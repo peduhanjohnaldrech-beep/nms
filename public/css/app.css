@@ -1,0 +1,144 @@
+/* =========================================================
+   NMS — app.css
+   ========================================================= */
+
+:root {
+    --sidebar-width: 240px;
+    --sidebar-transition: 0.25s ease;
+    --status-suw:    #dc2626;
+    --status-uw:     #f59e0b;
+    --status-normal: #16a34a;
+    --status-ow:     #0ea5e9;
+    --status-ob:     #6366f1;
+}
+
+body {
+    font-size: 0.9rem;
+    background-color: #f1f5f9;
+}
+
+/* ---- Layout ---- */
+#wrapper {
+    min-height: calc(100vh - 56px);
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    height: calc(100vh - 56px);
+    z-index: 100;
+    transition: transform var(--sidebar-transition);
+}
+
+.sidebar .nav-link {
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    margin-bottom: 2px;
+    font-size: 0.875rem;
+    transition: background-color 0.15s ease;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.sidebar .nav-link.active {
+    background-color: rgba(255,255,255,0.18);
+    font-weight: 600;
+}
+
+.page-content {
+    min-width: 0;
+    overflow-x: auto;
+    margin-left: var(--sidebar-width);
+}
+
+/* ---- Status Badges ---- */
+.status-suw    { background-color: var(--status-suw);    color: white; }
+.status-uw     { background-color: var(--status-uw);     color: white; }
+.status-normal { background-color: var(--status-normal); color: white; }
+.status-ow     { background-color: var(--status-ow);     color: white; }
+.status-ob     { background-color: var(--status-ob);     color: white; }
+.status-sw     { background-color: var(--status-suw);    color: white; }
+.status-mw     { background-color: var(--status-uw);     color: white; }
+.status-stunted{ background-color: #92400e;               color: white; }
+.status-tall   { background-color: #0891b2;               color: white; }
+
+/* ---- Cards ---- */
+.card { border-radius: 0.75rem; }
+.card-header { border-radius: 0.75rem 0.75rem 0 0 !important; }
+.card-hover { transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: pointer; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.10) !important; }
+
+/* ---- Tables ---- */
+.table > :not(caption) > * > * {
+    vertical-align: middle;
+}
+
+/* ---- Navbar ---- */
+.navbar-brand { font-size: 1rem; letter-spacing: 0.02em; }
+
+/* ---- Mobile Sidebar ---- */
+@media (max-width: 991.98px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1040;
+        box-shadow: 4px 0 16px rgba(0,0,0,.25);
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .page-content {
+        margin-left: 0 !important;
+    }
+
+    .sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.4);
+        z-index: 1039;
+    }
+}
+
+/* ---- Follow-up pulse & shake ---- */
+@keyframes card-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+    50%       { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+}
+@keyframes icon-shake {
+    0%,100% { transform: rotate(0deg); }
+    20%     { transform: rotate(-12deg); }
+    40%     { transform: rotate(12deg); }
+    60%     { transform: rotate(-8deg); }
+    80%     { transform: rotate(8deg); }
+}
+.card-pulse { animation: card-pulse 2s ease-in-out infinite; }
+.icon-shake { animation: icon-shake 1.5s ease-in-out infinite; display: inline-block; }
+
+/* ---- Breadcrumbs ---- */
+.breadcrumb { background: transparent; }
+.breadcrumb-item + .breadcrumb-item::before { color: #94a3b8; }
+.breadcrumb-item a { color: #64748b; }
+.breadcrumb-item a:hover { color: #2563eb; }
+.breadcrumb-item.active { color: #374151; font-weight: 500; }
+
+/* ---- Utilities ---- */
+.opacity-60 { opacity: 0.6; }
+.bg-purple   { background-color: var(--status-ob) !important; }
+
+/* ---- Charts ---- */
+canvas { max-width: 100%; }
+
+/* ---- Print ---- */
+@media print {
+    .sidebar, .navbar, .btn, form { display: none !important; }
+    .page-content { margin: 0 !important; }
+}

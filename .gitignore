@@ -1,0 +1,25 @@
+# Environment & secrets
+.env
+
+# SQLite database (contains live data)
+database/nms.sqlite
+database/*.sqlite
+
+# Composer vendor directory
+vendor/
+
+# Storage uploads
+storage/
+
+# Diagnostic/debug scripts (one-time use)
+diag_*.php
+
+# Zip files
+*.zip
+
+# PHP built-in server log
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
