@@ -32,11 +32,11 @@ class BeneficiaryController extends Controller
         $ageStatus = $_GET['age_status'] ?? '';
         $page      = max(1, (int)($_GET['page'] ?? 1));
 
-        if ($role === 'bhw') {
+        if (in_array($role, ['bhw', 'bns'])) {
             $filterBar = Session::get('user_barangay', '');
         }
 
-        $result    = $this->model->search($search, $filterBar, $page, 25, $source, $ageStatus);
+        $result    = $this->model->search($search, $filterBar, $page, 25, $source, $ageStatus, $role);
         $barangays = $this->model->getAllBarangays();
 
         $this->view('beneficiaries/index', array_merge($result, [
@@ -53,7 +53,8 @@ class BeneficiaryController extends Controller
         $this->requireAuth();
         $this->requirePermission('beneficiaries');
 
-        $barangay = Session::get('user_role') === 'bhw' ? Session::get('user_barangay', '') : '';
+        $role     = Session::get('user_role');
+        $barangay = in_array($role, ['bhw', 'bns']) ? Session::get('user_barangay', '') : '';
         $rows     = (new Assessment())->getWorsenedBeneficiaries($barangay);
 
         $this->view('beneficiaries/followup', ['rows' => $rows]);
@@ -64,7 +65,15 @@ class BeneficiaryController extends Controller
         $this->requireAuth();
         $this->requirePermission('beneficiaries');
 
-        $barangays = $this->model->getAllBarangays();
+        $barangays      = $this->model->getAllBarangays();
+        $userRole       = Session::get('user_role');
+        $userBarangay   = Session::get('user_barangay', '');
+        $lockedBarangay = in_array($userRole, ['bhw', 'bns', 'midwife']) && !empty($userBarangay);
+        $locationDefaults = [
+            'region'           => APP_REGION,
+            'province'         => APP_PROVINCE,
+            'city_municipality'=> APP_CITY,
+        ];
 
         if ($this->isPost()) {
             $this->validateCsrf();
@@ -73,16 +82,18 @@ class BeneficiaryController extends Controller
 
             if (!empty($errors)) {
                 Session::flash('error', implode('<br>', $errors));
-                $this->view('beneficiaries/create', ['data' => $data, 'barangays' => $barangays]);
+                $this->view('beneficiaries/create', ['data' => $data, 'barangays' => $barangays, 'lockedBarangay' => $lockedBarangay, 'locationDefaults' => $locationDefaults]);
                 return;
             }
 
-            if (Session::get('user_role') === 'bhw') {
-                $data['barangay'] = Session::get('user_barangay', $data['barangay']);
+            if ($lockedBarangay) {
+                $data['barangay'] = $userBarangay; // BHW/BNS locked to their barangay
             }
 
-            $data['created_by'] = Session::get('user_id');
-            $data['source']     = 'Walk-in';
+            $data['created_by']        = Session::get('user_id');
+            $data['source']            = 'Walk-in';
+            $data['validation_status'] = in_array(Session::get('user_role'), ['bhw', 'bns', 'encoder'])
+                ? 'pending' : 'validated';
 
             // Handle photo upload
             $data['photo'] = $this->handlePhotoUpload();
@@ -93,20 +104,28 @@ class BeneficiaryController extends Controller
             $this->redirect("/beneficiaries/{$id}");
         }
 
-        $this->view('beneficiaries/create', ['data' => [], 'barangays' => $barangays]);
+        $this->view('beneficiaries/create', ['data' => [], 'barangays' => $barangays, 'lockedBarangay' => $lockedBarangay, 'locationDefaults' => $locationDefaults]);
     }
 
     public function show(string $id): void
     {
         $this->requireAuth();
-        $id          = (int)$id;
-        $beneficiary = $this->model->findById($id);
+        $id  = (int)$id;
+        $db  = \Core\Database::getInstance();
+        $row = $db->prepare(
+            "SELECT b.*, u.full_name AS validated_by_name
+             FROM beneficiaries b
+             LEFT JOIN users u ON u.id = b.validated_by
+             WHERE b.id = ?"
+        );
+        $row->execute([$id]);
+        $beneficiary = $row->fetch(\PDO::FETCH_ASSOC);
 
         if (!$beneficiary || $beneficiary['deleted_at']) {
             $this->redirect('/beneficiaries');
         }
 
-        if (Session::get('user_role') === 'bhw' && $beneficiary['barangay'] !== Session::get('user_barangay')) {
+        if (in_array(Session::get('user_role'), ['bhw', 'bns']) && $beneficiary['barangay'] !== Session::get('user_barangay')) {
             Session::flash('error', 'Access denied.');
             $this->redirect('/beneficiaries');
         }
@@ -139,6 +158,7 @@ class BeneficiaryController extends Controller
         $id          = (int)$id;
         $beneficiary = $this->model->findById($id);
         $barangays   = $this->model->getAllBarangays();
+        $locationDefaults = ['region' => APP_REGION, 'province' => APP_PROVINCE, 'city_municipality' => APP_CITY];
 
         if (!$beneficiary || $beneficiary['deleted_at']) {
             $this->redirect('/beneficiaries');
@@ -151,7 +171,7 @@ class BeneficiaryController extends Controller
 
             if (!empty($errors)) {
                 Session::flash('error', implode('<br>', $errors));
-                $this->view('beneficiaries/edit', ['data' => $data, 'beneficiary' => $beneficiary, 'barangays' => $barangays]);
+                $this->view('beneficiaries/edit', ['data' => $data, 'beneficiary' => $beneficiary, 'barangays' => $barangays, 'locationDefaults' => $locationDefaults]);
                 return;
             }
 
@@ -168,6 +188,15 @@ class BeneficiaryController extends Controller
                 $data['photo'] = $beneficiary['photo'];
             }
 
+            // BHW/encoder editing a rejected record → reset to pending
+            if (in_array(Session::get('user_role'), ['bhw', 'encoder'])
+                && ($beneficiary['validation_status'] ?? '') === 'rejected') {
+                $data['validation_status'] = 'pending';
+                $data['rejection_note']    = null;
+                $data['validated_by']      = null;
+                $data['validated_at']      = null;
+            }
+
             $this->model->update($id, $data);
             \ActivityLog::log('beneficiary_update', "Updated beneficiary ID $id: {$data['last_name']}, {$data['first_name']}");
             Session::flash('success', 'Beneficiary updated successfully.');
@@ -175,10 +204,76 @@ class BeneficiaryController extends Controller
         }
 
         $this->view('beneficiaries/edit', [
-            'beneficiary' => $beneficiary,
-            'data'        => $beneficiary,
-            'barangays'   => $barangays,
+            'beneficiary'      => $beneficiary,
+            'data'             => $beneficiary,
+            'barangays'        => $barangays,
+            'locationDefaults' => $locationDefaults,
         ]);
+    }
+
+    public function validation(): void
+    {
+        $this->requireAuth();
+        if (!in_array(Session::get('user_role'), ['midwife','admin','nutritionist'])) {
+            Session::flash('error', 'Access denied.');
+            $this->redirect('/dashboard');
+        }
+
+        $db   = \Core\Database::getInstance();
+        $stmt = $db->prepare(
+            "SELECT b.*, u.full_name AS created_by_name
+             FROM beneficiaries b
+             LEFT JOIN users u ON u.id = b.created_by
+             WHERE b.validation_status = 'pending' AND b.deleted_at IS NULL
+             ORDER BY b.created_at DESC"
+        );
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+
+        $this->view('beneficiaries/validation', ['rows' => $rows]);
+    }
+
+    public function validate(string $id): void
+    {
+        $this->requireAuth();
+        if (!$this->isPost()) { $this->redirect('/beneficiaries'); }
+        $this->validateCsrf();
+
+        if (!in_array(Session::get('user_role'), ['midwife','admin','nutritionist'])) {
+            Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries');
+        }
+
+        $db = \Core\Database::getInstance();
+        $db->prepare(
+            "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE id=?"
+        )->execute([Session::get('user_id'), (int)$id]);
+
+        \ActivityLog::log('beneficiary_validate', "Validated beneficiary ID $id");
+        Session::flash('success', 'Beneficiary registration approved.');
+        $this->redirect("/beneficiaries/{$id}");
+    }
+
+    public function reject(string $id): void
+    {
+        $this->requireAuth();
+        if (!$this->isPost()) { $this->redirect('/beneficiaries'); }
+        $this->validateCsrf();
+
+        if (!in_array(Session::get('user_role'), ['midwife','admin','nutritionist'])) {
+            Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries');
+        }
+
+        $note = trim($_POST['rejection_note'] ?? '');
+        $db   = \Core\Database::getInstance();
+        $db->prepare(
+            "UPDATE beneficiaries SET validation_status='rejected', validated_by=?, validated_at=NOW(), rejection_note=? WHERE id=?"
+        )->execute([Session::get('user_id'), $note, (int)$id]);
+
+        \ActivityLog::log('beneficiary_reject', "Rejected beneficiary ID $id. Note: $note");
+        Session::flash('warning', 'Beneficiary registration rejected.');
+        $this->redirect("/beneficiaries/{$id}");
     }
 
     public function checkDuplicate(): void
@@ -237,6 +332,32 @@ class BeneficiaryController extends Controller
         \ActivityLog::log('beneficiary_restore', "Restored beneficiary ID $id" . ($b ? ": {$b['last_name']}, {$b['first_name']}" : ''));
         Session::flash('success', 'Beneficiary restored.');
         $this->redirect('/beneficiaries/trash');
+    }
+
+    public function submitToAdmin(string $id): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('beneficiaries');
+        if (!$this->isPost()) { $this->redirect('/beneficiaries'); }
+        $this->validateCsrf();
+
+        $id  = (int)$id;
+        $b   = $this->model->findById($id);
+
+        if (!$b || $b['deleted_at'] || ($b['validation_status'] ?? '') !== 'validated') {
+            Session::flash('error', 'Only validated beneficiaries can be submitted.');
+            $this->redirect('/beneficiaries');
+        }
+
+        if (!empty($b['submitted_at'])) {
+            Session::flash('info', 'Already submitted to admin.');
+            $this->redirect("/beneficiaries/{$id}");
+        }
+
+        $this->model->submitToAdmin($id, Session::get('user_id'));
+        \ActivityLog::log('beneficiary_submit', "Submitted beneficiary ID $id to admin: {$b['last_name']}, {$b['first_name']}");
+        Session::flash('success', 'Beneficiary submitted to admin.');
+        $this->redirect("/beneficiaries/{$id}");
     }
 
     public function delete(string $id): void
@@ -316,7 +437,14 @@ class BeneficiaryController extends Controller
             }
         }
         if (empty($data['sex']))       $errors[] = 'Sex is required.';
-        if (empty($data['barangay']))  $errors[] = 'Barangay is required.';
+        if (empty($data['barangay'])) {
+            $errors[] = 'Barangay is required.';
+        } else {
+            $validBarangays = array_column($this->model->getAllBarangays(), 'barangay');
+            if (!in_array($data['barangay'], $validBarangays)) {
+                $errors[] = 'Selected barangay is not in the list.';
+            }
+        }
         return $errors;
     }
 }

@@ -128,6 +128,79 @@
     </div>
 </div>
 
+<?php if (!empty($pendingValidation) && $pendingValidation > 0): ?>
+<div class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3" style="background:rgba(217,119,6,.12);border-left:4px solid #d97706 !important;">
+    <i class="bi bi-shield-exclamation fs-4" style="color:#d97706"></i>
+    <div class="flex-grow-1">
+        <strong><?= $pendingValidation ?> beneficiary registration<?= $pendingValidation > 1 ? 's' : '' ?> pending validation.</strong>
+        Review and approve or reject them to unlock assessments.
+    </div>
+    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-warning text-white">Review</a>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($pendingAssessmentValidation) && $pendingAssessmentValidation > 0): ?>
+<div class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3" style="background:rgba(37,99,235,.1);border-left:4px solid #2563eb !important;">
+    <i class="bi bi-clipboard2-pulse fs-4 text-primary"></i>
+    <div class="flex-grow-1">
+        <strong><?= $pendingAssessmentValidation ?> assessment<?= $pendingAssessmentValidation > 1 ? 's' : '' ?> from mobile pending validation.</strong>
+        These were submitted via the BNS mobile app and need midwife review.
+    </div>
+    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-primary">Review</a>
+</div>
+<?php endif; ?>
+
+<?php if (in_array(strtolower(\Core\Session::get('user_role','')), ['admin','nutritionist']) && ($submittedCount > 0 || !empty($recentSubmissions))): ?>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold small text-uppercase text-muted">
+            <i class="bi bi-phone me-1 text-primary"></i>Mobile Submissions Inbox
+        </span>
+        <a href="<?= APP_URL ?>/beneficiaries?source=mobile" class="btn btn-sm btn-outline-primary">
+            View All <span class="badge bg-primary ms-1"><?= $submittedCount ?></span>
+        </a>
+    </div>
+    <?php if (!empty($recentSubmissions)): ?>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Beneficiary</th>
+                    <th>Barangay</th>
+                    <th>Submitted By (BNS)</th>
+                    <th>Submitted At</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($recentSubmissions as $s): ?>
+                <tr>
+                    <td class="fw-semibold">
+                        <a href="<?= APP_URL ?>/beneficiaries/<?= $s['id'] ?>" class="text-decoration-none">
+                            <?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?>
+                        </a>
+                    </td>
+                    <td><?= htmlspecialchars($s['barangay']) ?></td>
+                    <td><?= htmlspecialchars($s['submitted_by_name'] ?? '—') ?></td>
+                    <td class="text-muted small"><?= date('M j, Y g:i a', strtotime($s['submitted_at'])) ?></td>
+                    <td>
+                        <a href="<?= APP_URL ?>/beneficiaries/<?= $s['id'] ?>" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-person me-1"></i>View
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php else: ?>
+    <div class="card-body text-center text-muted py-3 small">
+        <i class="bi bi-inbox fs-4 d-block mb-1"></i>No submissions yet.
+    </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
 <!-- Charts Row 1 -->
 <div class="row g-3 mb-4">
     <div class="col-lg-8">

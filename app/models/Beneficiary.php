@@ -8,22 +8,35 @@ class Beneficiary extends Model
 {
     protected string $table = 'beneficiaries';
 
-    public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = ''): array
+    public function submitToAdmin(int $id, int $userId): void
     {
-        $conditions = ['deleted_at IS NULL'];
+        $this->execute(
+            "UPDATE beneficiaries SET submitted_at = NOW(), submitted_by = ? WHERE id = ?",
+            [$userId, $id]
+        );
+    }
+
+    public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = ''): array
+    {
+        $conditions = ['b.deleted_at IS NULL'];
         $params     = [];
 
+        // Admin/nutritionist only see submitted records
+        if (in_array($role, ['admin', 'nutritionist'])) {
+            $conditions[] = 'b.submitted_at IS NOT NULL';
+        }
+
         if ($term !== '') {
-            $conditions[] = "(last_name LIKE ? OR first_name LIKE ? OR middle_name LIKE ?)";
+            $conditions[] = "(b.last_name LIKE ? OR b.first_name LIKE ? OR b.middle_name LIKE ?)";
             $like = '%' . $term . '%';
             $params = array_merge($params, [$like, $like, $like]);
         }
-        if ($barangay !== '') { $conditions[] = "barangay = ?"; $params[] = $barangay; }
+        if ($barangay !== '') { $conditions[] = "b.barangay = ?"; $params[] = $barangay; }
         if ($source !== '') {
             if ($source === 'Excel') {
-                $conditions[] = "source IN ('Excel', 'Excel Import')";
+                $conditions[] = "b.source IN ('Excel', 'Excel Import')";
             } else {
-                $conditions[] = "source = ?";
+                $conditions[] = "b.source = ?";
                 $params[] = $source;
             }
         }
@@ -72,7 +85,7 @@ class Beneficiary extends Model
 
     public function softDelete(int $id): int
     {
-        return $this->execute("UPDATE beneficiaries SET deleted_at = datetime('now') WHERE id = ?", [$id]);
+        return $this->execute("UPDATE beneficiaries SET deleted_at = NOW() WHERE id = ?", [$id]);
     }
 
     public function findDuplicates(string $lastName, string $firstName, string $dob, string $barangay): array
@@ -97,8 +110,12 @@ class Beneficiary extends Model
 
     public function getAllBarangays(): array
     {
-        return $this->fetchAll(
+        $config  = require BASE_PATH . '/config/barangays.php';
+        $fromDb  = $this->fetchAll(
             "SELECT DISTINCT barangay FROM beneficiaries WHERE deleted_at IS NULL ORDER BY barangay"
         );
+        $merged  = array_unique(array_merge($config, array_column($fromDb, 'barangay')));
+        sort($merged);
+        return array_map(fn($b) => ['barangay' => $b], $merged);
     }
 }

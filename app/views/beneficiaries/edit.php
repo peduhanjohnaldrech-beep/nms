@@ -69,31 +69,42 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
+                <?php $loc = $locationDefaults ?? []; ?>
                 <div class="col-md-3">
                     <label class="form-label">Region</label>
-                    <input type="text" name="region" class="form-control"
-                           value="<?= htmlspecialchars($data['region'] ?? '') ?>">
+                    <?php if (!empty($loc['region'])): ?>
+                    <input type="text" name="region" class="form-control bg-light" value="<?= htmlspecialchars($loc['region']) ?>" readonly>
+                    <?php else: ?>
+                    <input type="text" name="region" class="form-control" value="<?= htmlspecialchars($data['region'] ?? '') ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Province</label>
-                    <input type="text" name="province" class="form-control"
-                           value="<?= htmlspecialchars($data['province'] ?? '') ?>">
+                    <?php if (!empty($loc['province'])): ?>
+                    <input type="text" name="province" class="form-control bg-light" value="<?= htmlspecialchars($loc['province']) ?>" readonly>
+                    <?php else: ?>
+                    <input type="text" name="province" class="form-control" value="<?= htmlspecialchars($data['province'] ?? '') ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">City/Municipality</label>
-                    <input type="text" name="city_municipality" class="form-control"
-                           value="<?= htmlspecialchars($data['city_municipality'] ?? '') ?>">
+                    <?php if (!empty($loc['city_municipality'])): ?>
+                    <input type="text" name="city_municipality" class="form-control bg-light" value="<?= htmlspecialchars($loc['city_municipality']) ?>" readonly>
+                    <?php else: ?>
+                    <input type="text" name="city_municipality" class="form-control" value="<?= htmlspecialchars($data['city_municipality'] ?? '') ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Barangay <span class="text-danger">*</span></label>
-                    <input type="text" name="barangay" class="form-control" required
-                           list="barangay-list"
-                           value="<?= htmlspecialchars($data['barangay'] ?? '') ?>">
-                    <datalist id="barangay-list">
+                    <select name="barangay" class="form-select" required>
+                        <option value="">— Select Barangay —</option>
                         <?php foreach ($barangays ?? [] as $b): ?>
-                        <option value="<?= htmlspecialchars($b['barangay']) ?>">
+                        <option value="<?= htmlspecialchars($b['barangay']) ?>"
+                            <?= ($data['barangay'] ?? '') === $b['barangay'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($b['barangay']) ?>
+                        </option>
                         <?php endforeach; ?>
-                    </datalist>
+                    </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Purok/Zone</label>
@@ -143,8 +154,12 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Guardian Relationship</label>
-                    <input type="text" name="guardian_relationship" class="form-control"
-                           value="<?= htmlspecialchars($data['guardian_relationship'] ?? '') ?>">
+                    <select name="guardian_relationship" class="form-select">
+                        <option value="">— Select —</option>
+                        <?php foreach (['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Sibling','Other Relative','Guardian'] as $rel): ?>
+                        <option value="<?= $rel ?>" <?= ($data['guardian_relationship'] ?? '') === $rel ? 'selected' : '' ?>><?= $rel ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
         </div>

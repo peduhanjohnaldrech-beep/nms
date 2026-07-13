@@ -56,6 +56,13 @@ class AuthController extends Controller
         Session::set('user_barangay',    $user['barangay'] ?? '');
         Session::set('user_permissions', json_decode($user['permissions'] ?? '[]', true) ?: []);
 
+        // BNS and Midwife are app-only — block web login
+        if (in_array(strtolower($user['role']), ['bns', 'midwife', 'bhw'])) {
+            Session::flash('error', 'Your account is for the mobile app only. Please use the NMS Mobile app.');
+            $this->view('auth/login', ['username' => $this->clean($username)], false);
+            return;
+        }
+
         \ActivityLog::log('login', "User logged in: {$user['full_name']} ({$user['role']})");
 
         Session::flash('success', 'Welcome back, ' . $user['full_name'] . '!');

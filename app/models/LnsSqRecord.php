@@ -72,19 +72,15 @@ class LnsSqRecord extends Model
         $ref = $asOfDate ?: date('Y-m-d');
         return $this->fetchAll(
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                    (CAST(strftime('%Y', ?) AS INTEGER) - CAST(strftime('%Y', b.date_of_birth) AS INTEGER)) * 12
-                    + (CAST(strftime('%m', ?) AS INTEGER) - CAST(strftime('%m', b.date_of_birth) AS INTEGER))
-                    + CASE WHEN strftime('%d', ?) < strftime('%d', b.date_of_birth) THEN -1 ELSE 0 END AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
-               AND (CAST(strftime('%Y', ?) AS INTEGER) - CAST(strftime('%Y', b.date_of_birth) AS INTEGER)) * 12
-                   + (CAST(strftime('%m', ?) AS INTEGER) - CAST(strftime('%m', b.date_of_birth) AS INTEGER))
-                   + CASE WHEN strftime('%d', ?) < strftime('%d', b.date_of_birth) THEN -1 ELSE 0 END BETWEEN 6 AND 23
+               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
                AND NOT EXISTS (
                    SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
                )
              ORDER BY b.barangay, b.last_name",
-            [$ref, $ref, $ref, $ref, $ref, $ref, $year]
+            [$ref, $ref, $year]
         );
     }
 }

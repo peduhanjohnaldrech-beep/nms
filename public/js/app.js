@@ -1,5 +1,42 @@
 /* NMS — app.js */
 
+// ── Dark mode ─────────────────────────────────────────────────────
+(function initDarkMode() {
+    const html   = document.documentElement;
+    const stored = localStorage.getItem('nms-theme') ||
+                   (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        html.setAttribute('data-bs-theme', theme);   // Bootstrap 5 native dark mode
+        localStorage.setItem('nms-theme', theme);
+        const btn  = document.getElementById('darkModeToggle');
+        const icon = document.getElementById('darkModeIcon');
+        const lbl  = document.getElementById('darkModeLabel');
+        if (!btn) return;
+        if (theme === 'dark') {
+            icon && (icon.className = 'bi bi-sun-fill');
+            lbl  && (lbl.textContent = 'Light');
+        } else {
+            icon && (icon.className = 'bi bi-moon-fill');
+            lbl  && (lbl.textContent = 'Dark');
+        }
+    }
+
+    applyTheme(stored);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        applyTheme(stored);   // re-run after DOM is ready
+        const btn = document.getElementById('darkModeToggle');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                applyTheme(next);
+            });
+        }
+    });
+})();
+
 // ── Auto-dismiss success alerts after 3s ─────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () {

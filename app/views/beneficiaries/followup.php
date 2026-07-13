@@ -55,9 +55,11 @@
                         </td>
                         <td class="text-muted small"><?= DateHelper::formatDate($r['last_assessment_date'], 'M j, Y') ?></td>
                         <td class="text-nowrap">
+                            <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
                             <a href="<?= APP_URL ?>/assessments/create?bid=<?= $r['id'] ?>" class="btn btn-sm btn-primary me-1" title="Record a new assessment for this child">
                                 <i class="bi bi-clipboard2-plus me-1"></i>New Assessment
                             </a>
+                            <?php endif; ?>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $r['id'] ?>" class="btn btn-sm btn-outline-secondary" title="View profile">
                                 <i class="bi bi-person me-1"></i>View
                             </a>

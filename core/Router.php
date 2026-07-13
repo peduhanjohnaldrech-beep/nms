@@ -15,8 +15,32 @@ class Router
         $this->routes['POST'][$path] = $handler;
     }
 
+    public function put(string $path, string $handler): void
+    {
+        $this->routes['PUT'][$path] = $handler;
+    }
+
+    public function delete(string $path, string $handler): void
+    {
+        $this->routes['DELETE'][$path] = $handler;
+    }
+
+    public function patch(string $path, string $handler): void
+    {
+        $this->routes['PATCH'][$path] = $handler;
+    }
+
     public function dispatch(): void
     {
+        // Handle CORS preflight
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type');
+            http_response_code(204);
+            exit;
+        }
+
         $method = $_SERVER['REQUEST_METHOD'];
         $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 

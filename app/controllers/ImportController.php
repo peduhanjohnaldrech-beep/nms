@@ -21,7 +21,7 @@ class ImportController extends Controller
     public function index(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $filters = [
             'date_from'   => trim($_GET['date_from']   ?? ''),
@@ -42,7 +42,7 @@ class ImportController extends Controller
     public function storage(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $tab    = in_array($_GET['tab'] ?? '', ['imports', 'files']) ? $_GET['tab'] : 'imports';
         $folder = $this->sanitizeFolderName(trim($_GET['folder'] ?? ''));
@@ -65,7 +65,7 @@ class ImportController extends Controller
     public function uploadOtherFileFromGdrive(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import/storage?tab=files'); }
         $this->validateCsrf();
 
@@ -132,7 +132,7 @@ class ImportController extends Controller
     public function uploadOtherFile(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import/storage?tab=files'); }
         $this->validateCsrf();
 
@@ -186,7 +186,7 @@ class ImportController extends Controller
     public function viewOtherFile(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $file = $this->fileModel->getById($id);
         if (!$file) { $this->renderPreviewError('File not found.'); return; }
@@ -202,7 +202,7 @@ class ImportController extends Controller
     public function viewImportFile(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $log = $this->model->getImportLogById($id);
         if (!$log || empty($log['saved_filename'])) { $this->renderPreviewError('File not found.'); return; }
@@ -285,7 +285,7 @@ class ImportController extends Controller
     public function downloadOtherFile(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $file = $this->fileModel->getById($id);
         if (!$file) {
@@ -314,7 +314,7 @@ class ImportController extends Controller
     public function deleteOtherFile(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import/storage?tab=files'); }
         $this->validateCsrf();
 
@@ -383,7 +383,7 @@ class ImportController extends Controller
     public function uploadFromGdrive(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import'); }
         $this->validateCsrf();
 
@@ -459,7 +459,7 @@ class ImportController extends Controller
     public function upload(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import'); }
         $this->validateCsrf();
 
@@ -520,7 +520,7 @@ class ImportController extends Controller
     public function confirm(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import'); }
         $this->validateCsrf();
 
@@ -606,7 +606,7 @@ class ImportController extends Controller
     public function delete(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
         if (!$this->isPost()) { $this->redirect('/import'); }
         $this->validateCsrf();
 
@@ -631,7 +631,7 @@ class ImportController extends Controller
     public function download(int $id): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         $log = $this->model->getImportLogById($id);
         if (!$log || empty($log['saved_filename'])) {
@@ -666,7 +666,7 @@ class ImportController extends Controller
     public function downloadTemplate(): void
     {
         $this->requireAuth();
-        $this->requirePermission('import');
+        $this->requireAdmin();
 
         if (!class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')) {
             Session::flash('error', 'PhpSpreadsheet is not available.');

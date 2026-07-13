@@ -42,17 +42,25 @@ $selected = array_keys(array_filter($_POST['permissions'] ?? [], fn($v) => $v ==
                                    placeholder="Minimum 8 characters">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Role / Position <span class="text-danger">*</span></label>
-                            <input type="text" name="role" class="form-control" required
-                                   placeholder="e.g. Nutritionist, BHW, Encoder"
-                                   value="<?= htmlspecialchars($data['role'] ?? '') ?>">
-                            <div class="form-text">Custom label shown on their profile.</div>
+                            <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                            <select name="role" id="roleSelect" class="form-select" required>
+                                <?php foreach (['admin','nutritionist','bhw','bns','midwife'] as $r): ?>
+                                <option value="<?= $r ?>" <?= ($data['role'] ?? '') === $r ? 'selected' : '' ?>><?= ucfirst($r) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Barangay Assignment</label>
-                            <input type="text" name="barangay" class="form-control"
-                                   value="<?= htmlspecialchars($data['barangay'] ?? '') ?>"
-                                   placeholder="Optional">
+                            <label class="form-label fw-semibold" id="barangayLabel">Barangay Assignment</label>
+                            <select name="barangay" id="barangayInput" class="form-select">
+                                <option value="">— Select Barangay —</option>
+                                <?php foreach ($barangays as $b): ?>
+                                <option value="<?= htmlspecialchars($b['barangay']) ?>"
+                                    <?= ($data['barangay'] ?? '') === $b['barangay'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($b['barangay']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text" id="barangayHint"></div>
                         </div>
                     </div>
 
@@ -97,6 +105,26 @@ $selected = array_keys(array_filter($_POST['permissions'] ?? [], fn($v) => $v ==
 </div>
 
 <script>
+const _scopedRoles = ['bhw', 'bns', 'midwife', 'encoder'];
+const roleSelect    = document.getElementById('roleSelect');
+const barangayInput = document.getElementById('barangayInput');
+const barangayLabel = document.getElementById('barangayLabel');
+const barangayHint  = document.getElementById('barangayHint');
+
+function updateBarangayRequired() {
+    const role = roleSelect.value;
+    const required = _scopedRoles.includes(role);
+    barangayInput.required = required;
+    barangayLabel.innerHTML = required
+        ? 'Barangay <span class="text-danger">*</span>'
+        : 'Barangay Assignment';
+    barangayHint.textContent = required
+        ? `Barangay is required for ${role} accounts.`
+        : '';
+}
+roleSelect.addEventListener('change', updateBarangayRequired);
+updateBarangayRequired();
+
 document.getElementById('btnSelectAll').addEventListener('click', function() {
     document.querySelectorAll('.perm-check').forEach(cb => { cb.checked = true; cb.closest('.perm-item').classList.add('bg-primary','bg-opacity-10','border-primary'); });
 });

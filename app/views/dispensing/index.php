@@ -18,7 +18,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
             <p class="text-muted small mb-0">Track medicines and supplements dispensed across all programs</p>
         </div>
     </div>
-    <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist','encoder','bhw'])): ?>
+    <?php if (hasPerm('dispensing')): ?>
     <a href="<?= APP_URL ?>/dispensing/create" class="btn btn-primary">
         <i class="bi bi-plus-circle me-1"></i>Record Dispensing
     </a>

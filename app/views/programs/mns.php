@@ -70,7 +70,7 @@
     </li>
 </ul>
 
-<?php $canRecord = in_array(\Core\Session::get('user_role'), ['admin','nutritionist','bhw','encoder']); ?>
+<?php $canRecord = hasPerm('programs'); ?>
 
 <!-- ── Vitamin A Tab ── -->
 <?php if ($tab === 'vitaminA'): ?>

@@ -111,19 +111,15 @@ class ProgramEnrollment extends Model
         $refDate = $round === 'February' ? "{$year}-02-15" : "{$year}-08-15";
         return $this->fetchAll(
             "SELECT b.*,
-                    (CAST(strftime('%Y', ?) AS INTEGER) - CAST(strftime('%Y', b.date_of_birth) AS INTEGER)) * 12
-                    + (CAST(strftime('%m', ?) AS INTEGER) - CAST(strftime('%m', b.date_of_birth) AS INTEGER))
-                    + CASE WHEN strftime('%d', ?) < strftime('%d', b.date_of_birth) THEN -1 ELSE 0 END AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
-             AND (CAST(strftime('%Y', ?) AS INTEGER) - CAST(strftime('%Y', b.date_of_birth) AS INTEGER)) * 12
-                 + (CAST(strftime('%m', ?) AS INTEGER) - CAST(strftime('%m', b.date_of_birth) AS INTEGER))
-                 + CASE WHEN strftime('%d', ?) < strftime('%d', b.date_of_birth) THEN -1 ELSE 0 END BETWEEN 6 AND 59
+             AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM vitamin_a_records WHERE round = ? AND year = ?
              )
              ORDER BY b.barangay, b.last_name",
-            [$refDate, $refDate, $refDate, $refDate, $refDate, $refDate, $round, $year]
+            [$refDate, $refDate, $round, $year]
         );
     }
 

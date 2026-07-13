@@ -68,6 +68,9 @@ class Assessment extends Model
             'assessment_year'       => $data['assessment_year'],
             'assessed_by'           => $data['assessed_by'] ?? null,
             'remarks'               => $data['remarks'] ?? null,
+            'validation_status'     => $data['validation_status'] ?? 'validated',
+            'validated_by'          => $data['validated_by'] ?? null,
+            'validated_at'          => $data['validated_at'] ?? null,
             'created_by'            => $data['created_by'] ?? null,
         ]);
     }

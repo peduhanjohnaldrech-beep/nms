@@ -1,14 +1,23 @@
-<?php $pageTitle = 'Beneficiaries'; ?>
+<?php
+$pageTitle = 'Beneficiaries';
+$__role = \Core\Session::get('user_role');
+$__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
+?>
 
 <div class="d-flex justify-content-between align-items-center my-3">
-    <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Beneficiaries</h4>
+    <h4 class="mb-0">
+        <i class="bi bi-people-fill me-2"></i>Beneficiaries
+        <?php if ($__isAdminView): ?>
+        <span class="badge bg-info text-dark ms-2 fs-6 fw-normal">Submitted Records</span>
+        <?php endif; ?>
+    </h4>
     <div class="d-flex gap-2">
-        <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist','encoder','bhw'])): ?>
+        <?php if (hasPerm('beneficiaries')): ?>
         <a href="<?= APP_URL ?>/beneficiaries/create" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i>Add Beneficiary
         </a>
         <?php endif; ?>
-        <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist'])): ?>
+        <?php if ($__isAdminView): ?>
         <a href="<?= APP_URL ?>/beneficiaries/trash" class="btn btn-outline-secondary" title="View deleted beneficiaries">
             <i class="bi bi-trash3"></i>
         </a>
@@ -80,7 +89,13 @@
                                 <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?>
                                 <?= $b['middle_name'] ? htmlspecialchars(' ' . $b['middle_name']) : '' ?>
                             </a>
-                            <?php if (DateHelper::ageInMonths($b['date_of_birth']) > 59): ?>
+                            <?php if (($b['validation_status'] ?? 'validated') === 'pending'): ?>
+                            <span class="badge status-pending ms-1" title="Awaiting midwife validation"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                            <?php elseif (($b['validation_status'] ?? '') === 'rejected'): ?>
+                            <span class="badge status-rejected ms-1" title="Registration rejected"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                            <?php elseif (!empty($b['submitted_at'])): ?>
+                            <span class="badge bg-info text-dark ms-1" title="Submitted to admin"><i class="bi bi-send-check me-1"></i>Submitted</span>
+                            <?php elseif (DateHelper::ageInMonths($b['date_of_birth']) > 59): ?>
                             <span class="badge bg-secondary ms-1" title="Child is over 59 months old">Aged Out</span>
                             <?php elseif (!empty($b['is_recovered'])): ?>
                             <span class="badge bg-success ms-1" title="Child was previously malnourished and has recovered to Normal status"><i class="bi bi-heart-fill me-1"></i>Recovered</span>
@@ -117,10 +132,20 @@
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist','encoder'])): ?>
+                            <?php if (hasPerm('beneficiaries')): ?>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/edit" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            <?php endif; ?>
+                            <?php if (strtolower(\Core\Session::get('user_role')) === 'bns'
+                                    && ($b['validation_status'] ?? '') === 'validated'
+                                    && empty($b['submitted_at'])): ?>
+                            <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/submit" method="post" class="d-inline">
+                                <?= \Core\Session::csrfField() ?>
+                                <button type="submit" class="btn btn-sm btn-success" title="Submit to Admin">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
                             <?php endif; ?>
                             <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist'])): ?>
                             <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/delete" method="post" class="d-inline">

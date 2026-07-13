@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $this->requireAuth();
         $db   = Database::getInstance();
         $role = Session::get('user_role');
-        $bar  = $role === 'bhw' ? Session::get('user_barangay', '') : '';
+        $bar  = in_array($role, ['bhw', 'bns']) ? Session::get('user_barangay', '') : '';
 
         // Helper to build WHERE snippets with optional barangay filter
         $bWhere  = $bar ? ' AND barangay = ?' : '';
@@ -27,7 +27,7 @@ class DashboardController extends Controller
         $stmt = $db->prepare(
             "SELECT COUNT(DISTINCT a.beneficiary_id)
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE a.assessment_year = CAST(strftime('%Y','now') AS INTEGER)
+             WHERE a.assessment_year = YEAR(NOW())
                AND b.deleted_at IS NULL" . ($bar ? ' AND b.barangay = ?' : '')
         );
         $stmt->execute($bParams);
@@ -44,7 +44,7 @@ class DashboardController extends Controller
         $stmt = $db->prepare(
             "SELECT COUNT(DISTINCT v.beneficiary_id)
              FROM vitamin_a_records v JOIN beneficiaries b ON b.id = v.beneficiary_id
-             WHERE v.year = CAST(strftime('%Y','now') AS INTEGER)" . ($bar ? ' AND b.barangay = ?' : '')
+             WHERE v.year = YEAR(NOW())" . ($bar ? ' AND b.barangay = ?' : '')
         );
         $stmt->execute($bParams);
         $mnsCoverage = (int) $stmt->fetchColumn();
@@ -91,7 +91,7 @@ class DashboardController extends Controller
         $stmt = $db->prepare(
             "SELECT b.barangay, a.nutritional_status, COUNT(*) as count
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE a.assessment_year = CAST(strftime('%Y','now') AS INTEGER)
+             WHERE a.assessment_year = YEAR(NOW())
                AND b.deleted_at IS NULL" . ($bar ? ' AND b.barangay = ?' : '') . "
              GROUP BY b.barangay, a.nutritional_status
              ORDER BY b.barangay"
@@ -103,7 +103,7 @@ class DashboardController extends Controller
             "SELECT a.assessment_year, a.period, a.nutritional_status, COUNT(*) as count
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE a.assessment_year >= CAST(strftime('%Y','now') AS INTEGER) - 2
+             WHERE a.assessment_year >= YEAR(NOW()) - 2
                AND b.deleted_at IS NULL
              GROUP BY a.assessment_year, a.period, a.nutritional_status
              ORDER BY a.assessment_year, a.period"
@@ -139,18 +139,63 @@ class DashboardController extends Controller
             $enrollmentBreakdown = $stmt->fetchAll();
         }
 
+        // Pending validation count (for midwife/admin/nutritionist)
+        $pendingValidation = 0;
+        if (in_array($role, ['midwife', 'admin', 'nutritionist'])) {
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries WHERE validation_status = 'pending' AND deleted_at IS NULL");
+                $stmt->execute();
+                $pendingValidation = (int)$stmt->fetchColumn();
+            } catch (\Throwable $e) {}
+        }
+
+        // Mobile activity data (admin/nutritionist only)
+        $submittedCount              = 0;
+        $pendingAssessmentValidation = 0;
+        $recentSubmissions           = [];
+        if (in_array($role, ['admin', 'nutritionist'])) {
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries WHERE submitted_at IS NOT NULL AND deleted_at IS NULL");
+                $stmt->execute();
+                $submittedCount = (int)$stmt->fetchColumn();
+            } catch (\Throwable $e) {}
+
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM assessments WHERE validation_status = 'pending'");
+                $stmt->execute();
+                $pendingAssessmentValidation = (int)$stmt->fetchColumn();
+            } catch (\Throwable $e) {}
+
+            try {
+                $stmt = $db->prepare(
+                    "SELECT b.id, b.last_name, b.first_name, b.barangay, b.submitted_at,
+                            u.full_name AS submitted_by_name
+                     FROM beneficiaries b
+                     LEFT JOIN users u ON u.id = b.submitted_by
+                     WHERE b.submitted_at IS NOT NULL AND b.deleted_at IS NULL
+                     ORDER BY b.submitted_at DESC LIMIT 5"
+                );
+                $stmt->execute();
+                $recentSubmissions = $stmt->fetchAll();
+            } catch (\Throwable $e) {}
+        }
+
         $this->view('dashboard/index', [
-            'totalBeneficiaries'  => $totalBeneficiaries,
-            'activeOpt'           => $activeOpt,
-            'activeDsp'           => $activeDsp,
-            'mnsCoverage'         => $mnsCoverage,
-            'followupCount'       => $followupCount,
-            'notAssessedCount'    => $notAssessedCount,
-            'periodLabel'         => $periodLabel,
-            'currentYear'         => $currentYear,
-            'statusData'          => $statusData,
-            'trendData'           => $trendData,
-            'enrollmentBreakdown' => $enrollmentBreakdown,
+            'totalBeneficiaries'          => $totalBeneficiaries,
+            'activeOpt'                   => $activeOpt,
+            'activeDsp'                   => $activeDsp,
+            'mnsCoverage'                 => $mnsCoverage,
+            'followupCount'               => $followupCount,
+            'notAssessedCount'            => $notAssessedCount,
+            'periodLabel'                 => $periodLabel,
+            'currentYear'                 => $currentYear,
+            'statusData'                  => $statusData,
+            'trendData'                   => $trendData,
+            'enrollmentBreakdown'         => $enrollmentBreakdown,
+            'pendingValidation'           => $pendingValidation,
+            'submittedCount'              => $submittedCount,
+            'pendingAssessmentValidation' => $pendingAssessmentValidation,
+            'recentSubmissions'           => $recentSubmissions,
         ]);
     }
 }

@@ -2,10 +2,10 @@
 
 ## Prerequisites
 
-- Windows with PHP 8.0+ (via XAMPP or standalone)
+- Windows with XAMPP (includes PHP 8.0+, MySQL/MariaDB 10.4+, Apache)
 - Composer (https://getcomposer.org)
 - A modern browser (Chrome 90+, Firefox 90+, Edge 90+)
-- PHP extensions: `pdo_sqlite`, `sqlite3` (enabled by default in XAMPP)
+- PHP extensions: `pdo_mysql`, `mysqli` (enabled by default in XAMPP)
 
 ---
 
@@ -34,16 +34,29 @@ This installs:
 
 ### 3. Initialize the Database
 
-The SQLite database file should be at `database/nms.sqlite`.
-
-- If deploying from a backup: place the `.sqlite` file there directly.
-- If doing a fresh install: run the schema init script:
+Start MySQL in the XAMPP Control Panel, then create and import the schema:
 
 ```bash
-php database/init_sqlite.php
+# XAMPP Shell or Command Prompt
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root nms < database/nms.sql
 ```
 
-> `dispensing_records` is auto-created by the `DispensingRecord` model on first request — no extra migration needed.
+- If restoring from a backup: `mysql -u root nms < database/backups/nms_backup_YYYY-MM-DD_HHiiss.sql`
+- If your MySQL root has a password, add `-p` to the commands above.
+
+### 3a. Configure the Database Connection
+
+Edit `config/database.php`:
+
+```php
+return [
+    'host'   => 'localhost',
+    'dbname' => 'nms',
+    'user'   => 'root',
+    'pass'   => '',
+];
+```
 
 ### 4. Configure Environment
 
@@ -197,7 +210,8 @@ Click **Clear Demo Data** when done testing — only demo records are removed; r
 |-------|----------|
 | 404 on all pages (Apache) | Enable `mod_rewrite` and set `AllowOverride All` |
 | Blank page | Set `APP_ENV=development` in `.env`; check terminal/error log |
-| SQLite error: database not found | Ensure `database/nms.sqlite` exists |
+| MySQL connection refused | Ensure MySQL is started in XAMPP Control Panel |
+| Unknown database 'nms' | Run `mysql -u root -e "CREATE DATABASE nms;"` then import the schema |
 | Z-score shows null | Ensure `who_growth_standards` table is populated (run schema init) |
 | Import fails | Check `upload_max_filesize` in `php.ini`; ensure `public/uploads/` is writable |
 | Excel/PDF export fails | Run `composer install` |

@@ -18,7 +18,7 @@ class DispensingController extends Controller
 
         $year          = (int)($_GET['year']           ?? date('Y'));
         $program       = $_GET['program']              ?? '';
-        $barangay      = Session::get('user_role') === 'bhw'
+        $barangay      = in_array(Session::get('user_role'), ['bhw', 'bns'])
                          ? Session::get('user_barangay')
                          : ($_GET['barangay'] ?? '');
         $beneficiaryId = (int)($_GET['beneficiary_id'] ?? 0);
@@ -38,11 +38,10 @@ class DispensingController extends Controller
 
         // Monthly MNP & LNS-SQ log
         $db       = Database::getInstance();
-        $monthPad = str_pad($selectedMonth, 2, '0', STR_PAD_LEFT);
-        $mWhere   = "m.year = ? AND strftime('%m', m.date_given) = ?";
-        $lWhere   = "l.year = ? AND strftime('%m', l.date_given) = ?";
-        $mParams  = [$year, $monthPad];
-        $lParams  = [$year, $monthPad];
+        $mWhere   = "m.year = ? AND MONTH(m.date_given) = ?";
+        $lWhere   = "l.year = ? AND MONTH(l.date_given) = ?";
+        $mParams  = [$year, $selectedMonth];
+        $lParams  = [$year, $selectedMonth];
         if ($barangay) {
             $mWhere .= ' AND b.barangay = ?'; $mParams[] = $barangay;
             $lWhere .= ' AND b.barangay = ?'; $lParams[] = $barangay;
@@ -82,7 +81,7 @@ class DispensingController extends Controller
             'barangays'        => $barangays,
             'allBeneficiaries' => $allBeneficiaries,
             'activePrograms'   => $activePrograms,
-            'isBhw'            => Session::get('user_role') === 'bhw',
+            'isBhw'            => in_array(Session::get('user_role'), ['bhw', 'bns']),
             'dbError'          => $dbError,
             'selectedMonth'    => $selectedMonth,
             'mnpMonthRecords'  => $mnpMonthRecords,
@@ -161,7 +160,7 @@ class DispensingController extends Controller
 
         $year          = (int)($_GET['year']           ?? date('Y'));
         $program       = $_GET['program']              ?? '';
-        $barangay      = Session::get('user_role') === 'bhw'
+        $barangay      = in_array(Session::get('user_role'), ['bhw', 'bns'])
                          ? Session::get('user_barangay')
                          : ($_GET['barangay'] ?? '');
         $beneficiaryId = (int)($_GET['beneficiary_id'] ?? 0);

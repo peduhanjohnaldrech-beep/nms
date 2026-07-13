@@ -13,12 +13,12 @@ class ReportController extends Controller
 {
     private function allowedRoles(): array
     {
-        return ['admin', 'nutritionist', 'encoder', 'bhw'];
+        return ['admin', 'nutritionist', 'encoder', 'bhw', 'bns'];
     }
 
     private function resolveBarangay(string $requested): string
     {
-        if (Session::get('user_role') === 'bhw') {
+        if (in_array(Session::get('user_role'), ['bhw', 'bns'])) {
             return Session::get('user_barangay', '');
         }
         return $requested;
@@ -46,8 +46,9 @@ class ReportController extends Controller
         $this->view('reports/opt', array_merge(
             ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source)],
             ['year' => $year, 'period' => $period, 'barangay' => $barangay, 'source' => $source,
-             'isBhw' => Session::get('user_role') === 'bhw',
-             'ageGroupStats' => $ageGroupStats]
+             'isBhw' => in_array(Session::get('user_role'), ['bhw', 'bns']),
+             'ageGroupStats' => $ageGroupStats,
+             'barangays' => (new Beneficiary())->getAllBarangays()]
         ));
     }
 
@@ -61,11 +62,12 @@ class ReportController extends Controller
         $source   = $_GET['source'] ?? '';
 
         $this->view('reports/dsp', [
-            'rows'     => $this->getReportData('dsp', $year, '', $barangay, $source),
-            'year'     => $year,
-            'barangay' => $barangay,
-            'source'   => $source,
-            'isBhw'    => Session::get('user_role') === 'bhw',
+            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source),
+            'year'      => $year,
+            'barangay'  => $barangay,
+            'source'    => $source,
+            'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
+            'barangays' => (new Beneficiary())->getAllBarangays(),
         ]);
     }
 
@@ -100,10 +102,10 @@ class ReportController extends Controller
             $db     = Database::getInstance();
             $monthPad = str_pad($selectedMonth, 2, '0', STR_PAD_LEFT);
 
-            $mWhere = "m.year = ? AND strftime('%m', m.date_given) = ?";
-            $mParams = [$year, $monthPad];
-            $lWhere  = "l.year = ? AND strftime('%m', l.date_given) = ?";
-            $lParams = [$year, $monthPad];
+            $mWhere = "m.year = ? AND MONTH(m.date_given) = ?";
+            $mParams = [$year, $selectedMonth];
+            $lWhere  = "l.year = ? AND MONTH(l.date_given) = ?";
+            $lParams = [$year, $selectedMonth];
             if ($barangay) {
                 $mWhere .= ' AND b.barangay = ?'; $mParams[] = $barangay;
                 $lWhere .= ' AND b.barangay = ?'; $lParams[] = $barangay;
@@ -134,10 +136,11 @@ class ReportController extends Controller
             'source'          => $source,
             'tab'             => $tab,
             'exportType'      => $exportType,
-            'isBhw'           => Session::get('user_role') === 'bhw',
+            'isBhw'           => in_array(Session::get('user_role'), ['bhw', 'bns']),
             'selectedMonth'   => $selectedMonth,
             'mnpMonthRecords' => $mnpMonthRecords,
             'lnsMonthRecords' => $lnsMonthRecords,
+            'barangays'       => (new Beneficiary())->getAllBarangays(),
         ]);
     }
 
@@ -169,7 +172,7 @@ class ReportController extends Controller
             'year'      => $year,
             'barangay'  => $barangay,
             'barangays' => $barangays,
-            'isBhw'     => Session::get('user_role') === 'bhw',
+            'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
         ]);
     }
 
@@ -246,7 +249,7 @@ class ReportController extends Controller
              FROM beneficiaries
              WHERE deleted_at IS NULL
                AND date_of_birth <= '{$year}-12-31'
-               AND date_of_birth >= date('{$year}-01-01', '-59 months')"
+               AND date_of_birth >= DATE_SUB('{$year}-01-01', INTERVAL 59 MONTH)"
             . ($barangay ? " AND barangay = ?" : "") .
             " GROUP BY barangay ORDER BY barangay"
         );
@@ -797,8 +800,8 @@ class ReportController extends Controller
         $mWhere = 'm.year = ?'; $mParams = [$year];
         $lWhere = 'l.year = ?'; $lParams = [$year];
         if ($monthPad) {
-            $mWhere .= " AND strftime('%m', m.date_given) = ?"; $mParams[] = $monthPad;
-            $lWhere .= " AND strftime('%m', l.date_given) = ?"; $lParams[] = $monthPad;
+            $mWhere .= " AND MONTH(m.date_given) = ?"; $mParams[] = $month;
+            $lWhere .= " AND MONTH(l.date_given) = ?"; $lParams[] = $month;
         }
         if ($barangay) {
             $mWhere .= ' AND b.barangay = ?'; $mParams[] = $barangay;

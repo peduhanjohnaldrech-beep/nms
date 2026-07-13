@@ -51,12 +51,15 @@ class AssessmentController extends Controller
                 return;
             }
 
-            // Check for duplicate assessment this period/year
+            // Block duplicate assessment for same beneficiary/period/year
             $dupStmt = Database::getInstance()->prepare(
                 "SELECT assessment_date FROM assessments WHERE beneficiary_id = ? AND period = ? AND assessment_year = ?"
             );
             $dupStmt->execute([$bid, $period, $year]);
-            $hasDuplicate = $dupStmt->fetch();
+            if ($dupStmt->fetch()) {
+                Session::flash('error', "A <strong>$period $year</strong> assessment already exists for this beneficiary. Only one assessment per period is allowed.");
+                $this->redirect("/assessments/create?beneficiary_id={$bid}");
+            }
 
             $assessmentId = $this->model->createWithZScore([
                 'beneficiary_id'  => $bid,
@@ -102,9 +105,6 @@ class AssessmentController extends Controller
                             . 'Consider discharging them from DSP.</strong>';
                     }
                 }
-            }
-            if ($hasDuplicate) {
-                $flashMsg .= ' <strong>Note:</strong> A previous assessment for this period already existed.';
             }
             Session::flash('success', $flashMsg);
             $this->redirect("/beneficiaries/{$bid}");
@@ -156,8 +156,8 @@ class AssessmentController extends Controller
         $selectedBarangay = trim($_GET['barangay'] ?? $_POST['barangay'] ?? '');
         $assessmentDate   = trim($_GET['assessment_date'] ?? $_POST['assessment_date'] ?? date('Y-m-d'));
 
-        // BHW can only see their barangay
-        if ($role === 'bhw') {
+        // BHW / BNS can only see their barangay
+        if (in_array($role, ['bhw', 'bns'])) {
             $selectedBarangay = Session::get('user_barangay', '');
         }
 

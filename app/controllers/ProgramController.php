@@ -42,7 +42,7 @@ class ProgramController extends Controller
         $where  = 'a.assessment_year = ?';
 
         if ($period) { $where .= ' AND a.period = ?'; $params[] = $period; }
-        if (Session::get('user_role') === 'bhw') { $where .= ' AND b.barangay = ?'; $params[] = Session::get('user_barangay'); }
+        if (in_array(Session::get('user_role'), ['bhw', 'bns'])) { $where .= ' AND b.barangay = ?'; $params[] = Session::get('user_barangay'); }
 
         $stmt = $db->prepare(
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
@@ -56,8 +56,8 @@ class ProgramController extends Controller
         $eligibleParams = ["{$year}-12-31", "{$year}-01-01"];
         $eligibleWhere  = "b.deleted_at IS NULL
             AND b.date_of_birth <= ?
-            AND b.date_of_birth >= date(?, '-59 months')";
-        if (Session::get('user_role') === 'bhw') {
+            AND b.date_of_birth >= DATE_SUB(?, INTERVAL 59 MONTH)";
+        if (in_array(Session::get('user_role'), ['bhw', 'bns'])) {
             $eligibleWhere .= ' AND b.barangay = ?';
             $eligibleParams[] = Session::get('user_barangay');
         }
@@ -76,9 +76,7 @@ if ($period) {
 }
 $nywStmt = $db->prepare(
     "SELECT b.id, b.last_name, b.first_name, b.barangay, b.sex, b.date_of_birth,
-            (CAST(strftime('%Y','now') AS INTEGER) - CAST(strftime('%Y', b.date_of_birth) AS INTEGER)) * 12
-            + (CAST(strftime('%m','now') AS INTEGER) - CAST(strftime('%m', b.date_of_birth) AS INTEGER))
-            + CASE WHEN strftime('%d','now') < strftime('%d', b.date_of_birth) THEN -1 ELSE 0 END AS age_months
+            TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
      FROM beneficiaries b
      WHERE $eligibleWhere
      AND b.id NOT IN (

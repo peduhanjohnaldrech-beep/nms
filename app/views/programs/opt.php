@@ -93,9 +93,11 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                         <td><?= htmlspecialchars($b['sex']) ?></td>
                         <td><?= DateHelper::formatAge($b['age_months']) ?></td>
                         <td>
+                            <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
                             <a href="<?= APP_URL ?>/assessments/create?bid=<?= $b['id'] ?>" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-plus-circle me-1"></i>Record Weight
                             </a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

@@ -49,7 +49,15 @@ class Controller
     protected function requirePermission(string $module): void
     {
         $this->requireAuth();
-        if (strtolower(Session::get('user_role')) === 'admin') return;
+        $role = strtolower(Session::get('user_role', ''));
+        if ($role === 'admin' || $role === 'nutritionist') return;
+        if ($role === 'midwife') {
+            if ($module !== 'validation') {
+                Session::flash('error', 'You do not have permission to access this page.');
+                $this->redirect('/dashboard');
+            }
+            return;
+        }
         $permissions = Session::get('user_permissions', []);
         if (!in_array($module, (array)$permissions)) {
             Session::flash('error', 'You do not have permission to access this page.');
@@ -59,7 +67,9 @@ class Controller
 
     protected function hasPermission(string $module): bool
     {
-        if (strtolower(Session::get('user_role')) === 'admin') return true;
+        $role = strtolower(Session::get('user_role', ''));
+        if ($role === 'admin' || $role === 'nutritionist') return true;
+        if ($role === 'midwife') return $module === 'validation';
         return in_array($module, (array)Session::get('user_permissions', []));
     }
 

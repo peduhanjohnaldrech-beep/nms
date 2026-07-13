@@ -1,31 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <meta name="csrf-token" content="<?= \Core\Session::generateCsrf() ?>">
     <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' — ' : '' ?><?= APP_NAME ?></title>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap-icons.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css">
-    <style>
-        body {
-            background-image: linear-gradient(rgba(241,245,249,0.88), rgba(241,245,249,0.88)),
-                              url('<?= APP_URL ?>/img/background.jpg');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
-        }
-        .sidebar-chevron { transition: transform .2s ease; }
-        .nav-link[data-bs-toggle="collapse"].collapsed .sidebar-chevron { transform: rotate(-90deg); }
-        .sidebar .collapse .nav-link { font-size: .92em; }
-        @media print {
-            .no-print, nav, .sidebar, footer, .btn, .alert:not(.print-show) { display: none !important; }
-            .print-card-only { display: block !important; }
-            body { background: none !important; }
-            .col-lg-4, .col-lg-8 { width: 100% !important; }
-        }
-    </style>
+    <script>
+        // Apply theme before page paint to avoid flash
+        (function(){
+            var t=localStorage.getItem('nms-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+            document.documentElement.setAttribute('data-theme',t);
+            document.documentElement.setAttribute('data-bs-theme',t);
+        })();
+    </script>
 </head>
 <body>
 
@@ -33,20 +24,36 @@
 $userRole  = \Core\Session::get('user_role', '');
 $userName  = \Core\Session::get('user_name', '');
 $isAdmin   = strtolower($userRole) === 'admin';
-function hasPerm(string $m): bool {
-    static $isAdm, $perms;
-    if ($isAdm === null) {
-        $isAdm = strtolower(\Core\Session::get('user_role', '')) === 'admin';
-        $perms = (array)(\Core\Session::get('user_permissions') ?? []);
-    }
-    return $isAdm || in_array($m, $perms);
+// hasPerm() is defined globally in public/index.php
+// Pending validation count (midwife / admin / nutritionist)
+$__pendingValidation = 0;
+$__pendingAssessments = 0;
+$__submittedCount    = 0;
+if (in_array($userRole, ['midwife', 'admin', 'nutritionist'])) {
+    try {
+        $__vDb   = \Core\Database::getInstance();
+        $__vStmt = $__vDb->prepare("SELECT COUNT(*) FROM beneficiaries WHERE validation_status = 'pending' AND deleted_at IS NULL");
+        $__vStmt->execute();
+        $__pendingValidation = (int)$__vStmt->fetchColumn();
+        $__aStmt = $__vDb->prepare("SELECT COUNT(*) FROM assessments WHERE validation_status = 'pending'");
+        $__aStmt->execute();
+        $__pendingAssessments = (int)$__aStmt->fetchColumn();
+    } catch (\Throwable $__e) {}
+}
+if (in_array($userRole, ['admin', 'nutritionist'])) {
+    try {
+        $__vDb2   = \Core\Database::getInstance();
+        $__sStmt  = $__vDb2->prepare("SELECT COUNT(*) FROM beneficiaries WHERE submitted_at IS NOT NULL AND deleted_at IS NULL");
+        $__sStmt->execute();
+        $__submittedCount = (int)$__sStmt->fetchColumn();
+    } catch (\Throwable $__e) {}
 }
 $__uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $__assessOpen  = str_contains($__uri, '/assessments') || str_contains($__uri, '/beneficiaries/followup');
 $__programsOpen = str_contains($__uri, '/programs');
 $__reportsOpen = str_contains($__uri, '/reports');
 $__dataOpen    = str_contains($__uri, '/dispensing') || str_contains($__uri, '/import');
-$__adminOpen   = str_contains($__uri, '/activity') || str_contains($__uri, '/users') || str_contains($__uri, '/programs-admin');
+$__adminOpen   = str_contains($__uri, '/activity') || str_contains($__uri, '/users') || str_contains($__uri, '/programs-admin') || str_contains($__uri, '/backup');
 
 // Active sidebar helper
 $__basePath = rtrim(parse_url(APP_URL, PHP_URL_PATH) ?? '', '/');
@@ -79,7 +86,7 @@ foreach ($__crumbSegs as $seg) {
 }
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+<nav class="navbar navbar-expand-lg sticky-top nms-navbar">
     <div class="container-fluid">
         <button class="btn btn-outline-light btn-sm d-lg-none me-1 px-2" id="sidebarToggle" type="button">
             <i class="bi bi-list fs-5"></i>
@@ -91,14 +98,20 @@ foreach ($__crumbSegs as $seg) {
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item">
-                    <span class="nav-link text-white-50">
+                    <span class="nav-link" style="color:rgba(255,255,255,.65)">
                         <i class="bi bi-person-circle me-1"></i>
                         <?= htmlspecialchars($userName) ?>
-                        <span class="badge bg-light text-dark ms-1"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
+                        <span class="badge ms-1" style="background:rgba(255,255,255,.15);color:#fff"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
                     </span>
                 </li>
+                <li class="nav-item d-flex align-items-center ms-1">
+                    <button id="darkModeToggle" title="Toggle dark / light mode">
+                        <i id="darkModeIcon" class="bi bi-moon-fill"></i>
+                        <span id="darkModeLabel">Dark</span>
+                    </button>
+                </li>
                 <li class="nav-item">
-                    <a href="<?= APP_URL ?>/logout" class="btn btn-sm btn-outline-light ms-2">
+                    <a href="<?= APP_URL ?>/logout" class="btn btn-sm ms-2" style="border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8)">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>
                 </li>
@@ -108,36 +121,51 @@ foreach ($__crumbSegs as $seg) {
 </nav>
 
 <div class="d-flex" id="wrapper">
-    <div class="sidebar bg-dark text-white" id="sidebar">
-        <div class="sidebar-header p-3 border-bottom border-secondary">
-            <small class="text-muted">Navigation</small>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <small>Navigation</small>
         </div>
         <nav class="nav flex-column p-2">
-            <a class="nav-link text-white <?= __navActive('/dashboard') ?>" href="<?= APP_URL ?>/dashboard">
+            <a class="nav-link <?= __navActive('/dashboard') ?>" href="<?= APP_URL ?>/dashboard">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
             </a>
 
             <?php if (hasPerm('beneficiaries')): ?>
-            <a class="nav-link text-white <?= __navActive('/beneficiaries') ?>" href="<?= APP_URL ?>/beneficiaries">
+            <a class="nav-link <?= __navActive('/barangays') ?>" href="<?= APP_URL ?>/barangays">
+                <i class="bi bi-geo-alt-fill me-2"></i>Barangay Directory
+            </a>
+            <a class="nav-link <?= __navActive('/beneficiaries') ?>" href="<?= APP_URL ?>/beneficiaries">
                 <i class="bi bi-people-fill me-2"></i>Beneficiaries
             </a>
 
+            <?php if (in_array($userRole, ['midwife','admin','nutritionist'])): ?>
+            <a class="nav-link d-flex align-items-center <?= __navActive('/beneficiaries/validation') ?>" href="<?= APP_URL ?>/beneficiaries/validation">
+                <i class="bi bi-shield-check me-2"></i>Validation Queue
+                <?php if ($__pendingValidation > 0): ?>
+                <span class="sidebar-badge ms-auto"><?= $__pendingValidation ?></span>
+                <?php endif; ?>
+            </a>
+            <?php endif; ?>
+
+
             <?php if (hasPerm('assessments')): ?>
             <?php /* Assessments dropdown */ ?>
-            <a class="nav-link text-white d-flex justify-content-between align-items-center <?= $__assessOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__assessOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarAssessments" role="button"
                aria-expanded="<?= $__assessOpen ? 'true' : 'false' ?>">
                 <span><i class="bi bi-clipboard2-pulse me-2"></i>Assessments</span>
                 <i class="bi bi-chevron-down small sidebar-chevron"></i>
             </a>
             <div class="collapse <?= $__assessOpen ? 'show' : '' ?>" id="sidebarAssessments">
-                <a class="nav-link text-white ps-4 <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
+                <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
+                <a class="nav-link ps-4 <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
                     <i class="bi bi-plus-circle me-2"></i>New Assessment
                 </a>
-                <a class="nav-link text-white ps-4 <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
+                <?php endif; ?>
+                <a class="nav-link ps-4 <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
                     <i class="bi bi-clipboard2-data me-2"></i>Batch Assessment
                 </a>
-                <a class="nav-link text-white ps-4 <?= __navActive('/beneficiaries/followup') ?>" href="<?= APP_URL ?>/beneficiaries/followup">
+                <a class="nav-link ps-4 <?= __navActive('/beneficiaries/followup') ?>" href="<?= APP_URL ?>/beneficiaries/followup">
                     <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>For Follow-up
                 </a>
             </div>
@@ -152,7 +180,7 @@ foreach ($__crumbSegs as $seg) {
                 $__sidebarPrograms = (new App\Models\Program())->getActive();
             } catch (\Throwable $e) {}
             ?>
-            <a class="nav-link text-white d-flex justify-content-between align-items-center <?= $__programsOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__programsOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarPrograms" role="button"
                aria-expanded="<?= $__programsOpen ? 'true' : 'false' ?>">
                 <span><i class="bi bi-grid me-2"></i>Programs</span>
@@ -182,7 +210,7 @@ foreach ($__crumbSegs as $seg) {
                         default => htmlspecialchars($__prog['code'] . ' — ' . $__prog['name']),
                     };
                     ?>
-                <a class="nav-link text-white ps-4" href="<?= $__progUrl ?>">
+                <a class="nav-link ps-4" href="<?= $__progUrl ?>">
                     <i class="bi <?= htmlspecialchars($__prog['icon']) ?> me-2"></i><?= $__shortName ?>
                 </a>
                 <?php endforeach; ?>
@@ -193,26 +221,26 @@ foreach ($__crumbSegs as $seg) {
 
             <?php if (hasPerm('reports')): ?>
             <?php /* Reports dropdown */ ?>
-            <a class="nav-link text-white d-flex justify-content-between align-items-center <?= $__reportsOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__reportsOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarReports" role="button"
                aria-expanded="<?= $__reportsOpen ? 'true' : 'false' ?>">
                 <span><i class="bi bi-bar-chart-fill me-2"></i>Reports</span>
                 <i class="bi bi-chevron-down small sidebar-chevron"></i>
             </a>
             <div class="collapse <?= $__reportsOpen ? 'show' : '' ?>" id="sidebarReports">
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/reports">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports">
                     <i class="bi bi-bar-chart-fill me-2"></i>All Reports
                 </a>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/reports/summary">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/summary">
                     <i class="bi bi-file-earmark-bar-graph me-2"></i>Summary Report
                 </a>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/reports/comparison">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/comparison">
                     <i class="bi bi-arrow-left-right me-2"></i>Period Comparison
                 </a>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/reports/outcome">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/outcome">
                     <i class="bi bi-graph-up-arrow me-2"></i>Outcome Report
                 </a>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/reports/distribution">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/distribution">
                     <i class="bi bi-cloud-upload me-2"></i>Report Distribution
                 </a>
             </div>
@@ -220,25 +248,25 @@ foreach ($__crumbSegs as $seg) {
             <?php endif; /* reports */ ?>
 
             <?php if (hasPerm('dispensing')): ?>
-            <a class="nav-link text-white <?= __navActive('/dispensing') ?>" href="<?= APP_URL ?>/dispensing">
+            <a class="nav-link <?= __navActive('/dispensing') ?>" href="<?= APP_URL ?>/dispensing">
                 <i class="bi bi-prescription2 me-2"></i>Dispensing Tracker
             </a>
             <?php endif; ?>
 
-            <?php if (hasPerm('import')): ?>
-            <a class="nav-link text-white <?= __navActive('/import') ?>" href="<?= APP_URL ?>/import">
+            <?php if ($isAdmin): ?>
+            <a class="nav-link <?= __navActive('/import') ?>" href="<?= APP_URL ?>/import">
                 <i class="bi bi-file-earmark-excel me-2"></i>Import
             </a>
             <?php endif; ?>
             <?php endif; /* beneficiaries */ ?>
 
-            <a class="nav-link text-white <?= __navActive('/help') ?>" href="<?= APP_URL ?>/help">
+            <a class="nav-link <?= __navActive('/help') ?>" href="<?= APP_URL ?>/help">
                 <i class="bi bi-question-circle me-2"></i>Help
             </a>
 
             <?php if (hasPerm('activity_log') || $isAdmin): ?>
             <?php /* Admin dropdown */ ?>
-            <a class="nav-link text-white d-flex justify-content-between align-items-center <?= $__adminOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__adminOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarAdmin" role="button"
                aria-expanded="<?= $__adminOpen ? 'true' : 'false' ?>">
                 <span><i class="bi bi-gear-fill me-2"></i>Admin</span>
@@ -246,21 +274,26 @@ foreach ($__crumbSegs as $seg) {
             </a>
             <div class="collapse <?= $__adminOpen ? 'show' : '' ?>" id="sidebarAdmin">
                 <?php if (hasPerm('activity_log')): ?>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/activity">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/activity">
                     <i class="bi bi-journal-text me-2"></i>Activity Log
                 </a>
                 <?php endif; ?>
                 <?php if ($isAdmin): ?>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/users">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/users">
                     <i class="bi bi-person-gear me-2"></i>User Management
                 </a>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/admin/seed">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/admin/seed">
                     <i class="bi bi-database-fill-gear me-2"></i>Demo Seeder
                 </a>
                 <?php endif; ?>
                 <?php if (hasPerm('programs_admin') || $isAdmin): ?>
-                <a class="nav-link text-white ps-4" href="<?= APP_URL ?>/programs-admin">
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/programs-admin">
                     <i class="bi bi-grid me-2"></i>Program Manager
+                </a>
+                <?php endif; ?>
+                <?php if ($isAdmin): ?>
+                <a class="nav-link ps-4 <?= __navActive('/backup') ?>" href="<?= APP_URL ?>/backup">
+                    <i class="bi bi-database-fill-down me-2"></i>Database Backup
                 </a>
                 <?php endif; ?>
             </div>

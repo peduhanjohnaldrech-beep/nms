@@ -2,45 +2,46 @@
 
 ## Role Permissions
 
-| Feature | Admin | Nutritionist | Encoder | BHW |
-|---------|:-----:|:------------:|:-------:|:---:|
-| Dashboard | ✓ | ✓ | ✓ | ✓ |
-| View Beneficiaries (all barangays) | ✓ | ✓ | ✓ | — |
-| View Beneficiaries (own barangay) | ✓ | ✓ | ✓ | ✓ |
-| Add Beneficiary | ✓ | ✓ | ✓ | ✓ |
-| Edit Beneficiary | ✓ | ✓ | ✓ | — |
-| Delete Beneficiary (soft) | ✓ | ✓ | — | — |
-| Restore Deleted Beneficiary | ✓ | ✓ | — | — |
-| For Follow-up List | ✓ | ✓ | ✓ | ✓ |
-| Record Assessment | ✓ | ✓ | ✓ | ✓ |
-| Delete Assessment | ✓ | ✓ | — | — |
-| Batch Assessment | ✓ | ✓ | ✓ | ✓ |
-| OPT Module (view) | ✓ | ✓ | ✓ | ✓ |
-| OPT Manual Enroll | ✓ | ✓ | ✓ | — |
-| OPT Remove Enrollment | ✓ | ✓ | — | — |
-| DSP Module (view) | ✓ | ✓ | ✓ | ✓ |
-| DSP Enroll | ✓ | ✓ | ✓ | — |
-| DSP Discharge / Drop | ✓ | ✓ | — | — |
-| MNS / Vitamin A | ✓ | ✓ | ✓ | ✓ |
-| MNS / MNP | ✓ | ✓ | ✓ | ✓ |
-| MNS / LNS-SQ | ✓ | ✓ | ✓ | ✓ |
-| Custom Programs (view/enroll) | ✓ | ✓ | ✓ | ✓ |
-| Custom Programs (discharge) | ✓ | ✓ | — | — |
-| Programs Admin (view) | ✓ | ✓ | — | — |
-| Programs Admin (create/edit/toggle) | ✓ | — | — | — |
-| Dispensing Tracker (view/add) | ✓ | ✓ | ✓ | ✓ |
-| Import from Excel | ✓ | ✓ | — | — |
-| Import Storage Browser | ✓ | ✓ | — | — |
-| Create / Delete Import Folders | ✓ | — | — | — |
-| Reports (all) | ✓ | ✓ | ✓ | ✓* |
-| Export CSV / Excel / PDF | ✓ | ✓ | ✓ | ✓* |
-| Summary Report | ✓ | ✓ | ✓ | ✓* |
-| Period Comparison Report | ✓ | ✓ | ✓ | ✓* |
-| Activity Log | ✓ | ✓ | — | — |
-| User Management | ✓ | — | — | — |
-| Demo Seeder | ✓ | — | — | — |
+| Feature | Admin | Nutritionist | Encoder | BNS | BHW | Midwife |
+|---------|:-----:|:------------:|:-------:|:---:|:---:|:-------:|
+| Dashboard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| View Beneficiaries (all barangays) | ✓ | ✓ | ✓ | — | — | — |
+| View Beneficiaries (own barangay) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Add Beneficiary | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Edit Beneficiary | ✓ | ✓ | ✓ | — | — | — |
+| Delete Beneficiary (soft) | ✓ | ✓ | — | — | — | — |
+| Restore Deleted Beneficiary | ✓ | ✓ | — | — | — | — |
+| For Follow-up List | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Record Assessment | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Delete Assessment | ✓ | ✓ | — | — | — | — |
+| Batch Assessment | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| OPT Module (view) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| OPT Manual Enroll | ✓ | ✓ | ✓ | — | — | — |
+| OPT Remove Enrollment | ✓ | ✓ | — | — | — | — |
+| DSP Module (view) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| DSP Enroll | ✓ | ✓ | ✓ | — | — | — |
+| DSP Discharge / Drop | ✓ | ✓ | — | — | — | — |
+| MNS / Vitamin A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MNS / MNP | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MNS / LNS-SQ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Custom Programs (view/enroll) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Custom Programs (discharge) | ✓ | ✓ | — | — | — | — |
+| Programs Admin (view) | ✓ | ✓ | — | — | — | — |
+| Programs Admin (create/edit/toggle) | ✓ | — | — | — | — | — |
+| Dispensing Tracker (view/add) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Import from Excel | ✓ | ✓ | — | — | — | — |
+| Import Storage Browser | ✓ | ✓ | — | — | — | — |
+| Create / Delete Import Folders | ✓ | — | — | — | — | — |
+| Reports (all) | ✓ | ✓ | ✓ | ✓* | ✓* | ✓* |
+| Export CSV / Excel / PDF | ✓ | ✓ | ✓ | ✓* | ✓* | ✓* |
+| Summary Report | ✓ | ✓ | ✓ | ✓* | ✓* | ✓* |
+| Period Comparison Report | ✓ | ✓ | ✓ | ✓* | ✓* | ✓* |
+| Activity Log | ✓ | ✓ | — | — | — | — |
+| User Management | ✓ | — | — | — | — | — |
+| Database Backup | ✓ | — | — | — | — | — |
+| Demo Seeder | ✓ | — | — | — | — | — |
 
-*BHW sees only their assigned barangay.
+*Scoped to their assigned barangay.
 
 ---
 
@@ -282,10 +283,12 @@ Go to **Admin → Activity Log** for a timestamped audit trail of all data actio
 3. Click **Save User**
 
 **Roles:**
-- **Admin** — full system access including user management, demo seeder, and programs admin
-- **Nutritionist** — full access except user management; can import and discharge DSP
-- **Encoder** — data entry; can add/edit beneficiaries and enroll DSP; cannot import, discharge, or delete
-- **BHW** — restricted to assigned barangay; can view, record assessments, and record supplementation
+- **Admin** — full system access including user management, demo seeder, programs admin, and database backup
+- **Nutritionist** — full access except user management; validates mobile submissions; can import and discharge DSP
+- **Encoder** — data entry; can add/edit beneficiaries and record assessments; cannot import, discharge, or delete
+- **BNS** — Barangay Nutrition Scholar; same access as BHW, restricted to assigned barangay
+- **BHW** — Barangay Health Worker; restricted to assigned barangay; can view, record assessments, and record supplementation
+- **Midwife** — restricted to assigned barangay; can record and validate assessments
 
 ---
 

@@ -1,7 +1,7 @@
 <?php
 $pageTitle = htmlspecialchars($program['name']);
 $role      = \Core\Session::get('user_role');
-$canEdit   = in_array($role, ['admin','nutritionist','encoder']);
+$canEdit   = hasPerm('programs');
 $canManage = in_array($role, ['admin','nutritionist']);
 $color     = htmlspecialchars($program['color']);
 $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);

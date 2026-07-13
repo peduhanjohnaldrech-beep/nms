@@ -13,17 +13,17 @@ class DispensingRecord extends Model
     {
         parent::__construct();
         $this->db->exec("CREATE TABLE IF NOT EXISTS dispensing_records (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            beneficiary_id  INTEGER NOT NULL REFERENCES beneficiaries(id),
-            enrollment_id   INTEGER REFERENCES program_enrollments(id),
-            program         TEXT    NOT NULL,
-            supplement_type TEXT    NOT NULL,
-            quantity        REAL    NOT NULL DEFAULT 1,
-            unit            TEXT    NOT NULL DEFAULT 'piece(s)',
-            date_dispensed  TEXT    NOT NULL,
-            dispensed_by    INTEGER REFERENCES users(id),
+            id              INT PRIMARY KEY AUTO_INCREMENT,
+            beneficiary_id  INT NOT NULL,
+            enrollment_id   INT,
+            program         VARCHAR(50)  NOT NULL,
+            supplement_type VARCHAR(100) NOT NULL,
+            quantity        DECIMAL(10,2) NOT NULL DEFAULT 1,
+            unit            VARCHAR(50)  NOT NULL DEFAULT 'piece(s)',
+            date_dispensed  DATE         NOT NULL,
+            dispensed_by    INT,
             notes           TEXT,
-            created_at      TEXT    DEFAULT (datetime('now'))
+            created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
         )");
     }
 
@@ -45,7 +45,7 @@ class DispensingRecord extends Model
         $params = [];
 
         if ($year) {
-            $where[]  = "CAST(strftime('%Y', dr.date_dispensed) AS INTEGER) = ?";
+            $where[]  = "YEAR(dr.date_dispensed) = ?";
             $params[] = $year;
         }
         if ($program) {
@@ -78,7 +78,7 @@ class DispensingRecord extends Model
         return $this->fetchAll(
             "SELECT supplement_type, COUNT(*) AS cnt, SUM(quantity) AS total_qty
              FROM dispensing_records
-             WHERE CAST(strftime('%Y', date_dispensed) AS INTEGER) = ?
+             WHERE YEAR(date_dispensed) = ?
              GROUP BY supplement_type
              ORDER BY cnt DESC",
             [$year]

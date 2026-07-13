@@ -69,7 +69,7 @@ class SeederController extends Controller
                       purok_zone, household_no, mother_name, father_name,
                       contact_number, income_classification, philhealth_status,
                       is_4ps_member, source, created_by, created_at)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())"
                 );
                 $stmt->execute([
                     $lastName, $firstName, $dob, $sex, $barangay,

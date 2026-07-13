@@ -10,7 +10,7 @@ A web-based system for the City Health Office Nutrition Department to monitor an
 |-------|-----------|
 | Language | PHP 8.0+ |
 | Framework | Custom MVC (no external framework) |
-| Database | **SQLite** (file at `database/nms.sqlite`) |
+| Database | **MySQL / MariaDB 10.4+** (database name: `nms`) |
 | Frontend | Bootstrap 5.3, Bootstrap Icons, Chart.js |
 | Excel Import | PhpSpreadsheet 1.29+ |
 | eOPT Excel Export | Direct ZIP + XML manipulation (no external library) |
@@ -23,7 +23,8 @@ A web-based system for the City Health Office Nutrition Department to monitor an
 
 - PHP 8.0 or higher
 - Composer
-- XAMPP (optional — system also runs via PHP built-in server)
+- MySQL / MariaDB 10.4+ (included in XAMPP)
+- XAMPP recommended (includes Apache, MySQL, PHP)
 
 ---
 
@@ -45,15 +46,32 @@ composer install
 
 ### 3. Initialize the database
 
-The SQLite database file is at `database/nms.sqlite`. To create a fresh one from schema:
+Start XAMPP and ensure MySQL is running. Then create and import the schema:
 
 ```bash
-php database/init_sqlite.php
+# In XAMPP Shell or Command Prompt
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root nms < database/nms.sql
 ```
 
-Or use the existing `database/nms.sqlite` if present.
+Or restore from a backup:
 
-> `dispensing_records` is auto-created by the `DispensingRecord` model on first use — no migration needed.
+```bash
+mysql -u root nms < database/backups/nms_backup_YYYY-MM-DD_HHiiss.sql
+```
+
+### 3a. Configure the database connection
+
+Edit `config/database.php`:
+
+```php
+return [
+    'host'   => 'localhost',
+    'dbname' => 'nms',
+    'user'   => 'root',
+    'pass'   => '',   // set if your MySQL root has a password
+];
+```
 
 ### 4. Configure environment
 
@@ -105,10 +123,12 @@ http://127.0.0.1:3000
 
 | Role | Description |
 |------|-------------|
-| **admin** | Full access — user management, all modules, reports, demo seeder |
-| **nutritionist** | Access to all modules except user management |
+| **admin** | Full access — user management, all modules, reports, demo seeder, database backup |
+| **nutritionist** | Access to all modules except user management; validates mobile submissions |
 | **encoder** | Can add/edit beneficiaries and record assessments; no deletions |
+| **bns** | Barangay Nutrition Scholar — same access as BHW, scoped to assigned barangay |
 | **bhw** | Barangay Health Worker — restricted to their assigned barangay only |
+| **midwife** | Can record and validate assessments; barangay-scoped |
 
 ---
 
@@ -186,7 +206,7 @@ http://127.0.0.1:3000
 - User management
 - Activity log viewer
 - Program Manager
-- Database backup download
+- Database backup (auto daily via sync + manual "Create Backup Now"; download live dump or saved backups)
 - **Demo data seeder** (`/admin/seed`) — seeds ~30 realistic beneficiaries with assessments/enrollments; clear button removes all demo data safely
 
 ---
@@ -207,11 +227,13 @@ nms/
 │   ├── Controller.php
 │   ├── Model.php
 │   ├── View.php
-│   ├── Database.php        # PDO singleton (SQLite)
+│   ├── Database.php        # PDO singleton (MySQL)
 │   └── Session.php         # Session & CSRF management
+├── config/
+│   └── database.php        # MySQL connection settings
 ├── database/
-│   ├── nms.sqlite          # Live SQLite database
-│   └── nms_sqlite.sql      # SQLite schema (for fresh install)
+│   ├── nms.sql             # MySQL schema (for fresh install)
+│   └── backups/            # Auto-generated mysqldump backups (.sql)
 ├── public/
 │   ├── index.php           # Application entry point + all routes
 │   ├── css/
