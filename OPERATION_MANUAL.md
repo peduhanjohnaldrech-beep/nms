@@ -31,11 +31,14 @@
 |---|---|
 | App Name | NMS |
 | Platform | PHP 8.3 + MySQL 8 |
-| Web Server | Nginx + PHP 8.3-FPM |
-| Production URL | http://152.42.197.110 |
-| API URL | http://152.42.197.110/api |
+| Web Server | Nginx + PHP 8.3-FPM + Let's Encrypt SSL |
+| Production URL | https://kabnms.duckdns.org |
+| API URL | https://kabnms.duckdns.org/api |
+| Server IP | 152.42.197.110 (DigitalOcean) |
+| Domain | kabnms.duckdns.org (DuckDNS free DNS) |
 | Database | MySQL — database name: `nms` |
 | Default Admin | admin / Admin@1234 |
+| PWA | Installable as desktop/mobile app via Chrome/Edge |
 
 **Programs tracked:**
 - **OPT** — Operation Timbang (child weight monitoring)
@@ -146,7 +149,7 @@ Open browser at: `http://127.0.0.1:3000`
 
 **Production `.env` contents:**
 ```
-APP_URL=http://152.42.197.110
+APP_URL=https://kabnms.duckdns.org
 APP_ENV=production
 DB_HOST=localhost
 DB_NAME=nms
@@ -210,7 +213,7 @@ System works without these — falls back to text and plain background.
 
 | Cause | Fix |
 |---|---|
-| Wrong URL | Go to the correct URL (production: `http://152.42.197.110`) |
+| Wrong URL | Go to the correct URL (production: `https://kabnms.duckdns.org`) |
 | Apache mod_rewrite not enabled | See fix below |
 | `.htaccess` file missing | Check `public/.htaccess` exists |
 
@@ -531,9 +534,28 @@ The barangay field in the user account must exactly match (case-sensitive) the b
 
 ---
 
-## 13. Accessing from Other Devices (LAN)
+## 13. Accessing the System
 
-### Setup (XAMPP required for LAN access)
+### Production (Internet — any device)
+
+Open any browser and go to:
+```
+https://kabnms.duckdns.org
+```
+HTTPS is secured with a Let's Encrypt SSL certificate (auto-renews every 90 days).
+
+### Installing as a Desktop App (PWA)
+
+The web system can be installed as a desktop application on any computer:
+
+1. Open Chrome or Edge and go to `https://kabnms.duckdns.org`
+2. Click the **install icon** (⊕) in the address bar right side, OR
+3. Click **⋮ menu → Cast, save, and share → Install page as app**
+4. Click **Install**
+
+The app will open in its own window without a browser bar and will appear in the Start menu and taskbar. Works on Windows, Mac, and Linux.
+
+### Accessing from Other Devices (LAN — Local Development Only)
 
 1. Find server IP: Command Prompt → `ipconfig` → IPv4 Address (e.g., `192.168.1.5`)
 2. Update `.env`: `APP_URL=http://192.168.1.5/nms/public`
@@ -593,37 +615,71 @@ Back up these directories in addition to the database:
 
 ---
 
+## 14b. Deploying Updates (Git Workflow)
+
+The production server is linked to GitHub. To deploy changes:
+
+**Step 1 — On your PC (after making changes):**
+```bash
+cd C:\xampp\htdocs\nms
+git add .
+git commit -m "Description of changes"
+git push
+```
+
+**Step 2 — On the server (DigitalOcean console):**
+```bash
+cd /var/www/nms && git pull
+```
+
+**GitHub Repository:** https://github.com/peduhanjohnaldrech-beep/nms
+
+### SSL Certificate Renewal
+
+Let's Encrypt certificates auto-renew via certbot. To manually renew:
+```bash
+certbot renew
+systemctl reload nginx
+```
+
+Check certificate expiry:
+```bash
+certbot certificates
+```
+
+---
+
 ## 15. Quick Reference
 
 ### URLs (Production Server)
 
 | Page | URL |
 |---|---|
-| Login | http://152.42.197.110/login |
-| Dashboard | http://152.42.197.110/dashboard |
-| Beneficiaries | http://152.42.197.110/beneficiaries |
-| Beneficiary Trash | http://152.42.197.110/beneficiaries/trash |
-| Batch Assessment | http://152.42.197.110/assessments/batch |
-| For Follow-up | http://152.42.197.110/beneficiaries/followup |
-| OPT Program | http://152.42.197.110/programs/opt |
-| DSP Program | http://152.42.197.110/programs/dsp |
-| MNS Program | http://152.42.197.110/programs/mns |
-| Dispensing Tracker | http://152.42.197.110/dispensing |
-| OPT Report | http://152.42.197.110/reports/opt |
-| DSP Report | http://152.42.197.110/reports/dsp |
-| MNS Report | http://152.42.197.110/reports/mns |
-| Outcome Report | http://152.42.197.110/reports/outcome |
-| Summary Report | http://152.42.197.110/reports/summary |
-| Period Comparison | http://152.42.197.110/reports/comparison |
-| Distribution Report | http://152.42.197.110/reports/distribution |
-| eOPT Export | http://152.42.197.110/reports/export-eopt |
-| Import | http://152.42.197.110/import |
-| Import Storage | http://152.42.197.110/import/storage |
-| Activity Log | http://152.42.197.110/activity |
-| Program Manager | http://152.42.197.110/programs-admin |
-| User Management | http://152.42.197.110/users |
-| Demo Seeder | http://152.42.197.110/admin/seed |
-| Validation Queue | http://152.42.197.110/validation/queue |
+| Login | https://kabnms.duckdns.org/login |
+| Dashboard | https://kabnms.duckdns.org/dashboard |
+| Beneficiaries | https://kabnms.duckdns.org/beneficiaries |
+| Beneficiary Trash | https://kabnms.duckdns.org/beneficiaries/trash |
+| Batch Assessment | https://kabnms.duckdns.org/assessments/batch |
+| For Follow-up | https://kabnms.duckdns.org/beneficiaries/followup |
+| OPT Program | https://kabnms.duckdns.org/programs/opt |
+| DSP Program | https://kabnms.duckdns.org/programs/dsp |
+| MNS Program | https://kabnms.duckdns.org/programs/mns |
+| Dispensing Tracker | https://kabnms.duckdns.org/dispensing |
+| OPT Report | https://kabnms.duckdns.org/reports/opt |
+| DSP Report | https://kabnms.duckdns.org/reports/dsp |
+| MNS Report | https://kabnms.duckdns.org/reports/mns |
+| Outcome Report | https://kabnms.duckdns.org/reports/outcome |
+| Summary Report | https://kabnms.duckdns.org/reports/summary |
+| Period Comparison | https://kabnms.duckdns.org/reports/comparison |
+| Distribution Report | https://kabnms.duckdns.org/reports/distribution |
+| eOPT Export | https://kabnms.duckdns.org/reports/export-eopt |
+| Import | https://kabnms.duckdns.org/import |
+| Import Storage | https://kabnms.duckdns.org/import/storage |
+| Activity Log | https://kabnms.duckdns.org/activity |
+| Program Manager | https://kabnms.duckdns.org/programs-admin |
+| User Management | https://kabnms.duckdns.org/users |
+| Demo Seeder | https://kabnms.duckdns.org/admin/seed |
+| Validation Queue | https://kabnms.duckdns.org/validation/queue |
 
 ### Key File Locations (Production Server)
 
@@ -655,4 +711,4 @@ Back up these directories in addition to the database:
 
 ---
 
-*Document version: July 2026 — NMS v1.0*
+*Document version: July 2026 — NMS v1.1 | HTTPS + PWA + Git Deployment*

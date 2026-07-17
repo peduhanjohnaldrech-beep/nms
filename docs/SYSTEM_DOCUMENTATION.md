@@ -128,11 +128,11 @@ The NMS follows a **three-tier client-server architecture**:
 | Server Location | Singapore (SGP1) |
 | Server Tier | Premium Intel ($8/month) |
 | Operating System | Ubuntu 24.04 LTS |
-| Web Server | Nginx |
+| Web Server | Nginx + Let's Encrypt SSL |
 | PHP Runtime | PHP 8.3-FPM |
 | Database Server | MySQL 8 |
-| Production URL | http://152.42.197.110 |
-| API Base URL | http://152.42.197.110/api |
+| Production URL | https://kabnms.duckdns.org |
+| API Base URL | https://kabnms.duckdns.org/api |
 
 ---
 
@@ -352,7 +352,7 @@ lib/
 
 #### Key Mobile Features
 
-- **Configurable Server URL**: the API base URL can be changed at runtime from the login screen (Settings icon). The URL is persisted in SharedPreferences. Default: `http://152.42.197.110/api`
+- **Configurable Server URL**: the API base URL can be changed at runtime from the login screen (Settings icon). The URL is persisted in SharedPreferences. Default: `https://kabnms.duckdns.org/api`
 - **Token-based Authentication**: upon login, a Bearer token is issued and stored in encrypted SharedPreferences. The token is included in all subsequent API requests.
 - **Automatic Session Expiry**: a 401 response from the API triggers automatic logout and redirect to the login screen.
 - **Offline Local Database**: beneficiary data can be stored locally in SQLite using sqflite, allowing data entry when connectivity is unavailable. Data is pushed to the server when the connection is restored.
@@ -465,7 +465,7 @@ api_tokens (Bearer tokens for mobile app authentication)
 ### Base URL
 
 ```
-http://152.42.197.110/api
+https://kabnms.duckdns.org/api
 ```
 
 ### Authentication
@@ -934,12 +934,15 @@ The system is deployed on a DigitalOcean Droplet with the following specificatio
 | Region | Singapore (SGP1) |
 | Plan | Premium Intel ($8/month) |
 | Operating System | Ubuntu 24.04 LTS |
-| Web Server | Nginx |
+| Web Server | Nginx + Let's Encrypt SSL |
 | PHP Runtime | PHP 8.3-FPM |
 | Database | MySQL 8.0 |
 | Public IP | 152.42.197.110 |
-| Web URL | http://152.42.197.110 |
-| API Base URL | http://152.42.197.110/api |
+| Domain | kabnms.duckdns.org (DuckDNS) |
+| SSL | Let's Encrypt (auto-renews every 90 days) |
+| PWA | Installable as desktop/mobile app via Chrome/Edge |
+| Web URL | https://kabnms.duckdns.org |
+| API Base URL | https://kabnms.duckdns.org/api |
 | Application Directory | /var/www/nms |
 
 ### Nginx Configuration
@@ -977,7 +980,7 @@ Internet Request
 The server environment is configured through the `.env` file at `/var/www/nms/.env`:
 
 ```env
-APP_URL=http://152.42.197.110
+APP_URL=https://kabnms.duckdns.org
 APP_ENV=production
 DB_HOST=localhost
 DB_NAME=nms
@@ -989,7 +992,7 @@ DB_PASS=NmsAdmin@2026
 
 Updates to the PHP backend are deployed using Git:
 
-1. Developer pushes changes to GitHub: `git push origin main`
+1. Developer pushes changes to GitHub: `git push origin master`
 2. On the server: `cd /var/www/nms && git pull && composer install --no-dev`
 3. Nginx does not need to be restarted for PHP code changes
 
@@ -1027,7 +1030,7 @@ flutter build apk --release --target-platform android-arm64
 
 ### Server URL Configuration
 
-On first launch, the app connects to the default server URL (`http://152.42.197.110/api`). The URL can be changed by tapping the settings icon on the login screen. This is useful for local development or testing against a different server instance.
+On first launch, the app connects to the default server URL (`https://kabnms.duckdns.org/api`). The URL can be changed by tapping the settings icon on the login screen. This is useful for local development or testing against a different server instance.
 
 ### Application Permissions
 
@@ -1082,4 +1085,4 @@ The system includes a demo data seeder accessible to administrators at `/admin/s
 
 ---
 
-*Document version: July 2026 — NMS v1.0*
+*Document version: July 2026 — NMS v1.1 | HTTPS + PWA + Git Deployment*
