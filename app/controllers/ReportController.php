@@ -37,15 +37,18 @@ class ReportController extends Controller
         $this->requirePermission('reports');
 
         $year     = (int)($_GET['year'] ?? date('Y'));
-        $period   = $_GET['period'] ?? '';
+        $period   = $_GET['period']   ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
-        $source   = $_GET['source'] ?? '';
+        $source   = $_GET['source']   ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo   = $_GET['date_to']   ?? '';
 
         $ageGroupStats = (new Assessment())->getAgeGroupStats($year, $period, $barangay);
 
         $this->view('reports/opt', array_merge(
-            ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source)],
+            ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source, $dateFrom, $dateTo)],
             ['year' => $year, 'period' => $period, 'barangay' => $barangay, 'source' => $source,
+             'dateFrom' => $dateFrom, 'dateTo' => $dateTo,
              'isBhw' => in_array(Session::get('user_role'), ['bhw', 'bns']),
              'ageGroupStats' => $ageGroupStats,
              'barangays' => (new Beneficiary())->getAllBarangays()]
@@ -59,13 +62,17 @@ class ReportController extends Controller
 
         $year     = (int)($_GET['year'] ?? date('Y'));
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
-        $source   = $_GET['source'] ?? '';
+        $source   = $_GET['source']   ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo   = $_GET['date_to']   ?? '';
 
         $this->view('reports/dsp', [
-            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source),
+            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source, $dateFrom, $dateTo),
             'year'      => $year,
             'barangay'  => $barangay,
             'source'    => $source,
+            'dateFrom'  => $dateFrom,
+            'dateTo'    => $dateTo,
             'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
             'barangays' => (new Beneficiary())->getAllBarangays(),
         ]);
@@ -77,10 +84,12 @@ class ReportController extends Controller
         $this->requirePermission('reports');
 
         $year     = (int)($_GET['year'] ?? date('Y'));
-        $round    = $_GET['round'] ?? '';
+        $round    = $_GET['round']     ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
-        $source   = $_GET['source'] ?? '';
-        $tab      = $_GET['tab'] ?? 'vita';
+        $source   = $_GET['source']    ?? '';
+        $tab      = $_GET['tab']       ?? 'vita';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo   = $_GET['date_to']   ?? '';
 
         $exportType = match($tab) {
             'mnp'     => 'mns_mnp',
@@ -90,7 +99,7 @@ class ReportController extends Controller
         };
 
         $rows = $tab !== 'monthly'
-            ? $this->getReportData($exportType, $year, $round, $barangay, $source)
+            ? $this->getReportData($exportType, $year, $round, $barangay, $source, $dateFrom, $dateTo)
             : [];
 
         // Monthly log data
@@ -134,6 +143,8 @@ class ReportController extends Controller
             'round'           => $round,
             'barangay'        => $barangay,
             'source'          => $source,
+            'dateFrom'        => $dateFrom,
+            'dateTo'          => $dateTo,
             'tab'             => $tab,
             'exportType'      => $exportType,
             'isBhw'           => in_array(Session::get('user_role'), ['bhw', 'bns']),
@@ -402,12 +413,14 @@ class ReportController extends Controller
         $this->requireAuth();
         $this->requirePermission('reports');
 
-        $type     = $_GET['type']   ?? 'opt';
-        $format   = $_GET['format'] ?? 'csv';
+        $type     = $_GET['type']    ?? 'opt';
+        $format   = $_GET['format']  ?? 'csv';
         $year     = (int)($_GET['year'] ?? date('Y'));
         $period   = $_GET['period']   ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $source   = $_GET['source']   ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo   = $_GET['date_to']   ?? '';
 
         // Monthly MNS log has its own export handler
         if ($type === 'mns_monthly') {
@@ -415,7 +428,7 @@ class ReportController extends Controller
             return;
         }
 
-        $rows     = $this->getReportData($type, $year, $period, $barangay, $source);
+        $rows     = $this->getReportData($type, $year, $period, $barangay, $source, $dateFrom, $dateTo);
         $headers  = $this->getCsvHeaders($type);
         $filenamePrefix = match($type) {
             'opt'       => 'OPT_OperationTimbang',
@@ -631,13 +644,17 @@ class ReportController extends Controller
         exit;
     }
 
-    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = ''): array
+    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = ''): array
     {
         $db = Database::getInstance();
 
         if ($type === 'opt') {
-            $params = [$year]; $where = 'a.assessment_year = ?';
-            if ($period)   { $where .= ' AND a.period = ?';   $params[] = $period; }
+            if ($dateFrom && $dateTo) {
+                $params = [$dateFrom, $dateTo]; $where = 'a.assessment_date BETWEEN ? AND ?';
+            } else {
+                $params = [$year]; $where = 'a.assessment_year = ?';
+                if ($period) { $where .= ' AND a.period = ?'; $params[] = $period; }
+            }
             if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
             if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
             $stmt = $db->prepare(
@@ -658,7 +675,11 @@ class ReportController extends Controller
         }
 
         if ($type === 'dsp') {
-            $params = [$year]; $where = 'pe.cycle_year = ?';
+            if ($dateFrom && $dateTo) {
+                $params = [$dateFrom, $dateTo]; $where = 'pe.enrollment_date BETWEEN ? AND ?';
+            } else {
+                $params = [$year]; $where = 'pe.cycle_year = ?';
+            }
             if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
             if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
             $stmt = $db->prepare(
@@ -696,8 +717,12 @@ class ReportController extends Controller
         }
 
         if ($type === 'mns_vita') {
-            $params = [$year]; $where = 'v.year = ?';
-            if ($period)   { $where .= ' AND v.round = ?';    $params[] = $period; }
+            if ($dateFrom && $dateTo) {
+                $params = [$dateFrom, $dateTo]; $where = 'v.distribution_date BETWEEN ? AND ?';
+            } else {
+                $params = [$year]; $where = 'v.year = ?';
+                if ($period) { $where .= ' AND v.round = ?'; $params[] = $period; }
+            }
             if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
             if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
             $stmt = $db->prepare(
@@ -710,7 +735,11 @@ class ReportController extends Controller
         }
 
         if ($type === 'mns_mnp') {
-            $params = [$year]; $where = 'm.year = ?';
+            if ($dateFrom && $dateTo) {
+                $params = [$dateFrom, $dateTo]; $where = 'm.date_given BETWEEN ? AND ?';
+            } else {
+                $params = [$year]; $where = 'm.year = ?';
+            }
             if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
             if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
             $stmt = $db->prepare(
@@ -723,7 +752,11 @@ class ReportController extends Controller
         }
 
         if ($type === 'mns_lns') {
-            $params = [$year]; $where = 'l.year = ?';
+            if ($dateFrom && $dateTo) {
+                $params = [$dateFrom, $dateTo]; $where = 'l.date_given BETWEEN ? AND ?';
+            } else {
+                $params = [$year]; $where = 'l.year = ?';
+            }
             if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
             if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
             $stmt = $db->prepare(

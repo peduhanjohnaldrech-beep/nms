@@ -22,8 +22,20 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
         <form method="get" class="row g-2 align-items-end">
             <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
             <div class="col-md-2">
+                <label class="form-label small">Date From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($dateFrom ?? '') ?>">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Date To</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($dateTo ?? '') ?>">
+            </div>
+            <div class="col-md-1">
                 <label class="form-label small">Year</label>
-                <input type="number" name="year" class="form-control form-control-sm" value="<?= $year ?>">
+                <select name="year" class="form-select form-select-sm">
+                    <?php for ($y = date('Y') + 1; $y >= 2020; $y--): ?>
+                    <option value="<?= $y ?>" <?= $year === $y ? 'selected' : '' ?>><?= $y ?></option>
+                    <?php endfor; ?>
+                </select>
             </div>
             <?php if ($tab === 'vita'): ?>
             <div class="col-md-2">
@@ -63,20 +75,15 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/mns" class="btn btn-sm btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
             </div>
-            <?php if ($tab !== 'monthly'): ?>
+            <?php if ($tab !== 'monthly'):
+                $exportQs = 'type=' . $exportType . '&year=' . $year . '&period=' . urlencode($round) . '&barangay=' . urlencode($barangay);
+                if (!empty($dateFrom)) $exportQs .= '&date_from=' . urlencode($dateFrom);
+                if (!empty($dateTo))   $exportQs .= '&date_to='   . urlencode($dateTo);
+            ?>
             <div class="col text-end d-flex gap-1 justify-content-end">
-                <a href="<?= APP_URL ?>/reports/export?type=<?= $exportType ?>&format=csv&year=<?= $year ?>&period=<?= urlencode($round) ?>&barangay=<?= urlencode($barangay) ?>"
-                   class="btn btn-sm btn-outline-success">
-                    <i class="bi bi-filetype-csv me-1"></i>CSV
-                </a>
-                <a href="<?= APP_URL ?>/reports/export?type=<?= $exportType ?>&format=excel&year=<?= $year ?>&period=<?= urlencode($round) ?>&barangay=<?= urlencode($barangay) ?>"
-                   class="btn btn-sm btn-success">
-                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
-                </a>
-                <a href="<?= APP_URL ?>/reports/export?type=<?= $exportType ?>&format=pdf&year=<?= $year ?>&period=<?= urlencode($round) ?>&barangay=<?= urlencode($barangay) ?>"
-                   class="btn btn-sm btn-danger">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                </a>
+                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
             </div>
             <?php endif; ?>
         </form>
