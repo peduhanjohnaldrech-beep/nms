@@ -25,63 +25,96 @@
 
 ## 1. System Overview
 
-**NMS (Nutrition Monitoring System)** is a web-based system for the City Health Office to monitor nutrition programs for children aged 0–59 months.
+**NMS (Nutrition Monitoring System)** is a web and mobile system for the City Health Office to monitor nutrition programs for children aged 0–59 months.
 
 | Item | Value |
 |---|---|
 | App Name | NMS |
-| Platform | PHP 8 + SQLite |
-| Default URL | http://127.0.0.1:3000 |
-| Database | `database/nms.sqlite` |
+| Platform | PHP 8.3 + MySQL 8 |
+| Web Server | Nginx + PHP 8.3-FPM |
+| Production URL | http://152.42.197.110 |
+| API URL | http://152.42.197.110/api |
+| Database | MySQL — database name: `nms` |
 | Default Admin | admin / Admin@1234 |
 
 **Programs tracked:**
-- **OPT** — Operation Timbang (weight monitoring)
+- **OPT** — Operation Timbang (child weight monitoring)
 - **DSP** — Dietary Supplementation Program
 - **MNS** — Micronutrient Supplementation (Vitamin A, MNP, LNS-SQ)
 - **Custom programs** — created via Program Manager
 
 **Key automatic behaviors:**
-- When a child is assessed as UW or SUW → automatically flagged as eligible for DSP
+- When a child is assessed as UW, SUW, SW, or MW → automatically flagged as eligible for DSP
 - When DSP is completed with a post-weight → a new assessment is auto-created; eligibility is re-evaluated
 - When Vitamin A, MNP, or LNS-SQ is recorded → a dispensing record is automatically created
-- `dispensing_records` table is auto-created on first run — no migration needed
+- Mobile app submissions arrive as `validation_status = pending`; a nutritionist or admin must validate them
 
 ---
 
 ## 2. System Requirements
 
+### Web Server (Production — DigitalOcean)
+
+| Component | Requirement |
+|---|---|
+| OS | Ubuntu 24.04 LTS |
+| Web Server | Nginx |
+| PHP | PHP 8.3-FPM |
+| PHP Extensions | `pdo_mysql`, `mysqli`, `gd`, `mbstring`, `zip` |
+| Database | MySQL 8.0 |
+| Composer | Latest version |
+
+### Local Development (XAMPP)
+
 | Component | Requirement |
 |---|---|
 | PHP | Version 8.0 or higher |
-| PHP Extensions | `pdo_sqlite`, `sqlite3` |
+| PHP Extensions | `pdo_mysql`, `mysqli` (enabled by default in XAMPP) |
+| Database | MySQL / MariaDB 10.4+ (included in XAMPP) |
 | Browser | Chrome, Edge, Firefox (latest) |
-| Optional | XAMPP (Apache) for multi-device LAN access |
 
 ---
 
 ## 3. Starting and Stopping the System
 
-### Starting (PHP built-in server — recommended)
+### Production Server (DigitalOcean)
+
+The production server runs continuously. Nginx and PHP-FPM start automatically on server boot.
+
+**Check service status (run on server console):**
+```bash
+systemctl status nginx
+systemctl status php8.3-fpm
+systemctl status mysql
+```
+
+**Restart services if needed:**
+```bash
+systemctl restart nginx
+systemctl restart php8.3-fpm
+systemctl restart mysql
+```
+
+**Application files location:** `/var/www/nms`
+
+### Local Development (XAMPP)
+
+**Starting (PHP built-in server — recommended):**
 
 Double-click **`start.bat`** in the project root, or run:
-
 ```bash
 php -S 127.0.0.1:3000 -t public
 ```
-
 Open browser at: `http://127.0.0.1:3000`
 
-### Starting via XAMPP Apache
-
+**Starting via XAMPP Apache:**
 1. Open XAMPP Control Panel
-2. Click **Start** next to **Apache**
+2. Click **Start** next to **Apache** and **MySQL**
 3. Open browser at: `http://localhost/nms/public`
 
-### Stopping
-
+**Stopping:**
 - PHP built-in server: close the terminal window that's running it
-- XAMPP: click **Stop** next to Apache in XAMPP Control Panel
+- XAMPP: click **Stop** next to Apache and MySQL in XAMPP Control Panel
 
 ### If start.bat shows a port error
 
@@ -108,18 +141,35 @@ Open browser at: `http://127.0.0.1:3000`
 
 ### .env File
 
-Location: `C:\xampp\htdocs\nms\.env`
+**Production location:** `/var/www/nms/.env`
+**Local location:** `C:\xampp\htdocs\nms\.env`
 
+**Production `.env` contents:**
+```
+APP_URL=http://152.42.197.110
+APP_ENV=production
+DB_HOST=localhost
+DB_NAME=nms
+DB_USER=nmsuser
+DB_PASS=NmsAdmin@2026
+```
+
+**Local development `.env` contents:**
 ```
 APP_NAME=NMS
 APP_URL=http://127.0.0.1:3000
 APP_ENV=development
+DB_HOST=localhost
+DB_NAME=nms
+DB_USER=root
+DB_PASS=
 ```
 
 **When to edit:**
 - Changing the server URL or port
-- Switching from built-in server to XAMPP (change URL accordingly)
+- Switching from built-in server to XAMPP
 - Adding Google Drive API keys
+- Changing database credentials
 
 ### Google Drive Integration (optional)
 
@@ -130,7 +180,7 @@ GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 
 ### Branding Images
 
-Place in `C:\xampp\htdocs\nms\public\img\`:
+Place in `public/img/`:
 
 | File | Shown In |
 |---|---|
@@ -148,7 +198,9 @@ System works without these — falls back to text and plain background.
 | **admin** | Full access to everything | None |
 | **nutritionist** | Full access except user management and demo seeder | Cannot manage users or seed data |
 | **encoder** | Add/edit beneficiaries and assessments | No deletions, no import, no discharge |
+| **bns** | Barangay Nutrition Scholar | Only their assigned barangay |
 | **bhw** | Barangay Health Worker | Only their assigned barangay; no Programs Admin |
+| **midwife** | Can record and validate assessments | Only their assigned barangay |
 
 ---
 
@@ -158,7 +210,7 @@ System works without these — falls back to text and plain background.
 
 | Cause | Fix |
 |---|---|
-| Wrong URL | Go to `http://127.0.0.1:3000` (or your configured URL) |
+| Wrong URL | Go to the correct URL (production: `http://152.42.197.110`) |
 | Apache mod_rewrite not enabled | See fix below |
 | `.htaccess` file missing | Check `public/.htaccess` exists |
 
@@ -172,29 +224,21 @@ System works without these — falls back to text and plain background.
 
 ### "Database connection failed"
 
-**SQLite-specific:** Verify `database/nms.sqlite` exists and is readable/writable.
+**Check the `.env` file** — verify `DB_HOST`, `DB_NAME`, `DB_USER`, and `DB_PASS` are correct.
 
-```
-C:\xampp\htdocs\nms\database\nms.sqlite
-```
-
-If the file is missing, initialize from schema:
+**Test MySQL connection manually:**
 ```bash
-php database/init_sqlite.php
+mysql -u nmsuser -p nms
+# Enter password when prompted
 ```
 
----
+If the error says `Access denied for user`, the credentials in `.env` are wrong.
 
-### "Table not found" errors
-
-**Example:** `no such table: dispensing_records`
-
-`dispensing_records` is auto-created on first use — this error should not occur after the first request. If it does:
-
-1. Ensure `app/models/DispensingRecord.php` is loaded (check autoloader)
-2. Visit any dispensing-related page to trigger auto-creation
-
-For other missing tables, see Section 7.
+If the error says `Unknown database 'nms'`, the database hasn't been created yet:
+```bash
+mysql -u root -e "CREATE DATABASE nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root nms < /var/www/nms/database/nms_mysql.sql
+```
 
 ---
 
@@ -217,27 +261,25 @@ For other missing tables, see Section 7.
 ### Blank white page
 
 1. Open `.env` and set `APP_ENV=development`
-2. Check `C:\xampp\apache\logs\error.log` (XAMPP) or the terminal window (built-in server) for the actual error
+2. Check the Nginx error log (production): `tail -f /var/log/nginx/error.log`
+3. Check the PHP-FPM log (production): `tail -f /var/log/php8.3-fpm.log`
+4. Check XAMPP Apache log (local): `C:\xampp\apache\logs\error.log`
 
 ---
 
 ### Growth chart not showing on Beneficiary Profile
 
-**Cause:** Previously required 2+ assessments. Now shows from 1 assessment.
-
-If chart still doesn't appear, check browser console (F12) for JS errors.
+Shows from 1 assessment. If it still doesn't appear, check browser console (F12) for JavaScript errors.
 
 ---
 
 ### MNS record not appearing in Dispensing Tracker
 
-**Cause:** The `dispensing_records` table may have a broken FK (from `fix_fk.php` running partially).
-
-**Fix:** This was resolved in June 2026 by recreating the table with the correct FK. If it recurs, check the table's DDL:
-```php
-php -r "define('BASE_PATH',__DIR__); require 'config/config.php'; require 'core/Database.php'; echo Core\Database::getInstance()->query(\"SELECT sql FROM sqlite_master WHERE name='dispensing_records'\")->fetchColumn();"
+The `dispensing_records` table may have a broken foreign key constraint. Check the table structure:
+```sql
+SHOW CREATE TABLE dispensing_records;
 ```
-The FK should reference `program_enrollments`, not `program_enrollments_tmp`.
+The FK should reference `program_enrollments`, not any temporary table.
 
 ---
 
@@ -247,7 +289,7 @@ The FK should reference `program_enrollments`, not `program_enrollments_tmp`.
 
 **Check:**
 - Verify the child's date of birth (must be 6–23 months from today)
-- Check if an MNP/LNS-SQ record already exists in their profile
+- Check if a record already exists in their beneficiary profile
 
 ---
 
@@ -255,69 +297,107 @@ The FK should reference `program_enrollments`, not `program_enrollments_tmp`.
 
 **Cause:** No post-weight was entered on completion — no new assessment was created.
 
-**Fix:** Edit the enrollment to add the post-weight. If the child recovered (Normal weight), the auto-created assessment removes them from the eligible list.
+**Fix:** Edit the enrollment to add the post-weight. If the child recovered, the auto-created assessment removes them from the eligible list.
 
 ---
 
 ### Photo not showing after upload
 
-1. Verify `C:\xampp\htdocs\nms\storage\uploads\photos\` exists
-2. Create it manually if missing
+Verify `storage/uploads/photos/` exists and is writable. Create it manually if missing.
 
 ---
 
 ## 7. Database Troubleshooting
 
-The database is a single SQLite file: `C:\xampp\htdocs\nms\database\nms.sqlite`
+### Database Server
 
-### Checking tables
+The database is **MySQL 8.0** running on the DigitalOcean server.
 
-```bash
-php -r "
-define('BASE_PATH', __DIR__);
-require 'config/config.php';
-require 'core/Database.php';
-\$tables = Core\Database::getInstance()->query(\"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name\")->fetchAll(PDO::FETCH_COLUMN);
-echo implode(\"\n\", \$tables);
-"
-```
+- **Production:** `localhost` on the droplet (accessed via MySQL socket)
+- **Database name:** `nms`
+- **User:** `nmsuser`
+- **Application files:** `/var/www/nms`
 
-Expected tables: `users`, `beneficiaries`, `assessments`, `program_enrollments`, `vitamin_a_records`, `mnp_records`, `lns_sq_records`, `dispensing_records`, `import_logs`, `activity_logs`, `stored_files`, `who_growth_standards`, `programs`
-
-### Resetting admin password
+### Connecting to MySQL (on server console)
 
 ```bash
-php -r "
-define('BASE_PATH', __DIR__);
-require 'config/config.php';
-require 'core/Database.php';
-\$hash = password_hash('Admin@1234', PASSWORD_BCRYPT);
-\$stmt = Core\Database::getInstance()->prepare('UPDATE users SET password_hash = ? WHERE username = ?');
-\$stmt->execute([\$hash, 'admin']);
-echo 'Password reset to Admin@1234';
-"
+mysql -u nmsuser -p nms
+# Enter: NmsAdmin@2026
 ```
 
-### Checking record counts
+Or as root:
+```bash
+mysql -u root
+```
+
+---
+
+### Checking Tables
+
+```sql
+USE nms;
+SHOW TABLES;
+```
+
+Expected tables:
+`users`, `api_tokens`, `beneficiaries`, `assessments`, `programs`, `program_enrollments`, `vitamin_a_records`, `mnp_records`, `lns_sq_records`, `dispensing_records`, `import_logs`, `activity_logs`, `stored_files`, `who_growth_standards`
+
+---
+
+### Checking Record Counts
+
+```sql
+SELECT 'Beneficiaries' AS tbl, COUNT(*) AS cnt FROM beneficiaries WHERE deleted_at IS NULL
+UNION ALL
+SELECT 'Assessments', COUNT(*) FROM assessments
+UNION ALL
+SELECT 'Users', COUNT(*) FROM users
+UNION ALL
+SELECT 'Dispensing', COUNT(*) FROM dispensing_records;
+```
+
+---
+
+### Resetting Admin Password
+
+```sql
+UPDATE users
+SET password_hash = '$2y$10$YourNewHashHere'
+WHERE username = 'admin';
+```
+
+Or use PHP from the server console:
+```bash
+cd /var/www/nms
+php -r "echo password_hash('Admin@1234', PASSWORD_BCRYPT);"
+```
+Copy the output and use it in the SQL UPDATE above.
+
+---
+
+### Adding a Missing Column
+
+If a column is missing (e.g., `submitted_at` on `beneficiaries`):
+```sql
+ALTER TABLE beneficiaries ADD COLUMN submitted_at TIMESTAMP NULL DEFAULT NULL;
+```
+
+---
+
+### Re-importing the Schema (fresh install only)
 
 ```bash
-php -r "
-define('BASE_PATH', __DIR__);
-require 'config/config.php';
-require 'core/Database.php';
-\$db = Core\Database::getInstance();
-echo 'Beneficiaries: ' . \$db->query('SELECT COUNT(*) FROM beneficiaries WHERE deleted_at IS NULL')->fetchColumn() . \"\n\";
-echo 'Assessments: ' . \$db->query('SELECT COUNT(*) FROM assessments')->fetchColumn() . \"\n\";
-echo 'Dispensing: ' . \$db->query('SELECT COUNT(*) FROM dispensing_records')->fetchColumn() . \"\n\";
-echo 'Users: ' . \$db->query('SELECT COUNT(*) FROM users')->fetchColumn() . \"\n\";
-"
+mysql -u root -e "DROP DATABASE IF EXISTS nms; CREATE DATABASE nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root nms < /var/www/nms/database/nms_mysql.sql
 ```
+
+> **Warning:** This destroys all existing data. Only use for fresh installations.
 
 ---
 
 ## 8. File Upload Troubleshooting
 
-### Upload directory structure
+### Upload Directory Structure
 
 ```
 public/
@@ -332,7 +412,7 @@ storage/
 
 > `storage/` is protected — files are served only through controller endpoints, never directly via URL.
 
-### Photo upload fails
+### Photo Upload Fails
 
 **Checklist:**
 1. File under 2MB
@@ -340,20 +420,20 @@ storage/
 3. `storage/uploads/photos/` exists and is writable
 4. Check `upload_max_filesize` in `php.ini`
 
-### Changing max upload size
+### Changing Max Upload Size
 
-In `C:\xampp\php\php.ini`:
+In `C:\xampp\php\php.ini` (local) or `/etc/php/8.3/fpm/php.ini` (production):
 ```
 upload_max_filesize = 20M
 post_max_size = 25M
 ```
-Restart Apache (XAMPP) or restart the PHP built-in server after changing.
+Restart the server after changing.
 
 ---
 
 ## 9. Import Troubleshooting
 
-### Expected column order (A to V)
+### Expected Column Order (A to V)
 
 1. Last Name, 2. First Name, 3. Middle Name, 4. Suffix, 5. Date of Birth, 6. Sex, 7. Barangay, 8. Purok/Zone, 9. Household No., 10. InCode, 11. Mother's Name, 12. Father's Name, 13. Contact Number, 14. Income Classification, 15. Monthly Household Income, 16. 4Ps Member, 17. NHTS-PR Status, 18. PhilHealth Status, 19. Assessment Date, 20. Weight (kg), 21. Height (cm), 22. MUAC (cm)
 
@@ -367,7 +447,7 @@ Review the preview — rows marked **Error** in red are skipped. Fix the data in
 
 ### Saved import file missing from Storage Browser
 
-Verify `C:\xampp\htdocs\nms\storage\imports\` exists. Create it manually if missing.
+Verify `storage/imports/` exists. Create it manually if missing.
 
 ---
 
@@ -376,13 +456,13 @@ Verify `C:\xampp\htdocs\nms\storage\imports\` exists. Create it manually if miss
 ### Excel export blank/corrupt
 
 ```bash
-composer install
+cd /var/www/nms && composer install --no-dev
 ```
 
 ### PDF export garbled
 
 ```bash
-composer install
+cd /var/www/nms && composer install --no-dev
 ```
 
 ### Report shows "No records found"
@@ -396,19 +476,18 @@ composer install
 
 Place the `eopt_slim.xlsx` file in:
 ```
-C:\xampp\htdocs\nms\storage\templates\eopt_slim.xlsx
+storage/templates/eopt_slim.xlsx
 ```
-Create the `templates\` folder if it doesn't exist.
+Create the `templates/` folder if it doesn't exist.
 
 ### eOPT Export — downloaded file won't open / Excel repair dialog
 
-The file is a valid `.xlsx` ZIP archive. If Excel shows a repair dialog on open, accept the repair — it is normal for the first open because `calcChain.xml` is intentionally removed so Excel recalculates all formula cells. After saving once in Excel, the file will open cleanly in future.
+Accept the Excel repair — it is normal for the first open because `calcChain.xml` is intentionally removed so Excel recalculates all formula cells. After saving once in Excel, the file will open cleanly in future.
 
 ### eOPT Export — Summary / Data-Export cells still show 0
 
 1. Ensure assessments exist for the selected year and period
-2. Check that `nutritional_status`, `hfa_status`, and `wflh_status` are populated in those assessments (not NULL)
-3. If Summary totals show but F1K (First 1000 Days) columns are 0 — this was a known bug resolved in June 2026; ensure `EoptExport.php` is up to date
+2. Check that `nutritional_status`, `hfa_status`, and `wflh_status` are populated (not NULL) in those assessment records
 
 ---
 
@@ -416,7 +495,7 @@ The file is a valid `.xlsx` ZIP archive. If Excel shows a repair dialog on open,
 
 ### Creating a user (Admin only)
 1. **Admin → User Management → Create User**
-2. Fill in username, full name, password, role, barangay (BHW requires this)
+2. Fill in username, full name, password, role, barangay (BHW, BNS, and Midwife require a barangay)
 3. Save
 
 ### Resetting a password
@@ -429,7 +508,7 @@ The file is a valid `.xlsx` ZIP archive. If Excel shows a repair dialog on open,
 
 ### BHW can't see beneficiaries
 
-The barangay field in the user account must match exactly (case-sensitive) the barangay value in beneficiary records. Check User Management → Edit the BHW account.
+The barangay field in the user account must exactly match (case-sensitive) the barangay value stored in beneficiary records. Check User Management → Edit the user account.
 
 ---
 
@@ -448,6 +527,7 @@ The barangay field in the user account must match exactly (case-sensitive) the b
 | `dispensing_create` | Supplement dispensed |
 | `import_complete` | Excel import confirmed |
 | `program_create` / `program_update` | Programs Admin changes |
+| `backup` | Database backup created |
 
 ---
 
@@ -458,95 +538,121 @@ The barangay field in the user account must match exactly (case-sensitive) the b
 1. Find server IP: Command Prompt → `ipconfig` → IPv4 Address (e.g., `192.168.1.5`)
 2. Update `.env`: `APP_URL=http://192.168.1.5/nms/public`
 3. Allow Apache through Windows Firewall (port 80)
-4. BHW opens: `http://192.168.1.5/nms/public`
+4. Other device opens: `http://192.168.1.5/nms/public`
 
 Both devices must be on the same Wi-Fi network.
 
-> The PHP built-in server (`start.bat`) only accepts connections from localhost by default. For LAN access use XAMPP Apache, or change start.bat to bind to `0.0.0.0:3000` (less secure).
+> The PHP built-in server (`start.bat`) only accepts localhost connections by default. For LAN access use XAMPP Apache.
 
 ---
 
 ## 14. Backup & Restore
 
-### Backing up (SQLite)
+### Database Backups
 
-**Simplest method — copy the file:**
+The system uses **MySQL** (`mysqldump`) for all backups. Backup files are stored in `database/backups/` and named `nms_backup_YYYY-MM-DD_HHiiss.sql`. Up to 7 daily backups are retained; older ones are pruned automatically.
+
+**Automatic backups:** Triggered once per 24 hours when the mobile app performs a sync push.
+
+**Manual backup:** Admin → Database Backup → **Create Backup Now**
+
+**Download live dump:** Admin → Database Backup → **Download Live DB** (streams a fresh `mysqldump` immediately)
+
+### Creating a Manual Backup (from server console)
+
+```bash
+mysqldump -u nmsuser -p nms > /var/www/nms/database/backups/nms_manual_backup.sql
+# Enter: NmsAdmin@2026
 ```
-C:\xampp\htdocs\nms\database\nms.sqlite
-```
-Copy this file to a USB or Google Drive. That's the entire database.
 
-**Via the system:**
-Go to **Admin → Backup** (if available) to download the SQLite file directly.
+### Restoring from a Backup
 
-**Back up uploads and storage too:**
-```
-C:\xampp\htdocs\nms\storage\
-C:\xampp\htdocs\nms\public\img\
+```bash
+mysql -u nmsuser -p nms < nms_backup_YYYY-MM-DD_HHiiss.sql
+# Enter: NmsAdmin@2026
 ```
 
-**Recommended:** Back up weekly, or before any major import or seeding.
+### Backing Up Uploaded Files
 
-### Restoring
+Back up these directories in addition to the database:
+```
+/var/www/nms/storage/uploads/photos/   ← Beneficiary photos
+/var/www/nms/storage/imports/           ← Saved import files
+/var/www/nms/storage/files/             ← General uploaded files
+/var/www/nms/public/img/                ← Branding images (logo, background)
+```
 
-Replace `database/nms.sqlite` with the backed-up copy. Restart the server.
+### Fresh Installation
 
-### Fresh installation
-
-1. Run `composer install`
-2. Place `database/nms.sqlite` (from backup or fresh schema init)
-3. Set `.env` values
-4. Place `logo.jpg` and `background.jpg` in `public/img/`
-5. Run `start.bat` and login with `admin` / `Admin@1234`
+1. Set up MySQL: create database `nms` and user `nmsuser`
+2. Import schema: `mysql -u root nms < database/nms_mysql.sql`
+3. Run `composer install --no-dev`
+4. Set `.env` values
+5. Place `logo.jpg` and `background.jpg` in `public/img/`
+6. Navigate to the configured URL and login with `admin` / `Admin@1234`
 
 ---
 
 ## 15. Quick Reference
 
-### URLs (default: port 3000)
+### URLs (Production Server)
 
 | Page | URL |
 |---|---|
-| Login | http://127.0.0.1:3000/login |
-| Dashboard | http://127.0.0.1:3000/dashboard |
-| Beneficiaries | http://127.0.0.1:3000/beneficiaries |
-| Beneficiary Trash | http://127.0.0.1:3000/beneficiaries/trash |
-| Batch Assessment | http://127.0.0.1:3000/assessments/batch |
-| For Follow-up | http://127.0.0.1:3000/beneficiaries/followup |
-| OPT Program | http://127.0.0.1:3000/programs/opt |
-| DSP Program | http://127.0.0.1:3000/programs/dsp |
-| MNS Program | http://127.0.0.1:3000/programs/mns |
-| Dispensing Tracker | http://127.0.0.1:3000/dispensing |
-| OPT Report | http://127.0.0.1:3000/reports/opt |
-| DSP Report | http://127.0.0.1:3000/reports/dsp |
-| MNS Report | http://127.0.0.1:3000/reports/mns |
-| Outcome Report | http://127.0.0.1:3000/reports/outcome |
-| Summary Report | http://127.0.0.1:3000/reports/summary |
-| Period Comparison | http://127.0.0.1:3000/reports/comparison |
-| Distribution Report | http://127.0.0.1:3000/reports/distribution |
-| eOPT Export | http://127.0.0.1:3000/reports/export-eopt |
-| Import | http://127.0.0.1:3000/import |
-| Import Storage | http://127.0.0.1:3000/import/storage |
-| Activity Log | http://127.0.0.1:3000/activity |
-| Program Manager | http://127.0.0.1:3000/programs-admin |
-| User Management | http://127.0.0.1:3000/users |
-| Demo Seeder | http://127.0.0.1:3000/admin/seed |
+| Login | http://152.42.197.110/login |
+| Dashboard | http://152.42.197.110/dashboard |
+| Beneficiaries | http://152.42.197.110/beneficiaries |
+| Beneficiary Trash | http://152.42.197.110/beneficiaries/trash |
+| Batch Assessment | http://152.42.197.110/assessments/batch |
+| For Follow-up | http://152.42.197.110/beneficiaries/followup |
+| OPT Program | http://152.42.197.110/programs/opt |
+| DSP Program | http://152.42.197.110/programs/dsp |
+| MNS Program | http://152.42.197.110/programs/mns |
+| Dispensing Tracker | http://152.42.197.110/dispensing |
+| OPT Report | http://152.42.197.110/reports/opt |
+| DSP Report | http://152.42.197.110/reports/dsp |
+| MNS Report | http://152.42.197.110/reports/mns |
+| Outcome Report | http://152.42.197.110/reports/outcome |
+| Summary Report | http://152.42.197.110/reports/summary |
+| Period Comparison | http://152.42.197.110/reports/comparison |
+| Distribution Report | http://152.42.197.110/reports/distribution |
+| eOPT Export | http://152.42.197.110/reports/export-eopt |
+| Import | http://152.42.197.110/import |
+| Import Storage | http://152.42.197.110/import/storage |
+| Activity Log | http://152.42.197.110/activity |
+| Program Manager | http://152.42.197.110/programs-admin |
+| User Management | http://152.42.197.110/users |
+| Demo Seeder | http://152.42.197.110/admin/seed |
+| Validation Queue | http://152.42.197.110/validation/queue |
 
-### Key File Locations
+### Key File Locations (Production Server)
+
+| File/Folder | Path |
+|---|---|
+| Environment config | `/var/www/nms/.env` |
+| MySQL schema | `/var/www/nms/database/nms_mysql.sql` |
+| Database backups | `/var/www/nms/database/backups/` |
+| City logo | `/var/www/nms/public/img/logo.jpg` |
+| Background image | `/var/www/nms/public/img/background.jpg` |
+| Beneficiary photos | `/var/www/nms/storage/uploads/photos/` |
+| Saved import files | `/var/www/nms/storage/imports/` |
+| Other uploaded files | `/var/www/nms/storage/files/` |
+| eOPT template | `/var/www/nms/storage/templates/eopt_slim.xlsx` |
+| Nginx config | `/etc/nginx/sites-enabled/nms` |
+| PHP-FPM config | `/etc/php/8.3/fpm/php.ini` |
+| Nginx error log | `/var/log/nginx/error.log` |
+
+### Key File Locations (Local Development — XAMPP)
 
 | File/Folder | Path |
 |---|---|
 | Environment config | `C:\xampp\htdocs\nms\.env` |
-| SQLite database | `C:\xampp\htdocs\nms\database\nms.sqlite` |
+| Database config | `C:\xampp\htdocs\nms\config\database.php` |
 | City logo | `C:\xampp\htdocs\nms\public\img\logo.jpg` |
 | Background image | `C:\xampp\htdocs\nms\public\img\background.jpg` |
-| Beneficiary photos | `C:\xampp\htdocs\nms\storage\uploads\photos\` |
-| Saved import files | `C:\xampp\htdocs\nms\storage\imports\` |
-| Other uploaded files | `C:\xampp\htdocs\nms\storage\files\` |
-| eOPT template | `C:\xampp\htdocs\nms\storage\templates\eopt_slim.xlsx` |
 | PHP config | `C:\xampp\php\php.ini` |
 | Apache error log | `C:\xampp\apache\logs\error.log` |
 
 ---
 
-*Document version: June 2026 — NMS v1.5*
+*Document version: July 2026 — NMS v1.0*

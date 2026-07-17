@@ -6,6 +6,13 @@
     <meta name="color-scheme" content="light dark">
     <meta name="csrf-token" content="<?= \Core\Session::generateCsrf() ?>">
     <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' — ' : '' ?><?= APP_NAME ?></title>
+    <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+    <link rel="apple-touch-icon" href="<?= APP_URL ?>/img/logo.jpg">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NMS">
+    <meta name="theme-color" content="#1e3a5f">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap-icons.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css">
@@ -404,6 +411,11 @@ document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         form.submit();
     });
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('<?= APP_URL ?>/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
