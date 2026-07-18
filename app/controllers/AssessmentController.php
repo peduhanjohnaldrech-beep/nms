@@ -90,9 +90,9 @@ class AssessmentController extends Controller
             if ($dspEnrollmentId) {
                 $wflh = $saved['wflh_status'] ?? '';
                 $wfa  = $saved['nutritional_status'] ?? '';
-                if ($wflh === 'SW')                   $intervention = 'RUTF';
-                elseif ($wflh === 'MW')               $intervention = 'RUSF';
-                else                                  $intervention = 'Health Education';
+                if ($wflh === 'SW' || $wfa === 'SUW')        $intervention = 'RUTF';
+                elseif ($wflh === 'MW' || $wfa === 'UW')     $intervention = 'Supplementary Feeding';
+                else                                          $intervention = 'Health Education';
                 $flashMsg .= ' — <strong>Auto-enrolled in DSP</strong> (' . $intervention . ').';
             } else {
                 // Check if child is currently in DSP and has now recovered

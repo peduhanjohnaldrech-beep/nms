@@ -39,10 +39,9 @@ class ProgramEnrollment extends Model
         $wflhStatus = $assessment['wflh_status'] ?? null;
         $wfaStatus  = $assessment['nutritional_status'] ?? null;
 
-        if ($wflhStatus === 'SW')                     $interventionType = 'RUTF';
-        elseif ($wflhStatus === 'MW')                 $interventionType = 'RUSF';
-        elseif (in_array($wfaStatus, ['SUW','UW']))   $interventionType = 'Health Education';
-        else                                          return 0;
+        if ($wflhStatus === 'SW' || $wfaStatus === 'SUW') $interventionType = 'RUTF';
+        elseif ($wflhStatus === 'MW' || $wfaStatus === 'UW') $interventionType = 'Supplementary Feeding';
+        else                                               return 0;
 
         return $this->enrollBeneficiary($assessment['beneficiary_id'], 'DSP', [
             'enrollment_date'   => $assessment['assessment_date'],
