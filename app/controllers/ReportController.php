@@ -660,7 +660,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
                  FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-                 WHERE b.deleted_at IS NULL AND $where
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
                    AND a.id = (
                        SELECT id FROM assessments a2
                        WHERE a2.beneficiary_id = a.beneficiary_id
@@ -685,7 +685,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id
-                 WHERE pe.program = 'DSP' AND $where ORDER BY b.barangay, b.last_name"
+                 WHERE pe.program = 'DSP' AND b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -728,7 +728,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT v.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM vitamin_a_records v JOIN beneficiaries b ON b.id = v.beneficiary_id
-                 WHERE $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -745,7 +745,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT m.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM mnp_records m JOIN beneficiaries b ON b.id = m.beneficiary_id
-                 WHERE $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -762,7 +762,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT l.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM lns_sq_records l JOIN beneficiaries b ON b.id = l.beneficiary_id
-                 WHERE $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
