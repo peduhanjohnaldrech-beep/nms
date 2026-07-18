@@ -219,15 +219,27 @@ class BeneficiaryController extends Controller
             $this->redirect('/dashboard');
         }
 
-        $db   = \Core\Database::getInstance();
+        $db     = \Core\Database::getInstance();
+        $role   = Session::get('user_role');
+        $brgy   = Session::get('user_barangay');
+        $where  = ["b.validation_status = 'pending'", 'b.deleted_at IS NULL'];
+        $params = [];
+
+        if ($role === 'midwife' && $brgy) {
+            $where[]  = 'b.barangay = ?';
+            $params[] = $brgy;
+        }
+
+        $whereClause = 'WHERE ' . implode(' AND ', $where);
+
         $stmt = $db->prepare(
             "SELECT b.*, u.full_name AS created_by_name
              FROM beneficiaries b
              LEFT JOIN users u ON u.id = b.created_by
-             WHERE b.validation_status = 'pending' AND b.deleted_at IS NULL
+             $whereClause
              ORDER BY b.created_at DESC"
         );
-        $stmt->execute();
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $this->view('beneficiaries/validation', ['rows' => $rows]);
@@ -244,7 +256,20 @@ class BeneficiaryController extends Controller
             $this->redirect('/beneficiaries');
         }
 
-        $db = \Core\Database::getInstance();
+        $db   = \Core\Database::getInstance();
+        $role = Session::get('user_role');
+        $brgy = Session::get('user_barangay');
+
+        if ($role === 'midwife' && $brgy) {
+            $chk = $db->prepare("SELECT barangay FROM beneficiaries WHERE id = ? AND deleted_at IS NULL");
+            $chk->execute([(int)$id]);
+            $rec = $chk->fetch();
+            if (!$rec || $rec['barangay'] !== $brgy) {
+                Session::flash('error', 'Access denied: beneficiary is not in your barangay.');
+                $this->redirect('/beneficiaries/validation');
+            }
+        }
+
         $db->prepare(
             "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE id=?"
         )->execute([Session::get('user_id'), (int)$id]);
@@ -267,6 +292,19 @@ class BeneficiaryController extends Controller
 
         $note = trim($_POST['rejection_note'] ?? '');
         $db   = \Core\Database::getInstance();
+        $role = Session::get('user_role');
+        $brgy = Session::get('user_barangay');
+
+        if ($role === 'midwife' && $brgy) {
+            $chk = $db->prepare("SELECT barangay FROM beneficiaries WHERE id = ? AND deleted_at IS NULL");
+            $chk->execute([(int)$id]);
+            $rec = $chk->fetch();
+            if (!$rec || $rec['barangay'] !== $brgy) {
+                Session::flash('error', 'Access denied: beneficiary is not in your barangay.');
+                $this->redirect('/beneficiaries/validation');
+            }
+        }
+
         $db->prepare(
             "UPDATE beneficiaries SET validation_status='rejected', validated_by=?, validated_at=NOW(), rejection_note=? WHERE id=?"
         )->execute([Session::get('user_id'), $note, (int)$id]);
