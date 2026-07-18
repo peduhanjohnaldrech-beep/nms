@@ -219,15 +219,15 @@ class BeneficiaryController extends Controller
             $this->redirect('/dashboard');
         }
 
-        $db     = \Core\Database::getInstance();
-        $role   = Session::get('user_role');
-        $brgy   = Session::get('user_barangay');
-        $where  = ["b.validation_status = 'pending'", 'b.deleted_at IS NULL'];
-        $params = [];
+        $db            = \Core\Database::getInstance();
+        $sessionBrgy   = Session::get('user_barangay');
+        $filterBrgy    = $sessionBrgy ?: trim($_GET['barangay'] ?? '');
+        $where         = ["b.validation_status = 'pending'", 'b.deleted_at IS NULL'];
+        $params        = [];
 
-        if ($role === 'midwife' && $brgy) {
+        if ($filterBrgy) {
             $where[]  = 'b.barangay = ?';
-            $params[] = $brgy;
+            $params[] = $filterBrgy;
         }
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
@@ -240,9 +240,15 @@ class BeneficiaryController extends Controller
              ORDER BY b.created_at DESC"
         );
         $stmt->execute($params);
-        $rows = $stmt->fetchAll();
+        $rows      = $stmt->fetchAll();
+        $barangays = $sessionBrgy ? [] : $this->model->getAllBarangays();
 
-        $this->view('beneficiaries/validation', ['rows' => $rows]);
+        $this->view('beneficiaries/validation', [
+            'rows'         => $rows,
+            'barangays'    => $barangays,
+            'filterBrgy'   => $filterBrgy,
+            'sessionBrgy'  => $sessionBrgy,
+        ]);
     }
 
     public function validate(string $id): void
@@ -257,10 +263,9 @@ class BeneficiaryController extends Controller
         }
 
         $db   = \Core\Database::getInstance();
-        $role = Session::get('user_role');
         $brgy = Session::get('user_barangay');
 
-        if ($role === 'midwife' && $brgy) {
+        if ($brgy) {
             $chk = $db->prepare("SELECT barangay FROM beneficiaries WHERE id = ? AND deleted_at IS NULL");
             $chk->execute([(int)$id]);
             $rec = $chk->fetch();
@@ -292,10 +297,9 @@ class BeneficiaryController extends Controller
 
         $note = trim($_POST['rejection_note'] ?? '');
         $db   = \Core\Database::getInstance();
-        $role = Session::get('user_role');
         $brgy = Session::get('user_barangay');
 
-        if ($role === 'midwife' && $brgy) {
+        if ($brgy) {
             $chk = $db->prepare("SELECT barangay FROM beneficiaries WHERE id = ? AND deleted_at IS NULL");
             $chk->execute([(int)$id]);
             $rec = $chk->fetch();

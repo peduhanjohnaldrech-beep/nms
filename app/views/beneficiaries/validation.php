@@ -8,6 +8,22 @@
     <span class="badge bg-warning text-dark fs-6"><?= count($rows) ?> Pending</span>
 </div>
 
+<?php if (empty($sessionBrgy) && !empty($barangays)): ?>
+<form method="get" class="mb-3 d-flex gap-2 align-items-center">
+    <select name="barangay" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+        <option value="">All Barangays</option>
+        <?php foreach ($barangays as $b): ?>
+        <option value="<?= htmlspecialchars($b['barangay']) ?>" <?= $filterBrgy === $b['barangay'] ? 'selected' : '' ?>>
+            <?= htmlspecialchars($b['barangay']) ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
+    <?php if ($filterBrgy): ?>
+    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-outline-secondary">Clear</a>
+    <?php endif; ?>
+</form>
+<?php endif; ?>
+
 <?php if (empty($rows)): ?>
 <div class="card border-0 shadow-sm text-center py-5">
     <div class="card-body">
