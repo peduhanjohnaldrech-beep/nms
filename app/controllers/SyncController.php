@@ -145,6 +145,7 @@ class SyncController extends ApiController
                     'is_pwd_household'         => (int)($item['is_pwd_household'] ?? 0),
                     'is_indigenous_people'     => (int)($item['is_indigenous_people'] ?? 0),
                     'source'                   => 'Mobile',
+                    'validation_status'        => $this->isFieldWorker() ? 'pending' : 'validated',
                     'created_by'               => $this->userId(),
                 ]);
 
