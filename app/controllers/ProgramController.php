@@ -47,7 +47,7 @@ class ProgramController extends Controller
         $stmt = $db->prepare(
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND $where ORDER BY b.barangay, a.nutritional_status, b.last_name"
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where ORDER BY b.barangay, a.nutritional_status, b.last_name"
         );
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
@@ -55,6 +55,7 @@ class ProgramController extends Controller
         // Eligible: children who were 0–59 months at any point during the selected year
         $eligibleParams = ["{$year}-12-31", "{$year}-01-01"];
         $eligibleWhere  = "b.deleted_at IS NULL
+            AND b.validation_status = 'validated'
             AND b.date_of_birth <= ?
             AND b.date_of_birth >= DATE_SUB(?, INTERVAL 59 MONTH)";
         if (in_array(Session::get('user_role'), ['bhw', 'bns'])) {
