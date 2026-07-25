@@ -171,7 +171,7 @@ class ReportController extends Controller
         $stmt = $db->prepare(
             "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.id AS beneficiary_id
              FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE " . implode(' AND ', $where) . " ORDER BY b.barangay, b.last_name"
+             WHERE b.validation_status = 'validated' AND " . implode(' AND ', $where) . " ORDER BY b.barangay, b.last_name"
         );
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
@@ -203,7 +203,7 @@ class ReportController extends Controller
         $stmt = $db->prepare(
             "SELECT b.barangay, a.period, a.nutritional_status, COUNT(*) as cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND a.assessment_year = ?$bWhere
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND a.assessment_year = ?$bWhere
                AND a.period IN ('January','July')
              GROUP BY b.barangay, a.period, a.nutritional_status
              ORDER BY b.barangay, a.period"
@@ -259,6 +259,7 @@ class ReportController extends Controller
             "SELECT barangay, COUNT(*) AS total
              FROM beneficiaries
              WHERE deleted_at IS NULL
+               AND validation_status = 'validated'
                AND date_of_birth <= '{$year}-12-31'
                AND date_of_birth >= DATE_SUB('{$year}-01-01', INTERVAL 59 MONTH)"
             . ($barangay ? " AND barangay = ?" : "") .
@@ -707,6 +708,7 @@ class ReportController extends Controller
                      ORDER BY assessment_date DESC LIMIT 1
                  )
                  WHERE pe.program = 'DSP' AND pe.status = 'Active'
+                 AND b.validation_status = 'validated'
                  AND a.nutritional_status NOT IN ('SUW', 'UW')
                  AND (a.wflh_status IS NULL OR a.wflh_status NOT IN ('SW', 'MW'))
                  $where

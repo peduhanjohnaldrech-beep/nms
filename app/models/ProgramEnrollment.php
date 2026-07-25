@@ -98,6 +98,7 @@ class ProgramEnrollment extends Model
              )
              WHERE (a.wflh_status IN ('SW','MW') OR a.nutritional_status IN ('SUW','UW'))
              AND b.deleted_at IS NULL
+             AND b.validation_status = 'validated'
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments WHERE program = 'DSP' AND status = 'Active'
              )
@@ -113,6 +114,7 @@ class ProgramEnrollment extends Model
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
+             AND b.validation_status = 'validated'
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM vitamin_a_records WHERE round = ? AND year = ?
@@ -136,6 +138,7 @@ class ProgramEnrollment extends Model
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
+             AND b.validation_status = 'validated'
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments
                  WHERE program = ? AND status = 'Active'

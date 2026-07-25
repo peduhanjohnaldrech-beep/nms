@@ -31,8 +31,8 @@ class AuthApiController extends ApiController
 
         // Generate token (32 bytes = 64 hex chars)
         $token = bin2hex(random_bytes(32));
-        // Expires in 30 days
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+        // Expires in 90 days
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+90 days'));
 
         $db = Database::getInstance();
         $stmt = $db->prepare('

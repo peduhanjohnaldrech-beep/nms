@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $bWhere  = $bar ? ' AND barangay = ?' : '';
         $bParams = $bar ? [$bar] : [];
 
-        $stmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries WHERE deleted_at IS NULL$bWhere");
+        $stmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries WHERE deleted_at IS NULL AND validation_status = 'validated'$bWhere");
         $stmt->execute($bParams);
         $totalBeneficiaries = (int) $stmt->fetchColumn();
 
@@ -59,6 +59,7 @@ class DashboardController extends Controller
         $stmt = $db->prepare(
             "SELECT COUNT(*) FROM beneficiaries b
              WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
                AND b.date_of_birth >= '$cutoffDob'"
             . ($bar ? ' AND b.barangay = ?' : '') .
             " AND NOT EXISTS (
@@ -81,6 +82,7 @@ class DashboardController extends Controller
                  SELECT id FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1 OFFSET 1
              )
              WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
                AND CASE a1.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END
                  < CASE a2.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END" .
             ($bar ? ' AND b.barangay = ?' : '')

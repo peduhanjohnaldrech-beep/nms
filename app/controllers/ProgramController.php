@@ -282,7 +282,7 @@ $notYetWeighed = $nywStmt->fetchAll();
         $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate);
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries
-             WHERE deleted_at IS NULL ORDER BY last_name, first_name"
+             WHERE deleted_at IS NULL AND validation_status = 'validated' ORDER BY last_name, first_name"
         )->fetchAll();
 
         $this->view('programs/mns', [
