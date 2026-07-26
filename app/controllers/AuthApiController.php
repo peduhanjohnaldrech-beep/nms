@@ -26,7 +26,7 @@ class AuthApiController extends ApiController
         $user = $userModel->authenticate($username, $password);
 
         if (!$user) {
-            $this->error('Invalid credentials or account is inactive', 401);
+            $this->error('Invalid credentials or account is inactive', 400);
         }
 
         // Generate token (32 bytes = 64 hex chars)
