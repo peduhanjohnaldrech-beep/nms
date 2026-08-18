@@ -15,7 +15,7 @@ class ProgramApiController extends ApiController
         $period = $_GET['period']        ?? '';
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
-        $where  = ['b.deleted_at IS NULL', 'a.assessment_year = ?'];
+        $where  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", 'a.assessment_year = ?'];
         $params = [$year];
 
         if ($period) { $where[] = 'a.period = ?'; $params[] = $period; }
@@ -63,7 +63,7 @@ class ProgramApiController extends ApiController
                 "SELECT v.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
                  FROM vitamin_a_records v
                  JOIN beneficiaries b ON b.id = v.beneficiary_id
-                 WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
                  ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
@@ -76,7 +76,7 @@ class ProgramApiController extends ApiController
                 "SELECT m.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
                  FROM mnp_records m
                  JOIN beneficiaries b ON b.id = m.beneficiary_id
-                 WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
                  ORDER BY m.date_given DESC"
             );
             $stmt->execute($params);
@@ -90,7 +90,7 @@ class ProgramApiController extends ApiController
                 "SELECT l.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
                  FROM lns_sq_records l
                  JOIN beneficiaries b ON b.id = l.beneficiary_id
-                 WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
                  ORDER BY l.date_given DESC"
             );
             $stmt->execute($params);
@@ -119,7 +119,7 @@ class ProgramApiController extends ApiController
                    b.contact_number, b.mother_name
             FROM program_enrollments pe
             JOIN beneficiaries b ON b.id = pe.beneficiary_id
-            WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
             ORDER BY pe.status, b.last_name
         ");
         $stmt->execute($params);
@@ -258,7 +258,7 @@ class ProgramApiController extends ApiController
             SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
             FROM program_enrollments pe
             JOIN beneficiaries b ON b.id = pe.beneficiary_id
-            WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
             ORDER BY pe.status, b.last_name
         ");
         $stmt->execute($params);
