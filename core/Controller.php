@@ -22,6 +22,7 @@ class Controller
     protected function requireAuth(): void
     {
         if (!Session::has('user_id')) {
+            Session::flash('error', 'Your session has expired. Please log in again.');
             $this->redirect('/login');
         }
     }

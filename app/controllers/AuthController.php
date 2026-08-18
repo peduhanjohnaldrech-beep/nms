@@ -29,10 +29,16 @@ class AuthController extends Controller
             $this->redirect('/dashboard');
         }
 
-        $this->validateCsrf();
-
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
+
+        // Validate CSRF — if it fails the session likely expired; re-show login gracefully
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!\Core\Session::validateCsrf($csrfToken)) {
+            Session::flash('error', 'Page expired. Please try again.');
+            $this->view('auth/login', ['username' => $this->clean($username)], false);
+            return;
+        }
 
         if (empty($username) || empty($password)) {
             Session::flash('error', 'Username and password are required.');
