@@ -49,7 +49,8 @@ class VitaminARecord extends Model
             "SELECT v.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
              FROM vitamin_a_records v
              JOIN beneficiaries b ON b.id = v.beneficiary_id
-             WHERE v.round = ? AND v.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+               AND v.round = ? AND v.year = ?
              ORDER BY b.barangay, b.last_name",
             [$round, $year]
         );
@@ -64,7 +65,8 @@ class VitaminARecord extends Model
                     SUM(CASE WHEN v.capsule_color = 'Red' THEN 1 ELSE 0 END) AS red_count
              FROM vitamin_a_records v
              JOIN beneficiaries b ON b.id = v.beneficiary_id
-             WHERE v.round = ? AND v.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+               AND v.round = ? AND v.year = ?
              GROUP BY b.barangay ORDER BY b.barangay",
             [$round, $year]
         );

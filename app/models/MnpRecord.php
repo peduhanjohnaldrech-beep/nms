@@ -47,7 +47,7 @@ class MnpRecord extends Model
         return $this->fetchAll(
             "SELECT b.barangay, m.age_group, COUNT(*) AS total, SUM(m.completed_routine) AS completed
              FROM mnp_records m JOIN beneficiaries b ON b.id = m.beneficiary_id
-             WHERE m.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND m.year = ?
              GROUP BY b.barangay, m.age_group ORDER BY b.barangay, m.age_group",
             [$year]
         );
@@ -61,7 +61,7 @@ class MnpRecord extends Model
              FROM mnp_records m
              JOIN beneficiaries b ON b.id = m.beneficiary_id
              LEFT JOIN users u ON u.id = m.given_by
-             WHERE m.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND m.year = ?
              ORDER BY m.date_given DESC, b.barangay, b.last_name",
             [$year]
         );
@@ -74,7 +74,7 @@ class MnpRecord extends Model
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
-             WHERE b.deleted_at IS NULL
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
                AND NOT EXISTS (
                    SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = ?

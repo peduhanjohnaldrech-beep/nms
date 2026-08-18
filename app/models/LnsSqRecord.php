@@ -47,7 +47,7 @@ class LnsSqRecord extends Model
         return $this->fetchAll(
             "SELECT b.barangay, l.age_group, COUNT(*) AS total, SUM(l.completed_routine) AS completed
              FROM lns_sq_records l JOIN beneficiaries b ON b.id = l.beneficiary_id
-             WHERE l.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?
              GROUP BY b.barangay, l.age_group ORDER BY b.barangay, l.age_group",
             [$year]
         );
@@ -61,7 +61,7 @@ class LnsSqRecord extends Model
              FROM lns_sq_records l
              JOIN beneficiaries b ON b.id = l.beneficiary_id
              LEFT JOIN users u ON u.id = l.given_by
-             WHERE l.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?
              ORDER BY l.date_given DESC, b.barangay, b.last_name",
             [$year]
         );
@@ -74,7 +74,7 @@ class LnsSqRecord extends Model
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
-             WHERE b.deleted_at IS NULL
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
                AND NOT EXISTS (
                    SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
