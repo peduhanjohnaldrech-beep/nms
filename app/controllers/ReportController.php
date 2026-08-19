@@ -39,19 +39,22 @@ class ReportController extends Controller
         $year     = (int)($_GET['year'] ?? date('Y'));
         $period   = $_GET['period']   ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok']    ?? '';
         $source   = $_GET['source']   ?? '';
         $dateFrom = $_GET['date_from'] ?? '';
         $dateTo   = $_GET['date_to']   ?? '';
 
+        $beneModel     = new Beneficiary();
         $ageGroupStats = (new Assessment())->getAgeGroupStats($year, $period, $barangay);
 
         $this->view('reports/opt', array_merge(
-            ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source, $dateFrom, $dateTo)],
-            ['year' => $year, 'period' => $period, 'barangay' => $barangay, 'source' => $source,
-             'dateFrom' => $dateFrom, 'dateTo' => $dateTo,
+            ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source, $dateFrom, $dateTo, $purok)],
+            ['year' => $year, 'period' => $period, 'barangay' => $barangay, 'purok' => $purok,
+             'source' => $source, 'dateFrom' => $dateFrom, 'dateTo' => $dateTo,
              'isBhw' => in_array(Session::get('user_role'), ['bhw', 'bns']),
              'ageGroupStats' => $ageGroupStats,
-             'barangays' => (new Beneficiary())->getAllBarangays()]
+             'barangays' => $beneModel->getAllBarangays(),
+             'puroks'    => $beneModel->getPuroksByBarangay($barangay)]
         ));
     }
 
@@ -62,19 +65,23 @@ class ReportController extends Controller
 
         $year     = (int)($_GET['year'] ?? date('Y'));
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok']    ?? '';
         $source   = $_GET['source']   ?? '';
         $dateFrom = $_GET['date_from'] ?? '';
         $dateTo   = $_GET['date_to']   ?? '';
 
+        $beneModel = new Beneficiary();
         $this->view('reports/dsp', [
-            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source, $dateFrom, $dateTo),
+            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source, $dateFrom, $dateTo, $purok),
             'year'      => $year,
             'barangay'  => $barangay,
+            'purok'     => $purok,
             'source'    => $source,
             'dateFrom'  => $dateFrom,
             'dateTo'    => $dateTo,
             'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
-            'barangays' => (new Beneficiary())->getAllBarangays(),
+            'barangays' => $beneModel->getAllBarangays(),
+            'puroks'    => $beneModel->getPuroksByBarangay($barangay),
         ]);
     }
 
@@ -86,6 +93,7 @@ class ReportController extends Controller
         $year     = (int)($_GET['year'] ?? date('Y'));
         $round    = $_GET['round']     ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok']     ?? '';
         $source   = $_GET['source']    ?? '';
         $tab      = $_GET['tab']       ?? 'vita';
         $dateFrom = $_GET['date_from'] ?? '';
@@ -99,7 +107,7 @@ class ReportController extends Controller
         };
 
         $rows = $tab !== 'monthly'
-            ? $this->getReportData($exportType, $year, $round, $barangay, $source, $dateFrom, $dateTo)
+            ? $this->getReportData($exportType, $year, $round, $barangay, $source, $dateFrom, $dateTo, $purok)
             : [];
 
         // Monthly log data
@@ -137,11 +145,13 @@ class ReportController extends Controller
             $lnsMonthRecords = $stmt->fetchAll();
         }
 
+        $beneModel = new Beneficiary();
         $this->view('reports/mns', [
             'rows'            => $rows,
             'year'            => $year,
             'round'           => $round,
             'barangay'        => $barangay,
+            'purok'           => $purok,
             'source'          => $source,
             'dateFrom'        => $dateFrom,
             'dateTo'          => $dateTo,
@@ -151,7 +161,8 @@ class ReportController extends Controller
             'selectedMonth'   => $selectedMonth,
             'mnpMonthRecords' => $mnpMonthRecords,
             'lnsMonthRecords' => $lnsMonthRecords,
-            'barangays'       => (new Beneficiary())->getAllBarangays(),
+            'barangays'       => $beneModel->getAllBarangays(),
+            'puroks'          => $beneModel->getPuroksByBarangay($barangay),
         ]);
     }
 
@@ -248,13 +259,20 @@ class ReportController extends Controller
         $year     = (int)($_GET['year']   ?? date('Y'));
         $period   = $_GET['period']       ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok']        ?? '';
         $db       = Database::getInstance();
 
-        $bWhere  = $barangay ? ' AND b.barangay = ?' : '';
-        $bParams = $barangay ? [$barangay] : [];
+        $bWhere  = '';
+        $bParams = [];
+        if ($barangay) { $bWhere .= ' AND b.barangay = ?';              $bParams[] = $barangay; }
+        if ($purok)    { $bWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $bParams[] = $purok; }
 
-        // Total active (0-59 months) beneficiaries per barangay
-        // Total eligible: children who were 0–59 months at any point during the selected year
+        // Total active (0-59 months) beneficiaries per barangay/purok
+        $tWhere  = '';
+        $tParams = [];
+        if ($barangay) { $tWhere .= ' AND barangay = ?';              $tParams[] = $barangay; }
+        if ($purok)    { $tWhere .= ' AND LOWER(purok_zone) = LOWER(?)'; $tParams[] = $purok; }
+
         $stmt = $db->prepare(
             "SELECT barangay, COUNT(*) AS total
              FROM beneficiaries
@@ -262,10 +280,10 @@ class ReportController extends Controller
                AND validation_status = 'validated'
                AND date_of_birth <= '{$year}-12-31'
                AND date_of_birth >= DATE_SUB('{$year}-01-01', INTERVAL 59 MONTH)"
-            . ($barangay ? " AND barangay = ?" : "") .
+            . $tWhere .
             " GROUP BY barangay ORDER BY barangay"
         );
-        $stmt->execute($bParams);
+        $stmt->execute($tParams);
         $totalByBar = [];
         foreach ($stmt->fetchAll() as $r) $totalByBar[$r['barangay']] = (int)$r['total'];
 
@@ -350,13 +368,15 @@ class ReportController extends Controller
             ];
         }
 
-        $barangays = (new Beneficiary())->getAllBarangays();
+        $beneModel = new Beneficiary();
         $this->view('reports/summary', [
             'summaryRows' => $summaryRows,
             'year'        => $year,
             'period'      => $period,
             'barangay'    => $barangay,
-            'barangays'   => $barangays,
+            'purok'       => $purok,
+            'barangays'   => $beneModel->getAllBarangays(),
+            'puroks'      => $beneModel->getPuroksByBarangay($barangay),
         ]);
     }
 
@@ -645,7 +665,7 @@ class ReportController extends Controller
         exit;
     }
 
-    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = ''): array
+    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = '', string $purok = ''): array
     {
         $db = Database::getInstance();
 
@@ -656,8 +676,9 @@ class ReportController extends Controller
                 $params = [$year]; $where = 'a.assessment_year = ?';
                 if ($period) { $where .= ' AND a.period = ?'; $params[] = $period; }
             }
-            if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
-            if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
+            if ($barangay) { $where .= ' AND b.barangay = ?';   $params[] = $barangay; }
+            if ($purok)    { $where .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+            if ($source)   { $where .= ' AND b.source = ?';     $params[] = $source; }
             $stmt = $db->prepare(
                 "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
                  FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
@@ -681,8 +702,9 @@ class ReportController extends Controller
             } else {
                 $params = [$year]; $where = 'pe.cycle_year = ?';
             }
-            if ($barangay) { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
-            if ($source)   { $where .= ' AND b.source = ?';   $params[] = $source; }
+            if ($barangay) { $where .= ' AND b.barangay = ?';   $params[] = $barangay; }
+            if ($purok)    { $where .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+            if ($source)   { $where .= ' AND b.source = ?';     $params[] = $source; }
             $stmt = $db->prepare(
                 "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id

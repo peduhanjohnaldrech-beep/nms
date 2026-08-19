@@ -25,12 +25,12 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="Search by name..."
                        value="<?= htmlspecialchars($search ?? '') ?>">
             </div>
-            <div class="col-md-3">
-                <select name="barangay" class="form-select">
+            <div class="col-md-2">
+                <select name="barangay" id="filterBarangay" class="form-select">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $b): ?>
                     <option value="<?= htmlspecialchars($b['barangay']) ?>"
@@ -41,11 +41,14 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="source" class="form-select">
-                    <option value="">All Sources</option>
-                    <option value="Walk-in" <?= ($source ?? '') === 'Walk-in' ? 'selected' : '' ?>>Walk-in</option>
-                    <option value="Excel" <?= ($source ?? '') === 'Excel' ? 'selected' : '' ?>>Excel (Device)</option>
-                    <option value="Google" <?= ($source ?? '') === 'Google' ? 'selected' : '' ?>>Google Drive</option>
+                <select name="purok" id="filterPurok" class="form-select">
+                    <option value="">All Puroks</option>
+                    <?php foreach ($puroks ?? [] as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>"
+                        <?= ($filterPurok ?? '') === $p ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
+                    </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-md-2">
@@ -57,9 +60,24 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                 </select>
             </div>
             <div class="col-md-1">
+                <select name="source" class="form-select">
+                    <option value="">All Sources</option>
+                    <option value="Walk-in" <?= ($source ?? '') === 'Walk-in' ? 'selected' : '' ?>>Walk-in</option>
+                    <option value="Excel" <?= ($source ?? '') === 'Excel' ? 'selected' : '' ?>>Excel</option>
+                    <option value="Mobile" <?= ($source ?? '') === 'Mobile' ? 'selected' : '' ?>>Mobile</option>
+                </select>
+            </div>
+            <div class="col-md-1">
                 <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search"></i></button>
             </div>
         </form>
+        <script>
+        // When barangay changes, reset purok and reload to get puroks for the new barangay
+        document.getElementById('filterBarangay').addEventListener('change', function() {
+            document.getElementById('filterPurok').value = '';
+            this.closest('form').submit();
+        });
+        </script>
     </div>
 </div>
 

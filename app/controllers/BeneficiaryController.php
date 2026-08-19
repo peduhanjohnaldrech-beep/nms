@@ -28,6 +28,7 @@ class BeneficiaryController extends Controller
         $role      = Session::get('user_role');
         $search    = trim($_GET['search'] ?? '');
         $filterBar = $_GET['barangay'] ?? '';
+        $filterPurok = $_GET['purok'] ?? '';
         $source    = $_GET['source'] ?? '';
         $ageStatus = $_GET['age_status'] ?? '';
         $page      = max(1, (int)($_GET['page'] ?? 1));
@@ -36,15 +37,18 @@ class BeneficiaryController extends Controller
             $filterBar = Session::get('user_barangay', '');
         }
 
-        $result    = $this->model->search($search, $filterBar, $page, 25, $source, $ageStatus, $role);
+        $result    = $this->model->search($search, $filterBar, $page, 25, $source, $ageStatus, $role, $filterPurok);
         $barangays = $this->model->getAllBarangays();
+        $puroks    = $this->model->getPuroksByBarangay($filterBar);
 
         $this->view('beneficiaries/index', array_merge($result, [
-            'search'    => $search,
-            'barangays' => $barangays,
-            'filterBar' => $filterBar,
-            'source'    => $source,
-            'ageStatus' => $ageStatus,
+            'search'      => $search,
+            'barangays'   => $barangays,
+            'filterBar'   => $filterBar,
+            'filterPurok' => $filterPurok,
+            'puroks'      => $puroks,
+            'source'      => $source,
+            'ageStatus'   => $ageStatus,
         ]));
     }
 

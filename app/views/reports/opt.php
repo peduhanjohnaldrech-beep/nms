@@ -37,13 +37,24 @@
                 </select>
             </div>
             <?php if (!$isBhw): ?>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small">Barangay</label>
-                <select name="barangay" class="form-select form-select-sm">
+                <select name="barangay" id="filterBarangay" class="form-select form-select-sm">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $b): ?>
                     <option value="<?= htmlspecialchars($b['barangay']) ?>" <?= $barangay === $b['barangay'] ? 'selected' : '' ?>>
                         <?= htmlspecialchars($b['barangay']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Purok</label>
+                <select name="purok" class="form-select form-select-sm">
+                    <option value="">All Puroks</option>
+                    <?php foreach ($puroks ?? [] as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>" <?= ($purok ?? '') === $p ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>

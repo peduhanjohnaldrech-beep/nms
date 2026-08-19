@@ -16,7 +16,7 @@ class Beneficiary extends Model
         );
     }
 
-    public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = ''): array
+    public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = '', string $purok = ''): array
     {
         $conditions = ['b.deleted_at IS NULL'];
         $params     = [];
@@ -31,7 +31,8 @@ class Beneficiary extends Model
             $like = '%' . $term . '%';
             $params = array_merge($params, [$like, $like, $like]);
         }
-        if ($barangay !== '') { $conditions[] = "b.barangay = ?"; $params[] = $barangay; }
+        if ($barangay !== '') { $conditions[] = "b.barangay = ?";              $params[] = $barangay; }
+        if ($purok    !== '') { $conditions[] = "LOWER(b.purok_zone) = LOWER(?)"; $params[] = $purok; }
         if ($source !== '') {
             if ($source === 'Excel') {
                 $conditions[] = "b.source IN ('Excel', 'Excel Import')";
@@ -117,5 +118,18 @@ class Beneficiary extends Model
         $merged  = array_unique(array_merge($config, array_column($fromDb, 'barangay')));
         sort($merged);
         return array_map(fn($b) => ['barangay' => $b], $merged);
+    }
+
+    /** Returns distinct non-empty puroks for a given barangay (or all if empty). */
+    public function getPuroksByBarangay(string $barangay = ''): array
+    {
+        $where  = "deleted_at IS NULL AND purok_zone IS NOT NULL AND purok_zone <> ''";
+        $params = [];
+        if ($barangay !== '') { $where .= ' AND barangay = ?'; $params[] = $barangay; }
+        $rows = $this->fetchAll(
+            "SELECT DISTINCT purok_zone FROM beneficiaries WHERE $where ORDER BY purok_zone",
+            $params
+        );
+        return array_column($rows, 'purok_zone');
     }
 }

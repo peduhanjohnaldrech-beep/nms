@@ -18,6 +18,7 @@ class BeneficiaryApiController extends ApiController
         $this->requireApiAuth();
 
         $barangay    = $_GET['barangay'] ?? null;
+        $purok       = $_GET['purok'] ?? null;
         $search      = $_GET['search'] ?? '';
         $page        = max(1, (int)($_GET['page'] ?? 1));
         $perPage     = min(200, max(10, (int)($_GET['per_page'] ?? 50)));
@@ -42,6 +43,10 @@ class BeneficiaryApiController extends ApiController
         if ($barangay) {
             $where[]  = 'b.barangay = ?';
             $params[] = $barangay;
+        }
+        if ($purok) {
+            $where[]  = 'LOWER(b.purok_zone) = LOWER(?)';
+            $params[] = $purok;
         }
         if ($search) {
             $where[]  = '(b.last_name LIKE ? OR b.first_name LIKE ? OR b.middle_name LIKE ?)';
