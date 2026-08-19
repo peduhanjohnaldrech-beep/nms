@@ -34,9 +34,9 @@ class BeneficiaryApiController extends ApiController
         $where  = ['b.deleted_at IS NULL'];
         $params = [];
 
-        // Admin / Nutritionist only see beneficiaries submitted by BNS
+        // Admin / Nutritionist see validated and pending records
         if (in_array($role, ['admin', 'nutritionist'])) {
-            $where[] = 'b.submitted_at IS NOT NULL';
+            $where[] = "b.validation_status IN ('pending', 'validated')";
         }
 
         if ($barangay) {
