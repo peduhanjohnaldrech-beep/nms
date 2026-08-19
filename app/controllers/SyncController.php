@@ -24,7 +24,7 @@ class SyncController extends ApiController
         $this->requireApiAuth();
 
         $since    = $_GET['since'] ?? null;
-        $barangay = $this->isBhw() ? $this->userBarangay() : ($_GET['barangay'] ?? null);
+        $barangay = ($this->isBhw() || $this->isBns()) ? $this->userBarangay() : ($_GET['barangay'] ?? null);
 
         $db = Database::getInstance();
 
