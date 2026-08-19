@@ -460,6 +460,10 @@ class BeneficiaryController extends Controller
         foreach ($fields as $f) {
             $data[$f] = trim(strip_tags($post[$f] ?? '')) ?: null;
         }
+        // Normalize purok_zone to title case so "purok 1" and "Purok 1" are stored consistently
+        if (!empty($data['purok_zone'])) {
+            $data['purok_zone'] = mb_convert_case($data['purok_zone'], MB_CASE_TITLE, 'UTF-8');
+        }
         $data['household_monthly_income'] = is_numeric($post['household_monthly_income'] ?? '') ? (float)$post['household_monthly_income'] : null;
         $data['is_4ps_member']       = isset($post['is_4ps_member']) ? 1 : 0;
         $data['is_pwd_household']    = isset($post['is_pwd_household']) ? 1 : 0;
