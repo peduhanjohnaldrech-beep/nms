@@ -55,19 +55,13 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                 <select name="age_status" class="form-select">
                     <option value="">All Ages</option>
                     <option value="active"    <?= ($ageStatus ?? '') === 'active'    ? 'selected' : '' ?>>Active (0–59 mo)</option>
+                    <option value="0_23"      <?= ($ageStatus ?? '') === '0_23'      ? 'selected' : '' ?>>0–23 months</option>
+                    <option value="24_59"     <?= ($ageStatus ?? '') === '24_59'     ? 'selected' : '' ?>>24–59 months</option>
                     <option value="aged_out"  <?= ($ageStatus ?? '') === 'aged_out'  ? 'selected' : '' ?>>Aged Out (&gt;59 mo)</option>
                     <option value="recovered" <?= ($ageStatus ?? '') === 'recovered' ? 'selected' : '' ?>>Recovered</option>
                 </select>
             </div>
-            <div class="col-md-1">
-                <select name="source" class="form-select">
-                    <option value="">All Sources</option>
-                    <option value="Walk-in" <?= ($source ?? '') === 'Walk-in' ? 'selected' : '' ?>>Walk-in</option>
-                    <option value="Excel" <?= ($source ?? '') === 'Excel' ? 'selected' : '' ?>>Excel</option>
-                    <option value="Mobile" <?= ($source ?? '') === 'Mobile' ? 'selected' : '' ?>>Mobile</option>
-                </select>
-            </div>
-            <div class="col-md-1">
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search"></i></button>
             </div>
         </form>
@@ -87,13 +81,13 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th><th>Name</th><th>DOB</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Last Assessed</th><th>Source</th>
+                        <th>#</th><th>Name</th><th>DOB</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Last Assessed</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rows)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No beneficiaries found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No beneficiaries found.</td></tr>
                     <?php endif; ?>
                     <?php $rowNum = (($page ?? 1) - 1) * 25 + 1; ?>
                     <?php foreach ($rows as $b): ?>
@@ -130,18 +124,6 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                             <?php else: ?>
                             <span class="text-muted fst-italic">Never</span>
                             <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($b['source'])): ?>
-                            <?php
-                                $sourceLabels = ['Walk-in' => 'Walk-in', 'Excel' => 'Excel (Device)', 'Excel Import' => 'Excel (Device)', 'Google' => 'Google Drive'];
-                                $sourceLabel  = $sourceLabels[$b['source']] ?? $b['source'];
-                                $sourceBadge  = $b['source'] === 'Walk-in' ? 'bg-success' : ($b['source'] === 'Google' ? 'bg-primary' : 'bg-secondary');
-                            ?>
-                            <span class="badge <?= $sourceBadge ?> bg-opacity-75">
-                                <?= htmlspecialchars($sourceLabel) ?>
-                            </span>
-                            <?php else: ?><span class="text-muted small">—</span><?php endif; ?>
                         </td>
                         <td class="text-end">
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="btn btn-sm btn-outline-secondary">
@@ -188,7 +170,7 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
             <ul class="pagination pagination-sm mb-0">
                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                 <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                    <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>&barangay=<?= urlencode($filterBar ?? '') ?>&source=<?= urlencode($source ?? '') ?>&age_status=<?= urlencode($ageStatus ?? '') ?>"><?= $i ?></a>
+                    <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>&barangay=<?= urlencode($filterBar ?? '') ?>&age_status=<?= urlencode($ageStatus ?? '') ?>"><?= $i ?></a>
                 </li>
                 <?php endfor; ?>
             </ul>

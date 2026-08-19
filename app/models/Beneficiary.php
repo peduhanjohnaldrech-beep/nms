@@ -18,13 +18,8 @@ class Beneficiary extends Model
 
     public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = '', string $purok = ''): array
     {
-        $conditions = ['b.deleted_at IS NULL'];
+        $conditions = ['b.deleted_at IS NULL', "b.validation_status != 'pending'"];
         $params     = [];
-
-        // Admin/nutritionist see validated and pending records
-        if (in_array($role, ['admin', 'nutritionist'])) {
-            $conditions[] = "b.validation_status IN ('pending', 'validated')";
-        }
 
         if ($term !== '') {
             $conditions[] = "(b.last_name LIKE ? OR b.first_name LIKE ? OR b.middle_name LIKE ?)";
@@ -45,6 +40,8 @@ class Beneficiary extends Model
         $cutoff = date('Y-m-d', strtotime('-59 months'));
         if ($ageStatus === 'active')   { $conditions[] = "b.date_of_birth >= ?"; $params[] = $cutoff; }
         if ($ageStatus === 'aged_out') { $conditions[] = "b.date_of_birth < ?";  $params[] = $cutoff; }
+        if ($ageStatus === '0_23')     { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 0 AND 23"; }
+        if ($ageStatus === '24_59')    { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 24 AND 59"; }
         if ($ageStatus === 'recovered') {
             $conditions[] = "(SELECT nutritional_status FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1) = 'Normal'";
             $conditions[] = "EXISTS (SELECT 1 FROM assessments WHERE beneficiary_id = b.id AND nutritional_status IN ('SUW','UW'))";
