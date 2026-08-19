@@ -21,9 +21,9 @@ class Beneficiary extends Model
         $conditions = ['b.deleted_at IS NULL'];
         $params     = [];
 
-        // Admin/nutritionist only see submitted records
+        // Admin/nutritionist see validated and pending records
         if (in_array($role, ['admin', 'nutritionist'])) {
-            $conditions[] = 'b.submitted_at IS NOT NULL';
+            $conditions[] = "b.validation_status IN ('pending', 'validated')";
         }
 
         if ($term !== '') {

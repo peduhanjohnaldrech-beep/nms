@@ -7,9 +7,6 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
 <div class="d-flex justify-content-between align-items-center my-3">
     <h4 class="mb-0">
         <i class="bi bi-people-fill me-2"></i>Beneficiaries
-        <?php if ($__isAdminView): ?>
-        <span class="badge bg-info text-dark ms-2 fs-6 fw-normal">Submitted Records</span>
-        <?php endif; ?>
     </h4>
     <div class="d-flex gap-2">
         <?php if (hasPerm('beneficiaries')): ?>
