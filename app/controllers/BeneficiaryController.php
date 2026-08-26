@@ -99,9 +99,6 @@ class BeneficiaryController extends Controller
             $data['validation_status'] = in_array(Session::get('user_role'), ['bhw', 'bns', 'encoder'])
                 ? 'pending' : 'validated';
 
-            // Handle photo upload
-            $data['photo'] = $this->handlePhotoUpload();
-
             $id = $this->model->insert($data);
             \ActivityLog::log('beneficiary_create', "Added beneficiary ID $id: {$data['last_name']}, {$data['first_name']}");
             Session::flash('success', 'Beneficiary added successfully.');
@@ -177,19 +174,6 @@ class BeneficiaryController extends Controller
                 Session::flash('error', implode('<br>', $errors));
                 $this->view('beneficiaries/edit', ['data' => $data, 'beneficiary' => $beneficiary, 'barangays' => $barangays, 'locationDefaults' => $locationDefaults]);
                 return;
-            }
-
-            // Handle photo upload (only replace if a new one is uploaded)
-            $newPhoto = $this->handlePhotoUpload();
-            if ($newPhoto !== null) {
-                // Delete old photo if exists
-                if (!empty($beneficiary['photo'])) {
-                    $oldPath = UPLOAD_PATH . '/photos/' . $beneficiary['photo'];
-                    if (file_exists($oldPath)) unlink($oldPath);
-                }
-                $data['photo'] = $newPhoto;
-            } else {
-                $data['photo'] = $beneficiary['photo'];
             }
 
             // BHW/encoder editing a rejected record → reset to pending
@@ -418,32 +402,6 @@ class BeneficiaryController extends Controller
         \ActivityLog::log('beneficiary_delete', "Deleted beneficiary ID $id" . ($b ? ": {$b['last_name']}, {$b['first_name']}" : ''));
         Session::flash('success', 'Beneficiary removed.');
         $this->redirect('/beneficiaries');
-    }
-
-    private function handlePhotoUpload(): ?string
-    {
-        if (empty($_FILES['photo']['name'])) return null;
-
-        $file = $_FILES['photo'];
-        if ($file['error'] !== UPLOAD_ERR_OK) return null;
-
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $finfo        = finfo_open(FILEINFO_MIME_TYPE);
-        $mime         = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        if (!in_array($mime, $allowedMimes)) return null;
-        if ($file['size'] > 2 * 1024 * 1024) return null; // 2MB max
-
-        $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $filename = 'photo_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-        $dest     = UPLOAD_PATH . '/photos/' . $filename;
-
-        if (!is_dir(UPLOAD_PATH . '/photos')) {
-            mkdir(UPLOAD_PATH . '/photos', 0755, true);
-        }
-
-        return move_uploaded_file($file['tmp_name'], $dest) ? $filename : null;
     }
 
     private function sanitizeInput(array $post): array

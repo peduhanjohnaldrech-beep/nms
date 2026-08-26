@@ -102,7 +102,7 @@ class SyncController extends ApiController
     public function push(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns']);
+        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns', 'midwife']);
 
         $body        = $this->body();
         $newBeneficiaries = $body['beneficiaries'] ?? [];

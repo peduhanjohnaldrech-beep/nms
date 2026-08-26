@@ -274,31 +274,6 @@ $userBrgy = \Core\Session::get('user_barangay', '');
         </div>
     </div>
 
-    <!-- ── OPTIONAL: PHOTO (collapsed) ── -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white fw-semibold collapse-header d-flex justify-content-between align-items-center"
-             data-bs-toggle="collapse" data-bs-target="#collapsePhoto" aria-expanded="false" style="cursor:pointer">
-            <span><i class="bi bi-camera me-2"></i>Photo <small class="fw-normal">(optional)</small></span>
-            <i class="bi bi-chevron-down small chevron"></i>
-        </div>
-        <div class="collapse" id="collapsePhoto">
-            <div class="card-body">
-                <div class="row g-3 align-items-center">
-                    <div class="col-md-4">
-                        <label class="form-label">Upload Photo</label>
-                        <input type="file" name="photo" class="form-control" accept="image/*" id="photoInput">
-                        <div class="form-text">JPG, PNG or WEBP. Max 2MB.</div>
-                    </div>
-                    <div class="col-md-2">
-                        <img id="photoPreview" src="#" alt="Preview"
-                             class="rounded d-none"
-                             style="width:80px;height:80px;object-fit:cover;border:2px solid #e2e8f0;">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary px-4">
             <i class="bi bi-check-circle me-1"></i>Save Beneficiary
@@ -332,15 +307,6 @@ $userBrgy = \Core\Session::get('user_barangay', '');
 // IP group toggle
 document.getElementById('ipSelect').addEventListener('change', function() {
     document.getElementById('ipGroupWrapper').style.display = this.value === '1' ? '' : 'none';
-});
-
-// Photo preview
-document.getElementById('photoInput')?.addEventListener('change', function() {
-    const preview = document.getElementById('photoPreview');
-    if (this.files && this.files[0]) {
-        preview.src = URL.createObjectURL(this.files[0]);
-        preview.classList.remove('d-none');
-    }
 });
 
 // Collapse chevron rotation

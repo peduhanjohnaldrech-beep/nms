@@ -144,7 +144,7 @@ http://127.0.0.1:3000
 - Paginated list (25 per page), search and filter by name, barangay, source, age status
 
 ### Beneficiary Profile
-- Data completeness indicator (progress bar + 9-field checklist)
+- Data completeness indicator (progress bar + 8-field checklist)
 - Growth chart with WHO reference lines (-3SD, -2SD, median); toggle Weight/Height
 - Print-ready card (browser print — hides UI, shows compact summary card)
 - All records in one view: assessments, enrollments, Vitamin A, MNP/LNS-SQ, dispensing

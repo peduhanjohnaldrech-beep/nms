@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     username      VARCHAR(50)  UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name     VARCHAR(100),
-    role          ENUM('admin','nutritionist','bhw','encoder') NOT NULL DEFAULT 'encoder',
+    role          ENUM('admin','nutritionist','bhw','bns','midwife','encoder') NOT NULL DEFAULT 'encoder',
     barangay      VARCHAR(100),
     is_active     TINYINT(1)   NOT NULL DEFAULT 1,
     created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -55,17 +55,26 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     is_pwd_household         TINYINT(1)    NOT NULL DEFAULT 0,
     is_indigenous_people     TINYINT(1)    NOT NULL DEFAULT 0,
     ip_group                 VARCHAR(100),
-    source                   ENUM('Walk-in','Excel Import') NULL,
+    source                   ENUM('Walk-in','Excel Import','Mobile') NULL,
+    validation_status        ENUM('pending','validated','rejected') NOT NULL DEFAULT 'validated',
+    validated_by             INT,
+    validated_at             DATETIME,
+    rejection_note           TEXT,
+    submitted_at             DATETIME,
+    submitted_by             INT,
     created_by               INT,
     created_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at               DATETIME,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_bene_barangay   (barangay),
-    INDEX idx_bene_name       (last_name, first_name),
-    INDEX idx_bene_dob        (date_of_birth),
-    INDEX idx_bene_deleted_at (deleted_at),
-    INDEX idx_bene_source     (source)
+    FOREIGN KEY (created_by)   REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (validated_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_bene_barangay        (barangay),
+    INDEX idx_bene_name            (last_name, first_name),
+    INDEX idx_bene_dob             (date_of_birth),
+    INDEX idx_bene_deleted_at      (deleted_at),
+    INDEX idx_bene_source          (source),
+    INDEX idx_bene_validation      (validation_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS assessments (
@@ -86,13 +95,19 @@ CREATE TABLE IF NOT EXISTS assessments (
     assessment_year        YEAR         NOT NULL,
     assessed_by            VARCHAR(100),
     remarks                TEXT,
+    validation_status      ENUM('pending','validated','rejected') NOT NULL DEFAULT 'validated',
+    validated_by           INT,
+    validated_at           DATETIME,
+    rejection_note         TEXT,
     created_by             INT,
     created_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by)     REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_assess_bene   (beneficiary_id),
-    INDEX idx_assess_year   (assessment_year, period),
-    INDEX idx_assess_status (nutritional_status)
+    FOREIGN KEY (validated_by)   REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_assess_bene       (beneficiary_id),
+    INDEX idx_assess_year       (assessment_year, period),
+    INDEX idx_assess_status     (nutritional_status),
+    INDEX idx_assess_validation (validation_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS program_enrollments (

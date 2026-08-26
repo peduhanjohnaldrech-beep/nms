@@ -118,7 +118,7 @@ class BeneficiaryApiController extends ApiController
     public function store(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns']);
+        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns', 'midwife']);
 
         $data = $this->body();
         $errors = $this->validate($data);
@@ -174,7 +174,7 @@ class BeneficiaryApiController extends ApiController
     public function update(string $id): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns']);
+        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns', 'midwife']);
 
         $db   = Database::getInstance();
         $stmt = $db->prepare('SELECT * FROM beneficiaries WHERE id = ? AND deleted_at IS NULL');

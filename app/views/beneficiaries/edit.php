@@ -234,35 +234,6 @@
         </div>
     </div>
 
-    <!-- Photo Upload -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white fw-semibold">
-            <i class="bi bi-camera me-2"></i>Photo
-        </div>
-        <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <?php if (!empty($beneficiary['photo'])): ?>
-                <div class="col-auto">
-                    <img src="<?= APP_URL ?>/uploads/photos/<?= htmlspecialchars($beneficiary['photo']) ?>"
-                         alt="Current Photo" class="rounded"
-                         style="width:80px;height:80px;object-fit:cover;border:2px solid #e2e8f0;">
-                    <div class="form-text">Current photo</div>
-                </div>
-                <?php endif; ?>
-                <div class="col-md-4">
-                    <label class="form-label">Upload New Photo</label>
-                    <input type="file" name="photo" class="form-control" accept="image/*" id="photoInput">
-                    <div class="form-text">JPG, PNG or WEBP. Max 2MB. Leave blank to keep current.</div>
-                </div>
-                <div class="col-md-2">
-                    <img id="photoPreview" src="#" alt="Preview"
-                         class="rounded d-none"
-                         style="width:80px;height:80px;object-fit:cover;border:2px solid #e2e8f0;">
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary px-4">
             <i class="bi bi-check-circle me-1"></i>Update Beneficiary
@@ -301,12 +272,5 @@
 
 document.getElementById('isIp').addEventListener('change', function() {
     document.getElementById('ipGroupWrapper').style.display = this.checked ? '' : 'none';
-});
-document.getElementById('photoInput').addEventListener('change', function() {
-    const preview = document.getElementById('photoPreview');
-    if (this.files && this.files[0]) {
-        preview.src = URL.createObjectURL(this.files[0]);
-        preview.classList.remove('d-none');
-    }
 });
 </script>

@@ -121,12 +121,6 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
         </div>
         <table style="width:100%;border-collapse:collapse;">
             <tr>
-                <?php if (!empty($beneficiary['photo'])): ?>
-                <td style="width:80px;vertical-align:top;padding-right:12px;">
-                    <img src="<?= APP_URL ?>/uploads/photos/<?= htmlspecialchars($beneficiary['photo']) ?>"
-                         style="width:72px;height:72px;object-fit:cover;border:1px solid #cbd5e1;border-radius:4px;">
-                </td>
-                <?php endif; ?>
                 <td style="vertical-align:top;">
                     <strong style="font-size:14px;"><?= htmlspecialchars($beneficiary['last_name'] . ', ' . $beneficiary['first_name'] . ($beneficiary['suffix'] ? ' ' . $beneficiary['suffix'] : '')) ?></strong>
                     <?= $beneficiary['middle_name'] ? '<br><span style="color:#64748b;">' . htmlspecialchars($beneficiary['middle_name']) . '</span>' : '' ?>
@@ -167,13 +161,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
                 <?php endif; ?>
             </div>
             <div class="card-body text-center py-4">
-                <?php if (!empty($beneficiary['photo'])): ?>
-                <img src="<?= APP_URL ?>/uploads/photos/<?= htmlspecialchars($beneficiary['photo']) ?>"
-                     alt="Photo" class="rounded-circle mb-2"
-                     style="width:90px;height:90px;object-fit:cover;border:3px solid #e2e8f0;">
-                <?php else: ?>
                 <div class="display-4 text-primary mb-2"><i class="bi bi-person-circle"></i></div>
-                <?php endif; ?>
                 <h5 class="fw-bold mb-0">
                     <?= htmlspecialchars($beneficiary['last_name'] . ', ' . $beneficiary['first_name']) ?>
                     <?= $beneficiary['suffix'] ? htmlspecialchars(' ' . $beneficiary['suffix']) : '' ?>
@@ -235,7 +223,6 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <?php
         $__checks = [
-            'Photo'              => !empty($beneficiary['photo']),
             'Place of Birth'     => !empty($beneficiary['place_of_birth']),
             'Purok/Zone'         => !empty($beneficiary['purok_zone']),
             'Household No.'      => !empty($beneficiary['household_no']),
