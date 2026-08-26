@@ -161,11 +161,6 @@ $router->get('/activity', 'ActivityController@index');
 // Help
 $router->get('/help', 'HelpController@index');
 
-// Demo Seeder (admin only)
-$router->get('/admin/seed',       'SeederController@index');
-$router->post('/admin/seed/run',  'SeederController@run');
-$router->post('/admin/seed/clear','SeederController@clear');
-
 // Backup (admin only)
 $router->get('/backup',                       'BackupController@index');
 $router->get('/backup/download',              'BackupController@download');

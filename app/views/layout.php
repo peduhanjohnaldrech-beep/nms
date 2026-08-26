@@ -289,9 +289,6 @@ foreach ($__crumbSegs as $seg) {
                 <a class="nav-link ps-4" href="<?= APP_URL ?>/users">
                     <i class="bi bi-person-gear me-2"></i>User Management
                 </a>
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/admin/seed">
-                    <i class="bi bi-database-fill-gear me-2"></i>Demo Seeder
-                </a>
                 <?php endif; ?>
                 <?php if (hasPerm('programs_admin') || $isAdmin): ?>
                 <a class="nav-link ps-4" href="<?= APP_URL ?>/programs-admin">
