@@ -173,11 +173,13 @@ class ReportController extends Controller
 
         $year     = (int)($_GET['year'] ?? date('Y'));
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok'] ?? '';
 
         $db     = Database::getInstance();
         $where  = ['pe.program = \'DSP\'', 'pe.cycle_year = ?'];
         $params = [$year];
         if ($barangay) { $where[] = 'b.barangay = ?'; $params[] = $barangay; }
+        if ($purok)    { $where[] = 'LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
 
         $stmt = $db->prepare(
             "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.id AS beneficiary_id
@@ -187,13 +189,14 @@ class ReportController extends Controller
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
-        $barangays = (new Beneficiary())->getAllBarangays();
-
+        $beneModel = new Beneficiary();
         $this->view('reports/outcome', [
             'rows'      => $rows,
             'year'      => $year,
             'barangay'  => $barangay,
-            'barangays' => $barangays,
+            'purok'     => $purok,
+            'barangays' => $beneModel->getAllBarangays(),
+            'puroks'    => $beneModel->getPuroksByBarangay($barangay),
             'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
         ]);
     }
@@ -205,11 +208,13 @@ class ReportController extends Controller
 
         $year     = (int)($_GET['year']   ?? date('Y'));
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $purok    = $_GET['purok'] ?? '';
         $db       = Database::getInstance();
 
         $params = [$year];
         $bWhere = '';
-        if ($barangay) { $bWhere = ' AND b.barangay = ?'; $params[] = $barangay; }
+        if ($barangay) { $bWhere .= ' AND b.barangay = ?'; $params[] = $barangay; }
+        if ($purok)    { $bWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
 
         $stmt = $db->prepare(
             "SELECT b.barangay, a.period, a.nutritional_status, COUNT(*) as cnt
@@ -247,8 +252,10 @@ class ReportController extends Controller
             ];
         }
 
-        $barangays = (new Beneficiary())->getAllBarangays();
-        $this->view('reports/comparison', compact('rows', 'year', 'barangay', 'barangays'));
+        $beneModel = new Beneficiary();
+        $barangays = $beneModel->getAllBarangays();
+        $puroks    = $beneModel->getPuroksByBarangay($barangay);
+        $this->view('reports/comparison', compact('rows', 'year', 'barangay', 'purok', 'barangays', 'puroks'));
     }
 
     public function summary(): void

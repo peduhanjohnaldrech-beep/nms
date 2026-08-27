@@ -24,12 +24,23 @@
             <?php if (!$isBhw): ?>
             <div class="col-md-3">
                 <label class="form-label small mb-1">Barangay</label>
-                <select name="barangay" class="form-select form-select-sm">
+                <select name="barangay" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $b): ?>
                     <option value="<?= htmlspecialchars($b['barangay']) ?>"
                         <?= $barangay === $b['barangay'] ? 'selected' : '' ?>>
                         <?= htmlspecialchars($b['barangay']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Purok</label>
+                <select name="purok" class="form-select form-select-sm">
+                    <option value="">All Puroks</option>
+                    <?php foreach ($puroks ?? [] as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>" <?= ($purok ?? '') === $p ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
@@ -74,7 +85,7 @@ $avgGain  = count($withData) > 0
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <span class="fw-semibold">DSP Enrollees — Pre/Post Weight Comparison (<?= $year ?>)</span>
-        <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>"
+        <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>"
            class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
         </a>

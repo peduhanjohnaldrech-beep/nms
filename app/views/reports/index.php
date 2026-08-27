@@ -135,18 +135,4 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100">
-            <div class="card-body d-flex align-items-center gap-3 p-3">
-                <div class="rounded-3 bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px">
-                    <i class="bi bi-cloud-upload-fill fs-5 text-info"></i>
-                </div>
-                <div class="flex-grow-1 min-width-0">
-                    <h6 class="fw-bold mb-0">Distribution</h6>
-                    <p class="text-muted small mb-0">Print or upload to Google Drive</p>
-                </div>
-                <a href="<?= APP_URL ?>/reports/distribution" class="btn btn-outline-info btn-sm flex-shrink-0"><i class="bi bi-eye"></i></a>
-            </div>
-        </div>
-    </div>
 </div>
