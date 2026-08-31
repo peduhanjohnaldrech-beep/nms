@@ -32,7 +32,7 @@ class Assessment extends Model
         $height = !empty($data['height_cm']) ? (float) $data['height_cm'] : null;
 
         $wfaZscore = \ZScoreHelper::computeWFA($weight, $age, $sex);
-        $wfaStatus = $wfaZscore !== null ? \ZScoreHelper::classifyWFA($wfaZscore) : 'Normal';
+        $wfaStatus = $wfaZscore !== null ? \ZScoreHelper::classifyWFA($wfaZscore) : 'Pending';
 
         $hfaZscore = null;
         $hfaStatus = null;

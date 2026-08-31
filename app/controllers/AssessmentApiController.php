@@ -122,7 +122,7 @@ class AssessmentApiController extends ApiController
     public function store(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns']);
+        $this->requireRole(['encoder', 'nutritionist', 'bhw', 'bns', 'midwife']);
 
         $data   = $this->body();
         $errors = $this->validate($data);
@@ -142,9 +142,12 @@ class AssessmentApiController extends ApiController
         if (($this->isBhw() || $this->isBns()) && $bene['barangay'] !== $this->userBarangay()) {
             $this->error('Access denied', 403);
         }
+        if ($this->isMidwife() && $this->userBarangay() && $bene['barangay'] !== $this->userBarangay()) {
+            $this->error('Access denied', 403);
+        }
 
         $role   = strtolower($this->apiUser['role'] ?? '');
-        $autoValidated = in_array($role, ['admin', 'nutritionist']);
+        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife']);
 
         $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
         $year   = (int)date('Y', strtotime($data['assessment_date']));
@@ -210,7 +213,7 @@ class AssessmentApiController extends ApiController
     public function batch(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $this->requireRole(['encoder','nutritionist','bhw','bns','midwife']);
         $body  = $this->body();
         $items = $body['assessments'] ?? [];
         if (empty($items)) $this->error('No assessments provided', 422);
@@ -218,7 +221,7 @@ class AssessmentApiController extends ApiController
         $db      = Database::getInstance();
         $created = []; $failed = [];
         $role    = strtolower($this->apiUser['role'] ?? '');
-        $autoValidated = in_array($role, ['admin', 'nutritionist']);
+        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife']);
         foreach ($items as $data) {
             $errors = $this->validate($data);
             if ($errors) { $failed[] = ['errors' => $errors]; continue; }
@@ -228,6 +231,7 @@ class AssessmentApiController extends ApiController
                 $bene = $stmt->fetch(\PDO::FETCH_ASSOC);
                 if (!$bene) { $failed[] = ['errors' => ['beneficiary not found']]; continue; }
                 if (($this->isBhw() || $this->isBns()) && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
+                if ($this->isMidwife() && $this->userBarangay() && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
                 $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
                 $year   = (int)date('Y', strtotime($data['assessment_date']));
                 $newId  = $model->createWithZScore([
