@@ -187,18 +187,21 @@ class SyncController extends ApiController
 
                 $model    = new Assessment();
                 $serverId = $model->createWithZScore([
-                    'beneficiary_id'  => (int)$beneficiaryId,
-                    'sex'             => $item['sex'] ?? $bene['sex'],
-                    'age_in_months'   => $ageInMonths,
-                    'assessment_date' => $assessDate,
-                    'weight_kg'       => (float)($item['weight_kg'] ?? 0),
-                    'height_cm'       => isset($item['height_cm']) ? (float)$item['height_cm'] : null,
-                    'muac_cm'         => isset($item['muac_cm']) ? (float)$item['muac_cm'] : null,
-                    'period'          => $item['period'] ?? 'January',
-                    'assessment_year' => (int)($item['assessment_year'] ?? date('Y')),
-                    'assessed_by'     => $item['assessed_by'] ?? $this->apiUser['full_name'],
-                    'remarks'         => $item['remarks'] ?? null,
-                    'created_by'      => $this->userId(),
+                    'beneficiary_id'    => (int)$beneficiaryId,
+                    'sex'               => $item['sex'] ?? $bene['sex'],
+                    'age_in_months'     => $ageInMonths,
+                    'assessment_date'   => $assessDate,
+                    'weight_kg'         => (float)($item['weight_kg'] ?? 0),
+                    'height_cm'         => isset($item['height_cm']) ? (float)$item['height_cm'] : null,
+                    'muac_cm'           => isset($item['muac_cm']) ? (float)$item['muac_cm'] : null,
+                    'period'            => $item['period'] ?? 'January',
+                    'assessment_year'   => (int)($item['assessment_year'] ?? date('Y')),
+                    'assessed_by'       => $item['assessed_by'] ?? $this->apiUser['full_name'],
+                    'remarks'           => $item['remarks'] ?? null,
+                    'created_by'        => $this->userId(),
+                    'validation_status' => $this->isFieldWorker() ? 'pending' : 'validated',
+                    'validated_by'      => $this->isFieldWorker() ? null : $this->userId(),
+                    'validated_at'      => $this->isFieldWorker() ? null : date('Y-m-d H:i:s'),
                 ]);
 
                 $results['created'][] = ['type' => 'assessment', 'local_id' => $localId, 'server_id' => $serverId];

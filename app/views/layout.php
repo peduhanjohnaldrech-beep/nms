@@ -247,9 +247,6 @@ foreach ($__crumbSegs as $seg) {
                 <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/outcome">
                     <i class="bi bi-graph-up-arrow me-2"></i>Outcome Report
                 </a>
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports/distribution">
-                    <i class="bi bi-cloud-upload me-2"></i>Report Distribution
-                </a>
             </div>
 
             <?php endif; /* reports */ ?>
