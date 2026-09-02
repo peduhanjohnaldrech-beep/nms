@@ -28,7 +28,8 @@ class DashboardController extends Controller
             "SELECT COUNT(DISTINCT a.beneficiary_id)
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year = YEAR(NOW())
-               AND b.deleted_at IS NULL" . ($bar ? ' AND b.barangay = ?' : '')
+               AND b.deleted_at IS NULL
+               AND b.validation_status = 'validated'" . ($bar ? ' AND b.barangay = ?' : '')
         );
         $stmt->execute($bParams);
         $activeOpt = (int) $stmt->fetchColumn();
@@ -94,7 +95,8 @@ class DashboardController extends Controller
             "SELECT b.barangay, a.nutritional_status, COUNT(*) as count
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year = YEAR(NOW())
-               AND b.deleted_at IS NULL" . ($bar ? ' AND b.barangay = ?' : '') . "
+               AND b.deleted_at IS NULL
+               AND b.validation_status = 'validated'" . ($bar ? ' AND b.barangay = ?' : '') . "
              GROUP BY b.barangay, a.nutritional_status
              ORDER BY b.barangay"
         );
@@ -107,6 +109,7 @@ class DashboardController extends Controller
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year >= YEAR(NOW()) - 2
                AND b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
              GROUP BY a.assessment_year, a.period, a.nutritional_status
              ORDER BY a.assessment_year, a.period"
         );
