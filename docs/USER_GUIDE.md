@@ -9,12 +9,13 @@
 | View Beneficiaries (own barangay) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Add Beneficiary | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Edit Beneficiary | ✓ | ✓ | ✓ | — | — | — |
-| Delete Beneficiary (soft) | ✓ | ✓ | — | — | — | — |
+| Delete Beneficiary (own barangay) | ✓ | ✓ | — | ✓ | ✓ | — |
 | Restore Deleted Beneficiary | ✓ | ✓ | — | — | — | — |
 | For Follow-up List | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Record Assessment | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Delete Assessment | ✓ | ✓ | — | — | — | — |
 | Batch Assessment | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Validation Queue | ✓ | ✓ | — | — | — | ✓† |
 | OPT Module (view) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | OPT Manual Enroll | ✓ | ✓ | ✓ | — | — | — |
 | OPT Remove Enrollment | ✓ | ✓ | — | — | — | — |
@@ -42,6 +43,7 @@
 | Demo Seeder | ✓ | — | — | — | — | — |
 
 *Scoped to their assigned barangay.
+†Midwife requires the Validation Queue permission to be granted by an admin (User Management → Edit User → Permissions).
 
 ---
 
@@ -286,9 +288,9 @@ Go to **Admin → Activity Log** for a timestamped audit trail of all data actio
 - **Admin** — full system access including user management, demo seeder, programs admin, and database backup
 - **Nutritionist** — full access except user management; validates mobile submissions; can import and discharge DSP
 - **Encoder** — data entry; can add/edit beneficiaries and record assessments; cannot import, discharge, or delete
-- **BNS** — Barangay Nutrition Scholar; same access as BHW, restricted to assigned barangay
-- **BHW** — Barangay Health Worker; restricted to assigned barangay; can view, record assessments, and record supplementation
-- **Midwife** — restricted to assigned barangay; can record and validate assessments
+- **BNS** — Barangay Nutrition Scholar; restricted to assigned barangay; can add/view beneficiaries, delete own-barangay beneficiaries, record assessments and supplementation
+- **BHW** — Barangay Health Worker; restricted to assigned barangay; can add/view beneficiaries, delete own-barangay beneficiaries, record assessments and supplementation
+- **Midwife** — restricted to assigned barangay; can record assessments; can access Validation Queue when permission is granted by admin
 
 ---
 

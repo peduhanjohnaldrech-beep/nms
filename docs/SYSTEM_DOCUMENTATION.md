@@ -147,9 +147,9 @@ The system implements role-based access control (RBAC). Six roles are defined, e
 | **admin** | Full system access: user management, all modules, reports, program management, database backup, and demo seeder |
 | **nutritionist** | Full data access except user management; validates assessment submissions from field workers; can import data and discharge DSP enrollments |
 | **encoder** | Data entry access; can add and edit beneficiaries and record assessments; cannot delete, import, or discharge |
-| **bns** | Barangay Nutrition Scholar; field data entry restricted to assigned barangay; same access level as BHW |
-| **bhw** | Barangay Health Worker; field data entry restricted to assigned barangay |
-| **midwife** | Can record and validate assessments; restricted to assigned barangay |
+| **bns** | Barangay Nutrition Scholar; field data entry restricted to assigned barangay; can delete beneficiaries in own barangay |
+| **bhw** | Barangay Health Worker; field data entry restricted to assigned barangay; can delete beneficiaries in own barangay |
+| **midwife** | Can record assessments; can access Validation Queue when the Validation permission is granted by admin; restricted to assigned barangay |
 
 ### Permission Matrix
 
@@ -160,7 +160,7 @@ The system implements role-based access control (RBAC). Six roles are defined, e
 | View Beneficiaries (own barangay) | Yes | Yes | Yes | Yes | Yes | Yes |
 | Add Beneficiary | Yes | Yes | Yes | Yes | Yes | Yes |
 | Edit Beneficiary | Yes | Yes | Yes | — | — | — |
-| Delete Beneficiary (soft delete) | Yes | Yes | — | — | — | — |
+| Delete Beneficiary (own barangay) | Yes | Yes | — | Yes | Yes | — |
 | Restore Deleted Beneficiary | Yes | Yes | — | — | — | — |
 | Record Assessment | Yes | Yes | Yes | Yes | Yes | Yes |
 | Delete Assessment | Yes | Yes | — | — | — | — |
@@ -1085,4 +1085,4 @@ The system includes a demo data seeder accessible to administrators at `/admin/s
 
 ---
 
-*Document version: July 2026 — NMS v1.1 | HTTPS + PWA + Git Deployment*
+*Document version: September 2026 — NMS v1.2 | BHW/BNS delete, Midwife validation permission, OPT Batch Weighing (mobile)*

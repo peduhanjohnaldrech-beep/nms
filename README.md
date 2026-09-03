@@ -126,9 +126,9 @@ http://127.0.0.1:3000
 | **admin** | Full access — user management, all modules, reports, demo seeder, database backup |
 | **nutritionist** | Access to all modules except user management; validates mobile submissions |
 | **encoder** | Can add/edit beneficiaries and record assessments; no deletions |
-| **bns** | Barangay Nutrition Scholar — same access as BHW, scoped to assigned barangay |
-| **bhw** | Barangay Health Worker — restricted to their assigned barangay only |
-| **midwife** | Can record and validate assessments; barangay-scoped |
+| **bns** | Barangay Nutrition Scholar — scoped to assigned barangay; can add, record assessments, and delete own-barangay beneficiaries |
+| **bhw** | Barangay Health Worker — scoped to assigned barangay; can add, record assessments, and delete own-barangay beneficiaries |
+| **midwife** | Barangay-scoped; can record assessments; can access Validation Queue when permission is granted |
 
 ---
 

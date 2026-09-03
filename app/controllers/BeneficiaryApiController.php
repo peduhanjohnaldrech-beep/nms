@@ -185,7 +185,8 @@ class BeneficiaryApiController extends ApiController
         if (!$existing) {
             $this->error('Beneficiary not found', 404);
         }
-        if ($this->isBhw() && $existing['barangay'] !== $this->userBarangay()) {
+        if (($this->isBhw() || $this->isBns()) &&
+            strtolower(trim($existing['barangay'] ?? '')) !== strtolower(trim($this->userBarangay() ?? ''))) {
             $this->error('Access denied', 403);
         }
 

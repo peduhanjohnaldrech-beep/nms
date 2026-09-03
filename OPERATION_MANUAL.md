@@ -201,9 +201,9 @@ System works without these — falls back to text and plain background.
 | **admin** | Full access to everything | None |
 | **nutritionist** | Full access except user management and demo seeder | Cannot manage users or seed data |
 | **encoder** | Add/edit beneficiaries and assessments | No deletions, no import, no discharge |
-| **bns** | Barangay Nutrition Scholar | Only their assigned barangay |
-| **bhw** | Barangay Health Worker | Only their assigned barangay; no Programs Admin |
-| **midwife** | Can record and validate assessments | Only their assigned barangay |
+| **bns** | Barangay Nutrition Scholar; can add, record assessments, and delete beneficiaries in own barangay | Only their assigned barangay |
+| **bhw** | Barangay Health Worker; can add, record assessments, and delete beneficiaries in own barangay | Only their assigned barangay; no Programs Admin |
+| **midwife** | Can record assessments; can access Validation Queue when permission is granted | Only their assigned barangay |
 
 ---
 
@@ -499,7 +499,8 @@ Accept the Excel repair — it is normal for the first open because `calcChain.x
 ### Creating a user (Admin only)
 1. **Admin → User Management → Create User**
 2. Fill in username, full name, password, role, barangay (BHW, BNS, and Midwife require a barangay)
-3. Save
+3. For Midwife accounts, check **Validation Queue** under Access Permissions to allow them to validate field submissions
+4. Save
 
 ### Resetting a password
 1. **User Management** → Find user → **Edit**
@@ -511,7 +512,7 @@ Accept the Excel repair — it is normal for the first open because `calcChain.x
 
 ### BHW can't see beneficiaries
 
-The barangay field in the user account must exactly match (case-sensitive) the barangay value stored in beneficiary records. Check User Management → Edit the user account.
+The barangay field in the user account must match the barangay value stored in beneficiary records. The comparison is case-insensitive, but check User Management → Edit the user account to confirm the barangay is set correctly.
 
 ---
 
@@ -711,4 +712,4 @@ certbot certificates
 
 ---
 
-*Document version: July 2026 — NMS v1.1 | HTTPS + PWA + Git Deployment*
+*Document version: September 2026 — NMS v1.2 | BHW/BNS delete, Midwife validation permission, OPT Batch Weighing (mobile)*
