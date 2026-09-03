@@ -7,6 +7,7 @@ $modules = [
     'reports'        => ['label' => 'Reports',                 'icon' => 'bi-bar-chart-fill'],
     'dispensing'     => ['label' => 'Dispensing Tracker',      'icon' => 'bi-prescription2'],
     'import'         => ['label' => 'Import',                  'icon' => 'bi-file-earmark-excel'],
+    'validation'     => ['label' => 'Validation Queue',         'icon' => 'bi-patch-check'],
     'activity_log'   => ['label' => 'Activity Log',            'icon' => 'bi-journal-text'],
     'programs_admin' => ['label' => 'Program Manager',         'icon' => 'bi-gear'],
 ];
