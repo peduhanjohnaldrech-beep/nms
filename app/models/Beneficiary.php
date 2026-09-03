@@ -18,7 +18,7 @@ class Beneficiary extends Model
 
     public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = '', string $purok = ''): array
     {
-        $conditions = ['b.deleted_at IS NULL', "b.validation_status != 'pending'"];
+        $conditions = ['b.deleted_at IS NULL', "b.validation_status = 'validated'"];
         $params     = [];
 
         if ($term !== '') {
