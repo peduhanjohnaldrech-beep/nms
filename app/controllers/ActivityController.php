@@ -15,6 +15,7 @@ class ActivityController extends Controller
         $db     = Database::getInstance();
         $action = trim($_GET['action'] ?? '');
         $user   = trim($_GET['user']   ?? '');
+        $source = trim($_GET['source'] ?? '');
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $limit  = 50;
         $offset = ($page - 1) * $limit;
@@ -23,6 +24,8 @@ class ActivityController extends Controller
         $params = [];
         if ($action !== '') { $where[] = 'action = ?';              $params[] = $action; }
         if ($user !== '')   { $where[] = 'user_name LIKE ?';        $params[] = '%' . $user . '%'; }
+        if ($source === 'mobile') { $where[] = "action LIKE 'mobile_%'"; }
+        if ($source === 'web')    { $where[] = "action NOT LIKE 'mobile_%'"; }
         $cond = implode(' AND ', $where);
 
         $countStmt = $db->prepare("SELECT COUNT(*) FROM activity_logs WHERE $cond");

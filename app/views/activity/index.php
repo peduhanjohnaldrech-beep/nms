@@ -8,7 +8,7 @@
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form class="row g-2 align-items-end" method="get">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label small mb-1">Action</label>
                 <select name="action" class="form-select form-select-sm">
                     <option value="">All Actions</option>
@@ -19,10 +19,18 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label small mb-1">User</label>
                 <input type="text" name="user" class="form-control form-control-sm"
                        value="<?= htmlspecialchars($filterUser) ?>" placeholder="Search user...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Source</label>
+                <select name="source" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="web"    <?= ($_GET['source'] ?? '') === 'web'    ? 'selected' : '' ?>>Web</option>
+                    <option value="mobile" <?= ($_GET['source'] ?? '') === 'mobile' ? 'selected' : '' ?>>Mobile</option>
+                </select>
             </div>
             <div class="col-auto">
                 <button class="btn btn-sm btn-primary">Filter</button>
@@ -55,16 +63,24 @@
                         <td><?= htmlspecialchars($log['user_name'] ?? '—') ?></td>
                         <td>
                             <?php
+                            $isMobile = str_starts_with($log['action'], 'mobile_');
+                            $action   = $isMobile ? substr($log['action'], 7) : $log['action'];
                             $badgeClass = match(true) {
-                                str_contains($log['action'], 'login')    => 'bg-success',
-                                str_contains($log['action'], 'logout')   => 'bg-secondary',
-                                str_contains($log['action'], 'delete')   => 'bg-danger',
-                                str_contains($log['action'], 'create')   => 'bg-primary',
-                                str_contains($log['action'], 'update')   => 'bg-info text-dark',
-                                default                                  => 'bg-light text-dark border',
+                                str_contains($action, 'login')    => 'bg-success',
+                                str_contains($action, 'logout')   => 'bg-secondary',
+                                str_contains($action, 'delete')   => 'bg-danger',
+                                str_contains($action, 'create')   => 'bg-primary',
+                                str_contains($action, 'update')   => 'bg-info text-dark',
+                                str_contains($action, 'validate') => 'bg-success',
+                                str_contains($action, 'reject')   => 'bg-warning text-dark',
+                                str_contains($action, 'sync')     => 'bg-purple text-white',
+                                default                           => 'bg-light text-dark border',
                             };
                             ?>
-                            <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($log['action']) ?></span>
+                            <?php if ($isMobile): ?>
+                            <span class="badge bg-dark me-1" title="From mobile app"><i class="bi bi-phone"></i></span>
+                            <?php endif; ?>
+                            <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($action) ?></span>
                         </td>
                         <td class="small"><?= htmlspecialchars($log['description'] ?? '') ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($log['ip_address'] ?? '') ?></td>

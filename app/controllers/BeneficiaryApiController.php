@@ -165,6 +165,7 @@ class BeneficiaryApiController extends ApiController
         $stmt->execute([$id]);
         $created = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+        $this->logActivity('beneficiary_create', "Added beneficiary ID $id: {$data['last_name']}, {$data['first_name']}");
         $this->success(['beneficiary' => $created], 'Beneficiary created');
     }
 
@@ -229,6 +230,7 @@ class BeneficiaryApiController extends ApiController
         $stmt->execute([$id]);
         $updated = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+        $this->logActivity('beneficiary_update', "Updated beneficiary ID $id: {$data['last_name']}, {$data['first_name']}");
         $this->success(['beneficiary' => $updated], 'Beneficiary updated');
     }
 
@@ -249,6 +251,7 @@ class BeneficiaryApiController extends ApiController
 
         $db->prepare('UPDATE beneficiaries SET deleted_at = ? WHERE id = ?')
            ->execute([date('Y-m-d H:i:s'), $id]);
+        $this->logActivity('beneficiary_delete', "Deleted beneficiary ID $id");
         $this->success([], 'Beneficiary moved to trash');
     }
 

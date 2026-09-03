@@ -187,6 +187,7 @@ class AssessmentApiController extends ApiController
         $stmt->execute([$id]);
         $created = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+        $this->logActivity('assessment_create', "Recorded assessment ID $id for beneficiary ID {$data['beneficiary_id']}");
         $this->success(['assessment' => $created], 'Assessment recorded');
     }
 
@@ -204,6 +205,7 @@ class AssessmentApiController extends ApiController
         if (!$row) $this->error('Assessment not found', 404);
         if ($this->isBhw() && $row['barangay'] !== $this->userBarangay()) $this->error('Access denied', 403);
         $db->prepare('DELETE FROM assessments WHERE id=?')->execute([$id]);
+        $this->logActivity('assessment_delete', "Deleted assessment ID $id");
         $this->success([], 'Assessment deleted');
     }
 

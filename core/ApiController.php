@@ -117,4 +117,14 @@ class ApiController
     {
         return (int) ($this->apiUser['user_id'] ?? 0);
     }
+
+    protected function logActivity(string $action, string $description = ''): void
+    {
+        \ActivityLog::log(
+            'mobile_' . $action,
+            $description,
+            $this->userId(),
+            $this->apiUser['full_name'] ?? $this->apiUser['username'] ?? null
+        );
+    }
 }

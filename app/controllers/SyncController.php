@@ -216,6 +216,12 @@ class SyncController extends ApiController
         // Auto-backup: silently creates a daily backup in database/backups/
         try { \BackupScheduler::maybeBackup(); } catch (\Throwable $_) {}
 
+        $created_b = count(array_filter($results['created'], fn($r) => $r['type'] === 'beneficiary'));
+        $created_a = count(array_filter($results['created'], fn($r) => $r['type'] === 'assessment'));
+        if ($created_b > 0 || $created_a > 0) {
+            $this->logActivity('sync_push', "Synced $created_b beneficiar" . ($created_b === 1 ? 'y' : 'ies') . ", $created_a assessment" . ($created_a === 1 ? '' : 's'));
+        }
+
         $this->success([
             'id_map'  => $idMap,
             'results' => $results,

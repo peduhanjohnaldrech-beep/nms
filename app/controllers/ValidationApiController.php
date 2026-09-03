@@ -126,6 +126,7 @@ class ValidationApiController extends ApiController
 
         (new ProgramEnrollment())->autoEnrollDSP((int)$id);
 
+        $this->logActivity('assessment_validate', "Validated assessment ID $id");
         $this->success([], 'Assessment validated');
     }
 
@@ -169,6 +170,7 @@ class ValidationApiController extends ApiController
             WHERE id = ?
         ")->execute([$this->userId(), $note, $id]);
 
+        $this->logActivity('assessment_reject', "Rejected assessment ID $id. Note: $note");
         $this->success([], 'Assessment rejected');
     }
 
@@ -278,6 +280,7 @@ class ValidationApiController extends ApiController
             WHERE id = ?
         ")->execute([$this->userId(), $id]);
 
+        $this->logActivity('beneficiary_validate', "Validated beneficiary ID $id");
         $this->success([], 'Beneficiary validated');
     }
 
@@ -316,6 +319,7 @@ class ValidationApiController extends ApiController
             WHERE id = ?
         ")->execute([$this->userId(), $note, $id]);
 
+        $this->logActivity('beneficiary_reject', "Rejected beneficiary ID $id. Note: $note");
         $this->success([], 'Beneficiary rejected');
     }
 
