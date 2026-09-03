@@ -240,7 +240,7 @@ class BeneficiaryApiController extends ApiController
     public function destroy(string $id): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','admin']);
+        $this->requireRole(['encoder','nutritionist','admin','bns']);
 
         $db   = Database::getInstance();
         $stmt = $db->prepare('SELECT * FROM beneficiaries WHERE id = ? AND deleted_at IS NULL');
@@ -248,6 +248,7 @@ class BeneficiaryApiController extends ApiController
         $row  = $stmt->fetch(\PDO::FETCH_ASSOC);
         if (!$row) $this->error('Beneficiary not found', 404);
         if ($this->isBhw() && $row['barangay'] !== $this->userBarangay()) $this->error('Access denied', 403);
+        if ($this->isBns() && $row['barangay'] !== $this->userBarangay()) $this->error('Access denied', 403);
 
         $db->prepare('UPDATE beneficiaries SET deleted_at = ? WHERE id = ?')
            ->execute([date('Y-m-d H:i:s'), $id]);
