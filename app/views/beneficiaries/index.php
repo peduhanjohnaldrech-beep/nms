@@ -102,8 +102,6 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                             <span class="badge status-pending ms-1" title="Awaiting midwife validation"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
                             <?php elseif (($b['validation_status'] ?? '') === 'rejected'): ?>
                             <span class="badge status-rejected ms-1" title="Registration rejected"><i class="bi bi-x-circle me-1"></i>Rejected</span>
-                            <?php elseif (!empty($b['submitted_at'])): ?>
-                            <span class="badge bg-info text-dark ms-1" title="Submitted to admin"><i class="bi bi-send-check me-1"></i>Submitted</span>
                             <?php elseif (DateHelper::ageInMonths($b['date_of_birth']) > 59): ?>
                             <span class="badge bg-secondary ms-1" title="Child is over 59 months old">Aged Out</span>
                             <?php elseif (!empty($b['is_recovered'])): ?>
