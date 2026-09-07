@@ -18,7 +18,12 @@ class Beneficiary extends Model
 
     public function search(string $term = '', string $barangay = '', int $page = 1, int $perPage = 25, string $source = '', string $ageStatus = '', string $role = '', string $purok = ''): array
     {
-        $conditions = ['b.deleted_at IS NULL', "b.validation_status = 'validated'"];
+        $conditions = [
+            'b.deleted_at IS NULL',
+            "b.validation_status = 'validated'",
+            // BNS-added mobile records only appear after BNS explicitly submits them
+            "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))",
+        ];
         $params     = [];
 
         if ($term !== '') {
