@@ -378,7 +378,7 @@ class BeneficiaryApiController extends ApiController
             $stmt->execute([$id]);
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            if (!$row || $row['barangay'] !== $barangay
+            if (!$row || strtolower(trim($row['barangay'] ?? '')) !== strtolower(trim($barangay ?? ''))
                 || ($row['validation_status'] ?? '') !== 'validated'
                 || !empty($row['submitted_at'])) {
                 $skipped++;

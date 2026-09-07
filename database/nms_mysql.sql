@@ -57,12 +57,15 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     validated_by             INT,
     validated_at             DATETIME,
     rejection_note           TEXT,
+    submitted_at             DATETIME,
+    submitted_by             INT,
     created_by               INT,
     created_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at               TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at               DATETIME,
     FOREIGN KEY (created_by)  REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (validated_by) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (validated_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_bene_barangay   ON beneficiaries(barangay);
