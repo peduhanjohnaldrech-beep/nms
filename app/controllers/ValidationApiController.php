@@ -100,7 +100,7 @@ class ValidationApiController extends ApiController
 
         $db   = Database::getInstance();
         $stmt = $db->prepare("
-            SELECT a.*, b.barangay FROM assessments a
+            SELECT a.*, b.barangay, b.validation_status AS bene_status FROM assessments a
             JOIN beneficiaries b ON b.id = a.beneficiary_id
             WHERE a.id = ?
         ");
@@ -110,6 +110,9 @@ class ValidationApiController extends ApiController
         if (!$row) $this->error('Assessment not found', 404);
         if ($row['validation_status'] !== 'pending') {
             $this->error('Assessment is not in pending status', 400);
+        }
+        if (($row['bene_status'] ?? '') !== 'validated') {
+            $this->error('Cannot validate assessment — beneficiary registration is not yet validated', 400);
         }
         if ($this->isMidwife() && $this->userBarangay() && $row['barangay'] !== $this->userBarangay()) {
             $this->error('Access denied', 403);
@@ -353,13 +356,14 @@ class ValidationApiController extends ApiController
         if ($type === 'assessment') {
             foreach ($ids as $id) {
                 $stmt = $db->prepare("
-                    SELECT a.validation_status, b.barangay FROM assessments a
+                    SELECT a.validation_status, b.barangay, b.validation_status AS bene_status FROM assessments a
                     JOIN beneficiaries b ON b.id = a.beneficiary_id
                     WHERE a.id = ?
                 ");
                 $stmt->execute([$id]);
                 $row = $stmt->fetch(\PDO::FETCH_ASSOC);
                 if (!$row || $row['validation_status'] !== 'pending') { $skipped++; continue; }
+                if (($row['bene_status'] ?? '') !== 'validated') { $skipped++; continue; }
                 if ($this->isMidwife() && $brgy && $row['barangay'] !== $brgy) { $skipped++; continue; }
                 $db->prepare("
                     UPDATE assessments
