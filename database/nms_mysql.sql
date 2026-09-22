@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     validated_by             INT,
     validated_at             DATETIME,
     rejection_note           TEXT,
+    local_id                 VARCHAR(64)   DEFAULT NULL,
     submitted_at             DATETIME,
     submitted_by             INT,
     created_by               INT,
@@ -72,6 +73,7 @@ CREATE INDEX idx_bene_barangay   ON beneficiaries(barangay);
 CREATE INDEX idx_bene_name       ON beneficiaries(last_name, first_name);
 CREATE INDEX idx_bene_dob        ON beneficiaries(date_of_birth);
 CREATE INDEX idx_bene_deleted_at ON beneficiaries(deleted_at);
+CREATE UNIQUE INDEX idx_bene_local_id ON beneficiaries(local_id);
 CREATE INDEX idx_bene_source     ON beneficiaries(source);
 
 CREATE TABLE IF NOT EXISTS assessments (
