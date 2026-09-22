@@ -118,13 +118,26 @@ class SyncController extends ApiController
         foreach ($newBeneficiaries as $item) {
             $localId = $item['local_id'] ?? null;
             try {
+                // Idempotency: if this local_id was already pushed, return the existing server id
+                if ($localId) {
+                    $chk = $db->prepare('SELECT id FROM beneficiaries WHERE local_id = ? LIMIT 1');
+                    $chk->execute([$localId]);
+                    $existingId = $chk->fetchColumn();
+                    if ($existingId) {
+                        $idMap[$localId] = (int)$existingId;
+                        $results['created'][] = ['type' => 'beneficiary', 'local_id' => $localId, 'server_id' => (int)$existingId];
+                        continue;
+                    }
+                }
+
                 $model = new Beneficiary();
 
-                // BHW barangay restriction
+                // BHW/BNS barangay restriction
                 $barangay = $item['barangay'] ?? null;
-                if ($this->isBhw()) $barangay = $this->userBarangay();
+                if ($this->isBhw() || $this->isBns()) $barangay = $this->userBarangay();
 
                 $serverId = $model->insert([
+                    'local_id'                 => $localId,
                     'last_name'                => trim($item['last_name'] ?? ''),
                     'first_name'               => trim($item['first_name'] ?? ''),
                     'middle_name'              => $item['middle_name'] ?? null,
