@@ -44,10 +44,13 @@ class BarangayController extends Controller
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'
                AND a.assessment_year = YEAR(NOW())
                AND a.id = (
                    SELECT id FROM assessments a2
                    WHERE a2.beneficiary_id = a.beneficiary_id
+                     AND a2.validation_status = 'validated'
                    ORDER BY a2.assessment_date DESC LIMIT 1
                )
              GROUP BY b.barangay, a.nutritional_status"

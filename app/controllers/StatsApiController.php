@@ -41,7 +41,7 @@ class StatsApiController extends ApiController
             : ($_GET['barangay'] ?? null);
 
         $db      = Database::getInstance();
-        $bWhere  = $barangay ? ' AND b.barangay = ?' : '';
+        $bWhere  = " AND b.validation_status = 'validated'" . ($barangay ? ' AND b.barangay = ?' : '');
         $bParams = $barangay ? [$barangay] : [];
 
         // 1. Total active beneficiaries
@@ -58,6 +58,7 @@ class StatsApiController extends ApiController
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year = YEAR(NOW())
+               AND a.validation_status = 'validated'
                AND b.deleted_at IS NULL$bWhere"
         );
         $stmt->execute($bParams);
@@ -91,12 +92,12 @@ class StatsApiController extends ApiController
              FROM beneficiaries b
              JOIN assessments a1 ON a1.id = (
                  SELECT id FROM assessments
-                 WHERE beneficiary_id = b.id
+                 WHERE beneficiary_id = b.id AND validation_status = 'validated'
                  ORDER BY assessment_date DESC LIMIT 1
              )
              JOIN assessments a2 ON a2.id = (
                  SELECT id FROM assessments
-                 WHERE beneficiary_id = b.id
+                 WHERE beneficiary_id = b.id AND validation_status = 'validated'
                  ORDER BY assessment_date DESC LIMIT 1 OFFSET 1
              )
              WHERE b.deleted_at IS NULL
@@ -135,6 +136,7 @@ class StatsApiController extends ApiController
                    WHERE a.beneficiary_id = b.id
                      AND a.assessment_year = ?
                      AND a.period = ?
+                     AND a.validation_status = 'validated'
                )"
         );
         $stmt->execute([$cutoffDob, ...$bParams, $currentYear, $period]);
@@ -146,9 +148,10 @@ class StatsApiController extends ApiController
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
+               AND a.validation_status = 'validated'
                AND a.id = (
                    SELECT id FROM assessments
-                   WHERE beneficiary_id = b.id
+                   WHERE beneficiary_id = b.id AND validation_status = 'validated'
                    ORDER BY assessment_date DESC LIMIT 1
                )$bWhere
              GROUP BY a.nutritional_status"

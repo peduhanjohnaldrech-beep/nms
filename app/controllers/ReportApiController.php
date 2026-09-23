@@ -16,8 +16,8 @@ class ReportApiController extends ApiController
         $role   = strtolower($user['role'] ?? '');
         $brgy   = in_array($role, ['bhw','encoder']) ? ($user['barangay'] ?? null) : ($_GET['barangay'] ?? null);
 
-        $bWhere  = ['b.deleted_at IS NULL'];
-        $aWhere  = ['b.deleted_at IS NULL', 'a.assessment_year = ?'];
+        $bWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'"];
+        $aWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", "a.validation_status = 'validated'", 'a.assessment_year = ?'];
         $aParams = [$year];
         $bParams = [];
 
@@ -55,7 +55,7 @@ class ReportApiController extends ApiController
         $totalAssessed = (int)$stmt->fetchColumn();
 
         // By barangay
-        $brgWhere  = ['b.deleted_at IS NULL', 'a.assessment_year = ?'];
+        $brgWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", "a.validation_status = 'validated'", 'a.assessment_year = ?'];
         $brgParams = [$year];
         if ($period) { $brgWhere[] = 'a.period = ?'; $brgParams[] = $period; }
         if ($brgy)   { $brgWhere[] = 'b.barangay = ?'; $brgParams[] = $brgy; }
@@ -96,7 +96,7 @@ class ReportApiController extends ApiController
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
 
-        $where = ['b.deleted_at IS NULL','a.assessment_year=?']; $params = [$year];
+        $where = ['b.deleted_at IS NULL', "b.validation_status='validated'", "a.validation_status='validated'", 'a.assessment_year=?']; $params = [$year];
         if ($period) { $where[] = 'a.period=?'; $params[] = $period; }
         if ($brgy)   { $where[] = 'b.barangay=?'; $params[] = $brgy; }
 
@@ -121,7 +121,7 @@ class ReportApiController extends ApiController
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
 
-        $where = ["pe.program='DSP'","pe.cycle_year=?","b.deleted_at IS NULL"]; $params = [$year];
+        $where = ["pe.program='DSP'","pe.cycle_year=?","b.deleted_at IS NULL","b.validation_status='validated'"]; $params = [$year];
         if ($brgy) { $where[] = 'b.barangay=?'; $params[] = $brgy; }
 
         $stmt = $db->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN pe.status='Active' THEN 1 ELSE 0 END) as active, SUM(CASE WHEN pe.status='Completed' THEN 1 ELSE 0 END) as completed, SUM(CASE WHEN pe.status='Dropped' THEN 1 ELSE 0 END) as dropped FROM program_enrollments pe JOIN beneficiaries b ON b.id=pe.beneficiary_id WHERE ".implode(' AND ',$where));
@@ -141,7 +141,7 @@ class ReportApiController extends ApiController
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
 
-        $bWhere = ['b.deleted_at IS NULL']; $bParams = [];
+        $bWhere = ['b.deleted_at IS NULL', "b.validation_status='validated'"]; $bParams = [];
         if ($brgy) { $bWhere[] = 'b.barangay=?'; $bParams[] = $brgy; }
 
         $vaWhere = array_merge(['v.year=?'], $bWhere); $vaParams = array_merge([$year], $bParams);
@@ -167,7 +167,7 @@ class ReportApiController extends ApiController
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
 
-        $where = ['b.deleted_at IS NULL','a.assessment_year=?']; $params = [$year];
+        $where = ['b.deleted_at IS NULL', "b.validation_status='validated'", "a.validation_status='validated'", 'a.assessment_year=?']; $params = [$year];
         if ($brgy) { $where[] = 'b.barangay=?'; $params[] = $brgy; }
 
         $stmt = $db->prepare("SELECT a.period, a.nutritional_status, COUNT(*) as cnt FROM assessments a JOIN beneficiaries b ON b.id=a.beneficiary_id WHERE ".implode(' AND ',$where)." GROUP BY a.period, a.nutritional_status");
@@ -189,7 +189,7 @@ class ReportApiController extends ApiController
 
         $result = [];
         foreach ([$year1, $year2] as $yr) {
-            $where = ['b.deleted_at IS NULL','a.assessment_year=?']; $params = [$yr];
+            $where = ['b.deleted_at IS NULL', "b.validation_status='validated'", "a.validation_status='validated'", 'a.assessment_year=?']; $params = [$yr];
             if ($brgy) { $where[] = 'b.barangay=?'; $params[] = $brgy; }
             $stmt = $db->prepare("SELECT a.nutritional_status, COUNT(*) as cnt FROM assessments a JOIN beneficiaries b ON b.id=a.beneficiary_id WHERE ".implode(' AND ',$where)." GROUP BY a.nutritional_status");
             $stmt->execute($params);
@@ -208,7 +208,7 @@ class ReportApiController extends ApiController
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
 
-        $where = ['b.deleted_at IS NULL','a.assessment_year=?']; $params = [$year];
+        $where = ['b.deleted_at IS NULL', "b.validation_status='validated'", "a.validation_status='validated'", 'a.assessment_year=?']; $params = [$year];
         if ($period) { $where[] = 'a.period=?'; $params[] = $period; }
         if ($brgy)   { $where[] = 'b.barangay=?'; $params[] = $brgy; }
 

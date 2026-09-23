@@ -301,7 +301,9 @@ class ReportController extends Controller
         $stmt = $db->prepare(
             "SELECT b.barangay, a.nutritional_status, COUNT(*) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL$pWhere
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'$pWhere
              GROUP BY b.barangay, a.nutritional_status ORDER BY b.barangay"
         );
         $stmt->execute($pParams);
@@ -314,7 +316,9 @@ class ReportController extends Controller
         $stmt = $db->prepare(
             "SELECT b.barangay, COUNT(DISTINCT a.beneficiary_id) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL$pWhere
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'$pWhere
              GROUP BY b.barangay"
         );
         $stmt->execute($pParams);
