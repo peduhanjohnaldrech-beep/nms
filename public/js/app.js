@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 
 // ── Beneficiary Growth Chart ──────────────────────────────────
-(function () {
+window.initGrowthChart = function () {
     const raw = window.__growthData;
     if (!raw || !raw.length) return;
 
@@ -354,4 +354,4 @@ document.addEventListener('DOMContentLoaded', function () {
         chart.update();
         btnH.classList.add('active'); btnW.classList.remove('active');
     });
-})();
+};
