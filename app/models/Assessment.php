@@ -85,7 +85,10 @@ class Assessment extends Model
         return $this->fetchAll(
             "SELECT b.barangay, a.nutritional_status AS wfa_status, a.hfa_status, a.wflh_status, COUNT(*) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'
+               AND " . implode(' AND ', $where) . "
              GROUP BY b.barangay, a.nutritional_status, a.hfa_status, a.wflh_status
              ORDER BY b.barangay",
             $params
@@ -128,6 +131,8 @@ class Assessment extends Model
                  SELECT id FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1 OFFSET 1
              )
              WHERE $where
+               AND b.validation_status = 'validated'
+               AND a1.validation_status = 'validated'
                AND CASE a1.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END
                  < CASE a2.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END
              ORDER BY b.barangay, b.last_name",
@@ -157,7 +162,10 @@ class Assessment extends Model
                 COUNT(*) AS cnt
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND $cond
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'
+               AND $cond
              GROUP BY age_group, a.nutritional_status
              ORDER BY MIN(a.age_in_months), a.nutritional_status",
             $params
