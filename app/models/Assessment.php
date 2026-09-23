@@ -165,6 +165,7 @@ class Assessment extends Model
              WHERE b.deleted_at IS NULL
                AND b.validation_status = 'validated'
                AND a.validation_status = 'validated'
+               AND a.nutritional_status != 'Pending'
                AND $cond
              GROUP BY age_group, a.nutritional_status
              ORDER BY MIN(a.age_in_months), a.nutritional_status",
