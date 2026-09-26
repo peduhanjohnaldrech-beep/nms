@@ -52,6 +52,7 @@ class Assessment extends Model
         }
 
         return $this->insert([
+            'local_id'              => $data['local_id'] ?? null,
             'beneficiary_id'        => $data['beneficiary_id'],
             'assessment_date'       => $data['assessment_date'],
             'age_in_months'         => $age,

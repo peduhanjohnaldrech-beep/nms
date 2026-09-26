@@ -78,6 +78,7 @@ CREATE INDEX idx_bene_source     ON beneficiaries(source);
 
 CREATE TABLE IF NOT EXISTS assessments (
     id                     INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    local_id               VARCHAR(64)   DEFAULT NULL,
     beneficiary_id         INT           NOT NULL,
     assessment_date        DATE          NOT NULL,
     age_in_months          INT           NOT NULL,
@@ -106,6 +107,7 @@ CREATE TABLE IF NOT EXISTS assessments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX idx_assess_bene   ON assessments(beneficiary_id);
+CREATE UNIQUE INDEX idx_assess_local_id ON assessments(local_id);
 CREATE INDEX idx_assess_year   ON assessments(assessment_year, period);
 CREATE INDEX idx_assess_status ON assessments(nutritional_status);
 

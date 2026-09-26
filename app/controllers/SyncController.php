@@ -174,6 +174,17 @@ class SyncController extends ApiController
         foreach ($newAssessments as $item) {
             $localId = $item['local_id'] ?? null;
             try {
+                // Idempotency: if this local_id was already pushed, return the existing server id
+                if ($localId) {
+                    $chk = $db->prepare('SELECT id FROM assessments WHERE local_id = ? LIMIT 1');
+                    $chk->execute([$localId]);
+                    $existingId = $chk->fetchColumn();
+                    if ($existingId) {
+                        $results['created'][] = ['type' => 'assessment', 'local_id' => $localId, 'server_id' => (int)$existingId];
+                        continue;
+                    }
+                }
+
                 // Resolve beneficiary_id: may be a local_id that was just created
                 $beneficiaryId = $item['beneficiary_id'] ?? null;
                 $localBeneId   = $item['local_beneficiary_id'] ?? null;
@@ -200,6 +211,7 @@ class SyncController extends ApiController
 
                 $model    = new Assessment();
                 $serverId = $model->createWithZScore([
+                    'local_id'          => $localId,
                     'beneficiary_id'    => (int)$beneficiaryId,
                     'sex'               => $item['sex'] ?? $bene['sex'],
                     'age_in_months'     => $ageInMonths,

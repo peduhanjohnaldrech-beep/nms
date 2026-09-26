@@ -241,7 +241,7 @@ class BeneficiaryApiController extends ApiController
     public function destroy(string $id): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','admin','bns','bhw']);
+        $this->requireRole(['encoder','nutritionist','admin','bns','bhw','midwife']);
 
         $db   = Database::getInstance();
         $stmt = $db->prepare('SELECT * FROM beneficiaries WHERE id = ? AND deleted_at IS NULL');
