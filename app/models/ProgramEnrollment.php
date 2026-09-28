@@ -99,6 +99,7 @@ class ProgramEnrollment extends Model
              WHERE (a.wflh_status IN ('SW','MW') OR a.nutritional_status IN ('SUW','UW'))
              AND b.deleted_at IS NULL
              AND b.validation_status = 'validated'
+             AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments WHERE program = 'DSP' AND status = 'Active'
              )
