@@ -67,6 +67,7 @@ class ProgramController extends Controller
         $eligibleParams = ["{$year}-12-31", "{$year}-01-01"];
         $eligibleWhere  = "b.deleted_at IS NULL
             AND b.validation_status = 'validated'
+            AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . "
             AND b.date_of_birth <= ?
             AND b.date_of_birth >= DATE_SUB(?, INTERVAL 59 MONTH)";
         if (in_array(Session::get('user_role'), ['bhw', 'bns'])) {
@@ -292,8 +293,8 @@ $notYetWeighed = $nywStmt->fetchAll();
         $mnpNotYet       = $mnpModel->getNotYetReceived($year, $asOfDate);
         $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate);
         $allBeneficiaries = Database::getInstance()->query(
-            "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries
-             WHERE deleted_at IS NULL AND validation_status = 'validated' ORDER BY last_name, first_name"
+            "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries b
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . " ORDER BY b.last_name, b.first_name"
         )->fetchAll();
 
         $this->view('programs/mns', [

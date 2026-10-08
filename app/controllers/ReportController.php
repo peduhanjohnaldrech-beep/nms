@@ -216,10 +216,11 @@ class ReportController extends Controller
         if ($barangay) { $bWhere .= ' AND b.barangay = ?'; $params[] = $barangay; }
         if ($purok)    { $bWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
 
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
         $stmt = $db->prepare(
             "SELECT b.barangay, a.period, a.nutritional_status, COUNT(*) as cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND a.assessment_year = ?$bWhere
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $bnsFilter AND a.assessment_year = ?$bWhere
                AND a.period IN ('January','July')
              GROUP BY b.barangay, a.period, a.nutritional_status
              ORDER BY b.barangay, a.period"
@@ -280,11 +281,13 @@ class ReportController extends Controller
         if ($barangay) { $tWhere .= ' AND barangay = ?';              $tParams[] = $barangay; }
         if ($purok)    { $tWhere .= ' AND LOWER(purok_zone) = LOWER(?)'; $tParams[] = $purok; }
 
+        $bnsFilterNoAlias = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
         $stmt = $db->prepare(
             "SELECT barangay, COUNT(*) AS total
              FROM beneficiaries
              WHERE deleted_at IS NULL
                AND validation_status = 'validated'
+               AND $bnsFilterNoAlias
                AND date_of_birth <= '{$year}-12-31'
                AND date_of_birth >= DATE_SUB('{$year}-01-01', INTERVAL 59 MONTH)"
             . $tWhere .
@@ -298,11 +301,13 @@ class ReportController extends Controller
         $pWhere  = $bWhere . " AND a.assessment_year = ?";
         $pParams = array_merge($bParams, [$year]);
         if ($period) { $pWhere .= ' AND a.period = ?'; $pParams[] = $period; }
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
         $stmt = $db->prepare(
             "SELECT b.barangay, a.nutritional_status, COUNT(*) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
                AND b.validation_status = 'validated'
+               AND $bnsFilter
                AND a.validation_status = 'validated'$pWhere
              GROUP BY b.barangay, a.nutritional_status ORDER BY b.barangay"
         );
@@ -318,6 +323,7 @@ class ReportController extends Controller
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
                AND b.validation_status = 'validated'
+               AND $bnsFilter
                AND a.validation_status = 'validated'$pWhere
              GROUP BY b.barangay"
         );
@@ -678,7 +684,8 @@ class ReportController extends Controller
 
     private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = '', string $purok = ''): array
     {
-        $db = Database::getInstance();
+        $db        = Database::getInstance();
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
 
         if ($type === 'opt') {
             if ($dateFrom && $dateTo) {
@@ -693,7 +700,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
                  FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $bnsFilter AND $where
                    AND a.id = (
                        SELECT id FROM assessments a2
                        WHERE a2.beneficiary_id = a.beneficiary_id
@@ -719,7 +726,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id
-                 WHERE pe.program = 'DSP' AND b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
+                 WHERE pe.program = 'DSP' AND b.validation_status = 'validated' AND $bnsFilter AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -741,7 +748,7 @@ class ReportController extends Controller
                      ORDER BY assessment_date DESC LIMIT 1
                  )
                  WHERE pe.program = 'DSP' AND pe.status = 'Active'
-                 AND b.validation_status = 'validated'
+                 AND b.validation_status = 'validated' AND $bnsFilter
                  AND a.nutritional_status NOT IN ('SUW', 'UW')
                  AND (a.wflh_status IS NULL OR a.wflh_status NOT IN ('SW', 'MW'))
                  $where
@@ -763,7 +770,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT v.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM vitamin_a_records v JOIN beneficiaries b ON b.id = v.beneficiary_id
-                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $bnsFilter AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -780,7 +787,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT m.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM mnp_records m JOIN beneficiaries b ON b.id = m.beneficiary_id
-                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $bnsFilter AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();
@@ -797,7 +804,7 @@ class ReportController extends Controller
             $stmt = $db->prepare(
                 "SELECT l.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM lns_sq_records l JOIN beneficiaries b ON b.id = l.beneficiary_id
-                 WHERE b.validation_status = 'validated' AND $where ORDER BY b.barangay, b.last_name"
+                 WHERE b.validation_status = 'validated' AND $bnsFilter AND $where ORDER BY b.barangay, b.last_name"
             );
             $stmt->execute($params);
             return $stmt->fetchAll();

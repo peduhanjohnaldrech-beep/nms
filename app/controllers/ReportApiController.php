@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use Core\ApiController;
 use Core\Database;
+use App\Models\Beneficiary;
 
 class ReportApiController extends ApiController
 {
@@ -16,8 +17,9 @@ class ReportApiController extends ApiController
         $role   = strtolower($user['role'] ?? '');
         $brgy   = in_array($role, ['bhw','encoder']) ? ($user['barangay'] ?? null) : ($_GET['barangay'] ?? null);
 
-        $bWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'"];
-        $aWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", "a.validation_status = 'validated'", 'a.assessment_year = ?'];
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
+        $bWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", $bnsFilter];
+        $aWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", $bnsFilter, "a.validation_status = 'validated'", 'a.assessment_year = ?'];
         $aParams = [$year];
         $bParams = [];
 
@@ -55,7 +57,7 @@ class ReportApiController extends ApiController
         $totalAssessed = (int)$stmt->fetchColumn();
 
         // By barangay
-        $brgWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", "a.validation_status = 'validated'", 'a.assessment_year = ?'];
+        $brgWhere  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", $bnsFilter, "a.validation_status = 'validated'", 'a.assessment_year = ?'];
         $brgParams = [$year];
         if ($period) { $brgWhere[] = 'a.period = ?'; $brgParams[] = $period; }
         if ($brgy)   { $brgWhere[] = 'b.barangay = ?'; $brgParams[] = $brgy; }

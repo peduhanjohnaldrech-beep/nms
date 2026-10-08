@@ -39,12 +39,14 @@ class BarangayController extends Controller
         }
 
         // Latest nutritional status per beneficiary, grouped by barangay
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
         $stmt = $db->query(
             "SELECT b.barangay, a.nutritional_status, COUNT(*) AS cnt
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
                AND b.validation_status = 'validated'
+               AND $bnsFilter
                AND a.validation_status = 'validated'
                AND a.assessment_year = YEAR(NOW())
                AND a.id = (

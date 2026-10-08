@@ -6,6 +6,7 @@ use Core\Controller;
 use Core\Database;
 use Core\Session;
 use App\Models\Program;
+use App\Models\Beneficiary;
 
 class DashboardController extends Controller
 {
@@ -17,7 +18,9 @@ class DashboardController extends Controller
         $bar  = in_array($role, ['bhw', 'bns']) ? Session::get('user_barangay', '') : '';
 
         // Helper to build WHERE snippets with optional barangay filter
-        $bWhere  = $bar ? ' AND barangay = ?' : '';
+        $bnsFilterNoAlias = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
+        $bnsFilter        = Beneficiary::BNS_SUBMITTED_FILTER;
+        $bWhere  = " AND $bnsFilterNoAlias" . ($bar ? ' AND barangay = ?' : '');
         $bParams = $bar ? [$bar] : [];
 
         $stmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries WHERE deleted_at IS NULL AND validation_status = 'validated'$bWhere");
@@ -29,7 +32,7 @@ class DashboardController extends Controller
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year = YEAR(NOW())
                AND b.deleted_at IS NULL
-               AND b.validation_status = 'validated'" . ($bar ? ' AND b.barangay = ?' : '')
+               AND b.validation_status = 'validated' AND $bnsFilter" . ($bar ? ' AND b.barangay = ?' : '')
         );
         $stmt->execute($bParams);
         $activeOpt = (int) $stmt->fetchColumn();
@@ -60,7 +63,7 @@ class DashboardController extends Controller
         $stmt = $db->prepare(
             "SELECT COUNT(*) FROM beneficiaries b
              WHERE b.deleted_at IS NULL
-               AND b.validation_status = 'validated'
+               AND b.validation_status = 'validated' AND $bnsFilter
                AND b.date_of_birth >= '$cutoffDob'"
             . ($bar ? ' AND b.barangay = ?' : '') .
             " AND NOT EXISTS (
@@ -83,7 +86,7 @@ class DashboardController extends Controller
                  SELECT id FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1 OFFSET 1
              )
              WHERE b.deleted_at IS NULL
-               AND b.validation_status = 'validated'
+               AND b.validation_status = 'validated' AND $bnsFilter
                AND CASE a1.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END
                  < CASE a2.nutritional_status WHEN 'SUW' THEN 1 WHEN 'UW' THEN 2 WHEN 'Normal' THEN 3 WHEN 'OW' THEN 4 WHEN 'OB' THEN 5 ELSE 0 END" .
             ($bar ? ' AND b.barangay = ?' : '')
@@ -96,7 +99,7 @@ class DashboardController extends Controller
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year = YEAR(NOW())
                AND b.deleted_at IS NULL
-               AND b.validation_status = 'validated'" . ($bar ? ' AND b.barangay = ?' : '') . "
+               AND b.validation_status = 'validated' AND $bnsFilter" . ($bar ? ' AND b.barangay = ?' : '') . "
              GROUP BY b.barangay, a.nutritional_status
              ORDER BY b.barangay"
         );
@@ -109,7 +112,7 @@ class DashboardController extends Controller
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE a.assessment_year >= YEAR(NOW()) - 2
                AND b.deleted_at IS NULL
-               AND b.validation_status = 'validated'
+               AND b.validation_status = 'validated' AND $bnsFilter
              GROUP BY a.assessment_year, a.period, a.nutritional_status
              ORDER BY a.assessment_year, a.period"
         );

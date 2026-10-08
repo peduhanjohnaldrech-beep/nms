@@ -8,6 +8,10 @@ class Beneficiary extends Model
 {
     protected string $table = 'beneficiaries';
 
+    // Reusable SQL snippet: exclude BNS mobile records not yet submitted to admin
+    // Use with alias 'b' for beneficiaries table
+    const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
+
     public function submitToAdmin(int $id, int $userId): void
     {
         $this->execute(

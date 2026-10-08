@@ -41,7 +41,8 @@ class StatsApiController extends ApiController
             : ($_GET['barangay'] ?? null);
 
         $db      = Database::getInstance();
-        $bWhere  = " AND b.validation_status = 'validated'" . ($barangay ? ' AND b.barangay = ?' : '');
+        $bnsFilter = \App\Models\Beneficiary::BNS_SUBMITTED_FILTER;
+        $bWhere  = " AND b.validation_status = 'validated' AND $bnsFilter" . ($barangay ? ' AND b.barangay = ?' : '');
         $bParams = $barangay ? [$barangay] : [];
 
         // 1. Total active beneficiaries

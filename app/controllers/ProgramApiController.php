@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use Core\ApiController;
 use Core\Database;
+use App\Models\Beneficiary;
 
 class ProgramApiController extends ApiController
 {
@@ -15,7 +16,8 @@ class ProgramApiController extends ApiController
         $period = $_GET['period']        ?? '';
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
-        $where  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", 'a.assessment_year = ?'];
+        $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
+        $where  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", $bnsFilter, 'a.assessment_year = ?'];
         $params = [$year];
 
         if ($period) { $where[] = 'a.period = ?'; $params[] = $period; }
@@ -109,7 +111,8 @@ class ProgramApiController extends ApiController
         $status = $_GET['status'] ?? '';
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
-        $where  = ["pe.program = 'DSP'", "pe.cycle_year = ?"];
+        $bnsFilter2 = Beneficiary::BNS_SUBMITTED_FILTER;
+        $where  = ["pe.program = 'DSP'", "pe.cycle_year = ?", "b.validation_status = 'validated'", $bnsFilter2];
         $params = [$year];
         if ($status) { $where[] = 'pe.status = ?'; $params[] = $status; }
         if ($brgy)   { $where[] = 'b.barangay = ?'; $params[] = $brgy; }
@@ -119,7 +122,7 @@ class ProgramApiController extends ApiController
                    b.contact_number, b.mother_name
             FROM program_enrollments pe
             JOIN beneficiaries b ON b.id = pe.beneficiary_id
-            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
+            WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
             ORDER BY pe.status, b.last_name
         ");
         $stmt->execute($params);
@@ -249,7 +252,8 @@ class ProgramApiController extends ApiController
         $status = $_GET['status'] ?? '';
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
-        $where  = ["pe.program = ?", "pe.cycle_year = ?"];
+        $bnsFilter3 = Beneficiary::BNS_SUBMITTED_FILTER;
+        $where  = ["pe.program = ?", "pe.cycle_year = ?", "b.validation_status = 'validated'", $bnsFilter3];
         $params = [$code, $year];
         if ($status) { $where[] = 'pe.status = ?'; $params[] = $status; }
         if ($brgy)   { $where[] = 'b.barangay = ?'; $params[] = $brgy; }
@@ -258,7 +262,7 @@ class ProgramApiController extends ApiController
             SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex
             FROM program_enrollments pe
             JOIN beneficiaries b ON b.id = pe.beneficiary_id
-            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . implode(' AND ', $where) . "
+            WHERE b.deleted_at IS NULL AND " . implode(' AND ', $where) . "
             ORDER BY pe.status, b.last_name
         ");
         $stmt->execute($params);
