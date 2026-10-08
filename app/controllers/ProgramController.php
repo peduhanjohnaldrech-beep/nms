@@ -47,7 +47,16 @@ class ProgramController extends Controller
         $stmt = $db->prepare(
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where ORDER BY b.barangay, a.nutritional_status, b.last_name"
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
+               AND a.id = (
+                 SELECT id FROM assessments
+                 WHERE beneficiary_id = a.beneficiary_id
+                   AND assessment_year = a.assessment_year
+                   AND period = a.period
+                 ORDER BY assessment_date DESC, id DESC
+                 LIMIT 1
+               )
+             ORDER BY b.barangay, a.nutritional_status, b.last_name"
         );
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
