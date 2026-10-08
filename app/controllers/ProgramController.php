@@ -47,7 +47,9 @@ class ProgramController extends Controller
         $stmt = $db->prepare(
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+               AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
+               AND $where
                AND a.id = (
                  SELECT id FROM assessments
                  WHERE beneficiary_id = a.beneficiary_id
