@@ -283,6 +283,16 @@ class ValidationApiController extends ApiController
             WHERE id = ?
         ")->execute([$this->userId(), $id]);
 
+        // Auto-validate all pending assessments for this beneficiary
+        $db->prepare("
+            UPDATE assessments
+            SET validation_status = 'validated',
+                validated_by      = ?,
+                validated_at      = NOW(),
+                rejection_note    = NULL
+            WHERE beneficiary_id = ? AND validation_status = 'pending'
+        ")->execute([$this->userId(), $id]);
+
         $this->logActivity('beneficiary_validate', "Validated beneficiary ID $id");
         $this->success([], 'Beneficiary validated');
     }
@@ -384,6 +394,12 @@ class ValidationApiController extends ApiController
                     UPDATE beneficiaries
                     SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL
                     WHERE id=?
+                ")->execute([$uid, $id]);
+                // Auto-validate all pending assessments for this beneficiary
+                $db->prepare("
+                    UPDATE assessments
+                    SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL
+                    WHERE beneficiary_id=? AND validation_status='pending'
                 ")->execute([$uid, $id]);
                 $validated++;
             }

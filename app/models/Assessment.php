@@ -34,6 +34,26 @@ class Assessment extends Model
         $wfaZscore = \ZScoreHelper::computeWFA($weight, $age, $sex);
         $wfaStatus = $wfaZscore !== null ? \ZScoreHelper::classifyWFA($wfaZscore) : 'Pending';
 
+        // Outlier check: flag suspicious entries for midwife review instead of auto-validating
+        if (($data['check_outliers'] ?? false) && ($data['validation_status'] ?? '') === 'validated') {
+            $outlier = false;
+            if ($wfaZscore !== null && ($wfaZscore < -5 || $wfaZscore > 5)) $outlier = true;
+            if (!$outlier) {
+                $db   = \Core\Database::getInstance();
+                $prev = $db->prepare('SELECT weight_kg FROM assessments WHERE beneficiary_id = ? ORDER BY assessment_date DESC LIMIT 1');
+                $prev->execute([$data['beneficiary_id']]);
+                $prevKg = (float)$prev->fetchColumn();
+                if ($prevKg > 0 && ($weight < $prevKg * 0.75 || $weight > $prevKg * 3.0)) $outlier = true;
+            }
+            if ($outlier) {
+                $data['validation_status'] = 'pending';
+                $data['validated_by']      = null;
+                $data['validated_at']      = null;
+                $note = '[AUTO-FLAGGED: Unusual measurement — please verify]';
+                $data['remarks'] = $note . (isset($data['remarks']) && $data['remarks'] ? ' ' . $data['remarks'] : '');
+            }
+        }
+
         $hfaZscore = null;
         $hfaStatus = null;
         if ($height !== null) {

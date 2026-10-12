@@ -146,8 +146,10 @@ class AssessmentApiController extends ApiController
             $this->error('Access denied', 403);
         }
 
-        $role   = strtolower($this->apiUser['role'] ?? '');
-        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife']);
+        $role          = strtolower($this->apiUser['role'] ?? '');
+        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife'])
+            || ($bene['validation_status'] ?? '') === 'validated';
+        $checkOutliers = $autoValidated && !in_array($role, ['admin', 'nutritionist', 'midwife']);
 
         $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
         $year   = (int)date('Y', strtotime($data['assessment_date']));
@@ -170,6 +172,7 @@ class AssessmentApiController extends ApiController
                 'validation_status'=> $autoValidated ? 'validated' : 'pending',
                 'validated_by'     => $autoValidated ? $this->userId() : null,
                 'validated_at'     => $autoValidated ? date('Y-m-d H:i:s') : null,
+                'check_outliers'   => $checkOutliers,
             ]);
         } catch (\PDOException $e) {
             if ($e->getCode() === '23000') {
@@ -223,7 +226,7 @@ class AssessmentApiController extends ApiController
         $db      = Database::getInstance();
         $created = []; $failed = [];
         $role    = strtolower($this->apiUser['role'] ?? '');
-        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife']);
+        $isAuthRole = in_array($role, ['admin', 'nutritionist', 'midwife']);
         foreach ($items as $data) {
             $errors = $this->validate($data);
             if ($errors) { $failed[] = ['errors' => $errors]; continue; }
@@ -234,6 +237,8 @@ class AssessmentApiController extends ApiController
                 if (!$bene) { $failed[] = ['errors' => ['beneficiary not found']]; continue; }
                 if (($this->isBhw() || $this->isBns()) && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
                 if ($this->isMidwife() && $this->userBarangay() && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
+                $autoValidated = $isAuthRole || ($bene['validation_status'] ?? '') === 'validated';
+                $checkOutliers = $autoValidated && !$isAuthRole;
                 $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
                 $year   = (int)date('Y', strtotime($data['assessment_date']));
                 $newId  = $model->createWithZScore([
@@ -252,6 +257,7 @@ class AssessmentApiController extends ApiController
                     'validation_status'=> $autoValidated ? 'validated' : 'pending',
                     'validated_by'     => $autoValidated ? $this->userId() : null,
                     'validated_at'     => $autoValidated ? date('Y-m-d H:i:s') : null,
+                    'check_outliers'   => $checkOutliers,
                 ]);
                 // Auto-enroll in DSP if admin/nutritionist (already validated)
                 if ($autoValidated) {
