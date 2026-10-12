@@ -126,6 +126,16 @@ class BeneficiaryApiController extends ApiController
             $this->json(['success' => false, 'message' => 'Validation failed', 'errors' => $errors], 422);
         }
 
+        // Block beneficiaries over 59 months old
+        if (!empty($data['date_of_birth'])) {
+            $dob = new \DateTime($data['date_of_birth']);
+            $now = new \DateTime();
+            $ageInMonths = ($now->format('Y') - $dob->format('Y')) * 12 + ($now->format('n') - $dob->format('n'));
+            if ($ageInMonths > 59) {
+                $this->error('Beneficiary is over 59 months old and cannot be registered', 422);
+            }
+        }
+
         // BHW/BNS can only add to their barangay
         if ($this->isBhw() || $this->isBns()) {
             $data['barangay'] = $this->userBarangay();

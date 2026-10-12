@@ -130,6 +130,18 @@ class SyncController extends ApiController
                     }
                 }
 
+                // Block beneficiaries over 59 months old
+                $dob = $item['date_of_birth'] ?? null;
+                if ($dob) {
+                    $dobDate     = new \DateTime($dob);
+                    $now         = new \DateTime();
+                    $ageInMonths = ($now->format('Y') - $dobDate->format('Y')) * 12 + ($now->format('n') - $dobDate->format('n'));
+                    if ($ageInMonths > 59) {
+                        $results['failed'][] = ['type' => 'beneficiary', 'local_id' => $localId, 'error' => 'Beneficiary is over 59 months old'];
+                        continue;
+                    }
+                }
+
                 $model = new Beneficiary();
 
                 // BHW/BNS barangay restriction
@@ -194,6 +206,15 @@ class SyncController extends ApiController
 
                 if (!$beneficiaryId) {
                     throw new \RuntimeException('beneficiary_id could not be resolved');
+                }
+
+                // Idempotency: skip if an assessment already exists for this beneficiary/period/year
+                $dupChk = $db->prepare('SELECT id FROM assessments WHERE beneficiary_id = ? AND period = ? AND assessment_year = ? LIMIT 1');
+                $dupChk->execute([$beneficiaryId, $item['period'] ?? 'January', (int)($item['assessment_year'] ?? date('Y'))]);
+                $dupId = $dupChk->fetchColumn();
+                if ($dupId) {
+                    $results['created'][] = ['type' => 'assessment', 'local_id' => $localId, 'server_id' => (int)$dupId];
+                    continue;
                 }
 
                 // Verify beneficiary exists and get sex + dob for z-score calc
