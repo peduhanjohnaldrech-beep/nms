@@ -395,7 +395,7 @@ class BeneficiaryApiController extends ApiController
                 continue;
             }
 
-            $db->prepare('UPDATE beneficiaries SET submitted_at = NOW(), submitted_by = ? WHERE id = ?')
+            $db->prepare('UPDATE beneficiaries SET submitted_at = NOW(), submitted_by = ?, updated_at = NOW() WHERE id = ?')
                ->execute([$userId, $id]);
             $submitted++;
         }
@@ -425,7 +425,7 @@ class BeneficiaryApiController extends ApiController
         if (($row['validation_status'] ?? '') !== 'validated') $this->error('Beneficiary must be validated before submitting', 422);
         if (!empty($row['submitted_at'])) $this->error('Already submitted', 422);
 
-        $db->prepare('UPDATE beneficiaries SET submitted_at = NOW(), submitted_by = ? WHERE id = ?')
+        $db->prepare('UPDATE beneficiaries SET submitted_at = NOW(), submitted_by = ?, updated_at = NOW() WHERE id = ?')
            ->execute([$this->userId(), $id]);
 
         $this->success([], 'Beneficiary submitted to admin successfully');
