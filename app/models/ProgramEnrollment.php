@@ -121,6 +121,7 @@ class ProgramEnrollment extends Model
              AND b.validation_status = 'validated'
              AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
+             AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM vitamin_a_records WHERE round = ? AND year = ?
              )

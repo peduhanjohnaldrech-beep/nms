@@ -92,6 +92,7 @@ $nywStmt = $db->prepare(
             TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
      FROM beneficiaries b
      WHERE $eligibleWhere
+     AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
      AND b.id NOT IN (
          SELECT a.beneficiary_id FROM assessments a WHERE a.assessment_year = ?$periodClause
      )
@@ -336,7 +337,9 @@ $notYetWeighed = $nywStmt->fetchAll();
         $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate);
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries b
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . " ORDER BY b.last_name, b.first_name"
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+             AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) BETWEEN 6 AND 59
+             AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . " ORDER BY b.last_name, b.first_name"
         )->fetchAll();
 
         $this->view('programs/mns', [
