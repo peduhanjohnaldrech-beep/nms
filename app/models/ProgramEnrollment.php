@@ -62,7 +62,8 @@ class ProgramEnrollment extends Model
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = pe.program AND pe2.id <= pe.id) AS cycle_number,
                     b.last_name, b.first_name, b.middle_name, b.barangay, b.date_of_birth, b.sex,
-                    a.nutritional_status, a.wflh_status, a.assessment_date
+                    a.nutritional_status, a.wflh_status, a.assessment_date,
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
              LEFT JOIN assessments a ON a.id = (
@@ -203,8 +204,13 @@ class ProgramEnrollment extends Model
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE pe.program = 'DSP' AND pe.status = 'Active'
-             AND a.nutritional_status NOT IN ('SUW', 'UW')
-             AND (a.wflh_status IS NULL OR a.wflh_status NOT IN ('SW', 'MW'))
+             AND (
+                 TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) > 59
+                 OR (
+                     a.nutritional_status NOT IN ('SUW', 'UW')
+                     AND (a.wflh_status IS NULL OR a.wflh_status NOT IN ('SW', 'MW'))
+                 )
+             )
              ORDER BY b.last_name, b.first_name"
         );
     }

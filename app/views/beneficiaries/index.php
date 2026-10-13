@@ -54,7 +54,7 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
             <div class="col-md-2">
                 <select name="age_status" class="form-select">
                     <option value="">All Ages</option>
-                    <option value="active"    <?= ($ageStatus ?? '') === 'active'    ? 'selected' : '' ?>>Active (0–59 mo)</option>
+                    <option value="active"    <?= ($ageStatus ?? 'active') === 'active'    ? 'selected' : '' ?>>Active (0–59 mo)</option>
                     <option value="0_23"      <?= ($ageStatus ?? '') === '0_23'      ? 'selected' : '' ?>>0–23 months</option>
                     <option value="24_59"     <?= ($ageStatus ?? '') === '24_59'     ? 'selected' : '' ?>>24–59 months</option>
                     <option value="aged_out"  <?= ($ageStatus ?? '') === 'aged_out'  ? 'selected' : '' ?>>Aged Out (&gt;59 mo)</option>
@@ -74,6 +74,19 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
         </script>
     </div>
 </div>
+
+<?php if (($ageStatus ?? 'active') === 'active'): ?>
+<div class="alert alert-secondary py-2 px-3 d-flex align-items-center gap-2 mb-2 border-0" style="background:#f0f4f8;">
+    <i class="bi bi-eye-slash text-secondary"></i>
+    <span class="small text-muted">Aged-out beneficiaries (over 59 months) are hidden.</span>
+    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => 'aged_out'])) ?>" class="ms-auto small text-decoration-none text-secondary">
+        <i class="bi bi-funnel me-1"></i>Show aged-out
+    </a>
+    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => ''])) ?>" class="small text-decoration-none text-secondary ms-2">
+        Show all
+    </a>
+</div>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">

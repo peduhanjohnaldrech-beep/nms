@@ -59,6 +59,17 @@
                             <?php if (!empty($b['source'])): ?>
                             <span class="badge bg-secondary bg-opacity-50 ms-1 small"><?= htmlspecialchars($b['source']) ?></span>
                             <?php endif; ?>
+                            <?php if (!empty($b['assessments'])): ?>
+                            <button class="btn btn-link btn-sm p-0 ms-2 text-decoration-none"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#assessments<?= $b['id'] ?>"
+                                    title="View assessments">
+                                <span class="badge bg-info text-dark">
+                                    <i class="bi bi-clipboard-pulse me-1"></i><?= count($b['assessments']) ?> assessment<?= count($b['assessments']) > 1 ? 's' : '' ?>
+                                </span>
+                            </button>
+                            <?php endif; ?>
                         </td>
                         <td class="text-nowrap">
                             <?= DateHelper::formatDate($b['date_of_birth'], 'M j, Y') ?>
@@ -126,6 +137,57 @@
                             </div>
                         </td>
                     </tr>
+                    <?php if (!empty($b['assessments'])): ?>
+                    <tr class="collapse" id="assessments<?= $b['id'] ?>">
+                        <td colspan="7" class="p-0">
+                            <div class="bg-light border-top border-bottom px-4 py-2">
+                                <p class="text-muted small mb-2 fw-semibold"><i class="bi bi-clipboard-pulse me-1"></i>Pending Assessments</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0 bg-white">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Period</th>
+                                                <th>Age (mo)</th>
+                                                <th>Weight</th>
+                                                <th>Height</th>
+                                                <th>MUAC</th>
+                                                <th>Status</th>
+                                                <th>Assessed By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($b['assessments'] as $a): ?>
+                                            <tr>
+                                                <td class="text-nowrap small"><?= DateHelper::formatDate($a['assessment_date'], 'M j, Y') ?></td>
+                                                <td class="small"><?= htmlspecialchars($a['period'] . ' ' . $a['assessment_year']) ?></td>
+                                                <td class="small"><?= (int)$a['age_in_months'] ?></td>
+                                                <td class="small"><?= number_format((float)$a['weight_kg'], 2) ?> kg</td>
+                                                <td class="small"><?= $a['height_cm'] ? number_format((float)$a['height_cm'], 1) . ' cm' : '—' ?></td>
+                                                <td class="small"><?= $a['muac_cm'] ? number_format((float)$a['muac_cm'], 1) . ' cm' : '—' ?></td>
+                                                <td>
+                                                    <?php
+                                                        $ns = $a['nutritional_status'] ?? '—';
+                                                        $nsClass = match($ns) {
+                                                            'Normal' => 'success',
+                                                            'UW'     => 'warning',
+                                                            'SUW'    => 'danger',
+                                                            'OW','OB'=> 'info',
+                                                            default  => 'secondary',
+                                                        };
+                                                    ?>
+                                                    <span class="badge bg-<?= $nsClass ?>"><?= htmlspecialchars($ns) ?></span>
+                                                </td>
+                                                <td class="small text-muted"><?= htmlspecialchars($a['assessed_by'] ?? '—') ?></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                     <?php endforeach; ?>
                 </tbody>
             </table>

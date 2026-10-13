@@ -211,6 +211,34 @@ class ValidationApiController extends ApiController
         $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        // Attach pending assessments to each beneficiary
+        if (!empty($rows)) {
+            $beneIds      = array_column($rows, 'id');
+            $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
+            $aStmt = $db->prepare("
+                SELECT id, beneficiary_id, assessment_date, age_in_months,
+                       weight_kg, height_cm, muac_cm, nutritional_status,
+                       period, assessment_year, assessed_by, validation_status,
+                       rejection_note, created_at
+                FROM assessments
+                WHERE beneficiary_id IN ($placeholders)
+                  AND validation_status = 'pending'
+                ORDER BY beneficiary_id, assessment_date DESC
+            ");
+            $aStmt->execute($beneIds);
+            $allAssessments = $aStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Index assessments by beneficiary_id
+            $assessmentMap = [];
+            foreach ($allAssessments as $a) {
+                $assessmentMap[$a['beneficiary_id']][] = $a;
+            }
+            foreach ($rows as &$bene) {
+                $bene['assessments'] = $assessmentMap[$bene['id']] ?? [];
+            }
+            unset($bene);
+        }
+
         $this->success(['beneficiaries' => $rows, 'count' => count($rows)]);
     }
 

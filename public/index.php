@@ -92,6 +92,7 @@ $router->get('/programs',             'ProgramController@index');
 $router->get('/programs/opt',             'ProgramController@opt');
 $router->get('/programs/dsp',             'ProgramController@dsp');
 $router->post('/programs/dsp/enroll',     'ProgramController@dspEnroll');
+$router->post('/programs/dsp/enroll-all', 'ProgramController@dspEnrollAll');
 $router->post('/programs/dsp/discharge',  'ProgramController@dspDischarge');
 $router->post('/programs/dsp/update',     'ProgramController@dspUpdate');
 $router->get('/programs/mns',            'ProgramController@mns');

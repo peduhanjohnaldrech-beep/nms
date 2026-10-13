@@ -130,6 +130,48 @@ $notYetWeighed = $nywStmt->fetchAll();
         ]);
     }
 
+    public function dspEnrollAll(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('programs');
+        if (!$this->isPost()) { $this->redirect('/programs/dsp'); }
+        $this->validateCsrf();
+
+        // Fetch all latest validated assessments for eligible beneficiaries
+        $db   = Database::getInstance();
+        $stmt = $db->prepare(
+            "SELECT a.id FROM assessments a
+             JOIN beneficiaries b ON b.id = a.beneficiary_id
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND a.validation_status = 'validated'
+               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
+               AND (a.wflh_status IN ('SW','MW') OR a.nutritional_status IN ('SUW','UW'))
+               AND a.id = (
+                   SELECT id FROM assessments
+                   WHERE beneficiary_id = b.id
+                   ORDER BY assessment_date DESC, id DESC LIMIT 1
+               )
+               AND b.id NOT IN (
+                   SELECT beneficiary_id FROM program_enrollments WHERE program = 'DSP' AND status = 'Active'
+               )"
+        );
+        $stmt->execute();
+        $assessmentIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        $enrolled = 0;
+        foreach ($assessmentIds as $assessmentId) {
+            if ((new ProgramEnrollment())->autoEnrollDSP((int)$assessmentId)) {
+                $enrolled++;
+            }
+        }
+
+        \ActivityLog::log('dsp_enroll_all', "Bulk-enrolled $enrolled beneficiar" . ($enrolled === 1 ? 'y' : 'ies') . " in DSP");
+        Session::flash($enrolled > 0 ? 'success' : 'info',
+            $enrolled > 0 ? "$enrolled beneficiar" . ($enrolled === 1 ? 'y' : 'ies') . " enrolled in DSP." : 'No new eligible beneficiaries found.');
+        $this->redirect('/programs/dsp');
+    }
+
     public function dspEnroll(): void
     {
         $this->requireAuth();

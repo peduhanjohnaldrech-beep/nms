@@ -12,10 +12,24 @@
 
 <!-- Eligible -->
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-warning text-dark fw-semibold">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        Eligible for DSP (Wasted / Severely Wasted — Not Yet Enrolled)
-        <span class="badge bg-dark ms-2"><?= count($eligible) ?></span>
+    <div class="card-header bg-warning text-dark fw-semibold d-flex align-items-center justify-content-between">
+        <span>
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Eligible for DSP (Wasted / Severely Wasted — Not Yet Enrolled)
+            <span class="badge bg-dark ms-2"><?= count($eligible) ?></span>
+        </span>
+        <?php if (!empty($eligible)): ?>
+        <form action="<?= APP_URL ?>/programs/dsp/enroll-all" method="post" class="d-inline">
+            <?= \Core\Session::csrfField() ?>
+            <button type="button" class="btn btn-sm btn-dark confirm-trigger"
+                    data-confirm-title="Enroll All Eligible"
+                    data-confirm-message="Enroll all <?= count($eligible) ?> eligible beneficiar<?= count($eligible) === 1 ? 'y' : 'ies' ?> in DSP automatically?"
+                    data-confirm-btn="Enroll All"
+                    data-confirm-class="btn-dark">
+                <i class="bi bi-people-fill me-1"></i>Enroll All
+            </button>
+        </form>
+        <?php endif; ?>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -96,6 +110,12 @@
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $r['beneficiary_id'] ?>" class="text-decoration-none fw-semibold">
                                 <?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>
                             </a>
+                            <?php
+                                $ageMonths = DateHelper::ageInMonths($r['date_of_birth']);
+                                if ($ageMonths > 59):
+                            ?>
+                            <span class="badge bg-secondary ms-1">Aged Out</span>
+                            <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($r['barangay']) ?></td>
                         <td><span class="badge bg-secondary">Cycle <?= $r['cycle_number'] ?></span></td>
@@ -158,11 +178,16 @@
                     <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($active as $a): ?>
-                    <tr>
+                    <tr <?= ($a['age_months'] ?? 0) > 59 ? 'class="table-warning"' : '' ?>>
                         <td>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $a['beneficiary_id'] ?>" class="text-decoration-none fw-semibold">
                                 <?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>
                             </a>
+                            <?php if (($a['age_months'] ?? 0) > 59): ?>
+                            <span class="badge bg-secondary ms-1" title="Child is over 59 months old — should be discharged">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Aged Out
+                            </span>
+                            <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($a['barangay']) ?></td>
                         <td><span class="badge bg-secondary">Cycle <?= $a['cycle_number'] ?></span></td>

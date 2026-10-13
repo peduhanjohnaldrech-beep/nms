@@ -30,7 +30,7 @@ class BeneficiaryController extends Controller
         $filterBar = $_GET['barangay'] ?? '';
         $filterPurok = $_GET['purok'] ?? '';
         $source    = $_GET['source'] ?? '';
-        $ageStatus = $_GET['age_status'] ?? '';
+        $ageStatus = $_GET['age_status'] ?? 'active'; // default: hide aged-out
         $page      = max(1, (int)($_GET['page'] ?? 1));
 
         if (in_array($role, ['bhw', 'bns'])) {
@@ -231,6 +231,31 @@ class BeneficiaryController extends Controller
         $rows      = $stmt->fetchAll();
         $barangays = $sessionBrgy ? [] : $this->model->getAllBarangays();
 
+        // Fetch pending assessments for each beneficiary
+        if (!empty($rows)) {
+            $beneIds      = array_column($rows, 'id');
+            $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
+            $aStmt = $db->prepare(
+                "SELECT id, beneficiary_id, assessment_date, age_in_months,
+                        weight_kg, height_cm, muac_cm, nutritional_status,
+                        period, assessment_year, assessed_by, validation_status,
+                        rejection_note, created_at
+                 FROM assessments
+                 WHERE beneficiary_id IN ($placeholders)
+                   AND validation_status = 'pending'
+                 ORDER BY beneficiary_id, assessment_date DESC"
+            );
+            $aStmt->execute($beneIds);
+            $assessmentMap = [];
+            foreach ($aStmt->fetchAll() as $a) {
+                $assessmentMap[$a['beneficiary_id']][] = $a;
+            }
+            foreach ($rows as &$bene) {
+                $bene['assessments'] = $assessmentMap[$bene['id']] ?? [];
+            }
+            unset($bene);
+        }
+
         $this->view('beneficiaries/validation', [
             'rows'         => $rows,
             'barangays'    => $barangays,
@@ -263,9 +288,16 @@ class BeneficiaryController extends Controller
             }
         }
 
+        $userId = Session::get('user_id');
+
         $db->prepare(
             "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE id=?"
-        )->execute([Session::get('user_id'), (int)$id]);
+        )->execute([$userId, (int)$id]);
+
+        // Auto-validate all pending assessments for this beneficiary
+        $db->prepare(
+            "UPDATE assessments SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE beneficiary_id=? AND validation_status='pending'"
+        )->execute([$userId, (int)$id]);
 
         \ActivityLog::log('beneficiary_validate', "Validated beneficiary ID $id");
         Session::flash('success', 'Beneficiary registration approved.');
