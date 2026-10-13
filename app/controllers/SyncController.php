@@ -47,19 +47,29 @@ class SyncController extends ApiController
         // Collect beneficiary IDs for assessment filtering
         $beneIds = array_column($beneficiaries, 'id');
 
-        // --- Assessments (only for fetched beneficiaries) ---
+        // --- Assessments ---
+        // Pull assessments for recently-updated beneficiaries OR assessments
+        // updated since last sync (covers validation status changes).
         $assessments = [];
-        if ($beneIds) {
-            $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
-            $aWhere  = ["a.beneficiary_id IN ($placeholders)"];
-            $aParams = $beneIds;
-            if ($since) {
-                $aWhere[]  = 'a.created_at > ?';
-                $aParams[] = $since;
+        if ($since) {
+            $aWhere  = [];
+            $aParams = [];
+            if ($beneIds) {
+                $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
+                $aWhere[]  = "a.beneficiary_id IN ($placeholders)";
+                $aParams   = array_merge($aParams, $beneIds);
             }
-            $aClause = implode(' AND ', $aWhere);
-            $stmt = $db->prepare("SELECT * FROM assessments a WHERE $aClause ORDER BY a.id");
+            $aWhere[]  = '(a.created_at > ? OR a.validated_at > ?)';
+            $aParams[] = $since;
+            $aParams[] = $since;
+            $aClause   = implode(' OR ', $aWhere);
+            $stmt = $db->prepare("SELECT * FROM assessments a WHERE ($aClause) ORDER BY a.id");
             $stmt->execute($aParams);
+            $assessments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } elseif ($beneIds) {
+            $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
+            $stmt = $db->prepare("SELECT * FROM assessments a WHERE a.beneficiary_id IN ($placeholders) ORDER BY a.id");
+            $stmt->execute($beneIds);
             $assessments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
