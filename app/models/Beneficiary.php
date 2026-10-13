@@ -46,9 +46,8 @@ class Beneficiary extends Model
             }
         }
 
-        $cutoff = date('Y-m-d', strtotime('-59 months'));
-        if ($ageStatus === 'active')   { $conditions[] = "b.date_of_birth >= ?"; $params[] = $cutoff; }
-        if ($ageStatus === 'aged_out') { $conditions[] = "b.date_of_birth < ?";  $params[] = $cutoff; }
+        if ($ageStatus === 'active')   { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) <= 59"; }
+        if ($ageStatus === 'aged_out') { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) > 59"; }
         if ($ageStatus === '0_23')     { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 0 AND 23"; }
         if ($ageStatus === '24_59')    { $conditions[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 24 AND 59"; }
         if ($ageStatus === 'recovered') {
