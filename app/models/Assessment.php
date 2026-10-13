@@ -11,7 +11,7 @@ class Assessment extends Model
     public function findByBeneficiary(int $beneficiaryId): array
     {
         return $this->fetchAll(
-            "SELECT * FROM assessments WHERE beneficiary_id = ? ORDER BY assessment_date DESC",
+            "SELECT * FROM assessments WHERE beneficiary_id = ? AND validation_status = 'validated' ORDER BY assessment_date DESC",
             [$beneficiaryId]
         );
     }
@@ -19,7 +19,7 @@ class Assessment extends Model
     public function getLatest(int $beneficiaryId): array|false
     {
         return $this->fetch(
-            "SELECT * FROM assessments WHERE beneficiary_id = ? ORDER BY assessment_date DESC LIMIT 1",
+            "SELECT * FROM assessments WHERE beneficiary_id = ? AND validation_status = 'validated' ORDER BY assessment_date DESC LIMIT 1",
             [$beneficiaryId]
         );
     }
