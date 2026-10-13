@@ -30,7 +30,7 @@ class BeneficiaryController extends Controller
         $filterBar = $_GET['barangay'] ?? '';
         $filterPurok = $_GET['purok'] ?? '';
         $source    = $_GET['source'] ?? '';
-        $ageStatus = $_GET['age_status'] ?? ''; // show all by default
+        $ageStatus = $_GET['age_status'] ?? 'active'; // hide aged-out by default
         $page      = max(1, (int)($_GET['page'] ?? 1));
 
         if (in_array($role, ['bhw', 'bns'])) {

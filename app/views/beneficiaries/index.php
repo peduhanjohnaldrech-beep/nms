@@ -76,14 +76,10 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
 </div>
 
 <?php if (($ageStatus ?? 'active') === 'active'): ?>
-<div class="alert alert-secondary py-2 px-3 d-flex align-items-center gap-2 mb-2 border-0" style="background:#f0f4f8;">
-    <i class="bi bi-eye-slash text-secondary"></i>
-    <span class="small text-muted">Aged-out beneficiaries (over 59 months) are hidden.</span>
-    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => 'aged_out'])) ?>" class="ms-auto small text-decoration-none text-secondary">
-        <i class="bi bi-funnel me-1"></i>Show aged-out
-    </a>
-    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => ''])) ?>" class="small text-decoration-none text-secondary ms-2">
-        Show all
+<div class="d-flex align-items-center gap-2 mb-2">
+    <span class="small text-muted"><i class="bi bi-eye-slash me-1"></i>Aged-out beneficiaries are hidden.</span>
+    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => 'aged_out'])) ?>" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-people me-1"></i>Show Aged Out
     </a>
 </div>
 <?php endif; ?>
