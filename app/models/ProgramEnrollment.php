@@ -71,6 +71,7 @@ class ProgramEnrollment extends Model
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE pe.program = ? AND pe.status = 'Active'
+               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
              ORDER BY b.last_name, b.first_name",
             [$program]
         );
@@ -143,6 +144,7 @@ class ProgramEnrollment extends Model
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
              AND b.validation_status = 'validated'
+             AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments
                  WHERE program = ? AND status = 'Active'
