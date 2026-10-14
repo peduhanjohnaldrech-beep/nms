@@ -127,7 +127,7 @@ $notYetWeighed = $nywStmt->fetchAll();
         $readyToDischarge = $this->enrollmentModel->getReadyToDischarge($barangay, $purok);
         $history          = $this->enrollmentModel->getHistory('DSP', $historyYear, $barangay, $purok);
 
-        $barangays = $beneModel->getBarangays();
+        $barangays = $beneModel->getAllBarangays();
         $puroks    = $beneModel->getPuroksByBarangay($barangay);
 
         $this->view('programs/dsp', [
