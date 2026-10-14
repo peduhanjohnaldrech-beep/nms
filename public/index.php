@@ -93,8 +93,9 @@ $router->get('/programs/opt',             'ProgramController@opt');
 $router->get('/programs/dsp',             'ProgramController@dsp');
 $router->post('/programs/dsp/enroll',     'ProgramController@dspEnroll');
 $router->post('/programs/dsp/enroll-all', 'ProgramController@dspEnrollAll');
-$router->post('/programs/dsp/discharge',  'ProgramController@dspDischarge');
-$router->post('/programs/dsp/update',     'ProgramController@dspUpdate');
+$router->post('/programs/dsp/discharge',   'ProgramController@dspDischarge');
+$router->post('/programs/dsp/update',      'ProgramController@dspUpdate');
+$router->post('/programs/dsp/monitoring',  'ProgramController@dspMonitoringCreate');
 $router->get('/programs/mns',            'ProgramController@mns');
 $router->post('/programs/mns/vitamina',              'ProgramController@mnsVitaminA');
 $router->post('/programs/mns/vita/{id}/delete',      'ProgramController@mnsVitaminADelete');
@@ -228,7 +229,9 @@ $router->get('/api/programs/mns',           'ProgramApiController@mns');
 $router->get('/api/programs/dsp',           'ProgramApiController@dsp');
 $router->post('/api/programs/dsp/enroll',   'ProgramApiController@dspEnroll');
 $router->post('/api/programs/dsp/update',   'ProgramApiController@dspUpdate');
-$router->post('/api/programs/dsp/discharge','ProgramApiController@dspDischarge');
+$router->post('/api/programs/dsp/discharge',    'ProgramApiController@dspDischarge');
+$router->get('/api/programs/dsp/monitoring',    'ProgramApiController@dspMonitoringList');
+$router->post('/api/programs/dsp/monitoring',   'ProgramApiController@dspMonitoringCreate');
 $router->post('/api/programs/mns/vitamina',             'ProgramApiController@mnsVitaminA');
 $router->delete('/api/programs/mns/vitamina/{id}',      'ProgramApiController@mnsVitaminADelete');
 $router->post('/api/programs/mns/mnp',                  'ProgramApiController@mnsMnp');
@@ -270,6 +273,7 @@ $router->get('/api/stats/dashboard',  'StatsApiController@dashboard');
 
 // Validation — Assessments
 $router->get('/api/validation/pending',          'ValidationApiController@pending');
+$router->get('/api/validation/all',              'ValidationApiController@allSubmissions');
 $router->get('/api/validation/my-submissions',   'ValidationApiController@mySubmissions');
 $router->get('/api/validation/counts',           'ValidationApiController@counts');
 $router->post('/api/validation/batch',           'ValidationApiController@batch');
@@ -278,6 +282,7 @@ $router->post('/api/validation/{id}/reject',     'ValidationApiController@reject
 
 // Validation — Beneficiaries
 $router->get('/api/validation/beneficiaries/pending',        'ValidationApiController@beneficiariesPending');
+$router->get('/api/validation/beneficiaries/all',            'ValidationApiController@allBeneficiarySubmissions');
 $router->get('/api/validation/beneficiaries/my-submissions', 'ValidationApiController@myBeneficiarySubmissions');
 $router->post('/api/validation/beneficiaries/{id}/validate', 'ValidationApiController@validateBeneficiary');
 $router->post('/api/validation/beneficiaries/{id}/reject',   'ValidationApiController@rejectBeneficiary');

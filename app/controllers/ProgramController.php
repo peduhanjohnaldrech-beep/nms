@@ -144,6 +144,50 @@ $notYetWeighed = $nywStmt->fetchAll();
         ]);
     }
 
+    public function dspMonitoringCreate(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('programs');
+        if (!$this->isPost()) { $this->redirect('/programs/dsp'); }
+        $this->validateCsrf();
+
+        $enrollmentId   = (int)($_POST['enrollment_id']   ?? 0);
+        $beneficiaryId  = (int)($_POST['beneficiary_id']  ?? 0);
+        $dob            = $_POST['date_of_birth']         ?? '';
+        $sex            = $_POST['sex']                   ?? '';
+        $monitoringDate = $_POST['monitoring_date']       ?? date('Y-m-d');
+        $weightKg       = (float)($_POST['weight_kg']     ?? 0);
+        $heightCm       = !empty($_POST['height_cm'])     ? (float)$_POST['height_cm'] : null;
+        $muacCm         = !empty($_POST['muac_cm'])       ? (float)$_POST['muac_cm']   : null;
+
+        if (!$enrollmentId || !$beneficiaryId || $weightKg <= 0 || $muacCm === null) {
+            Session::flash('error', 'Weight and MUAC are required.');
+            $this->redirect('/programs/dsp');
+        }
+
+        $ageMonths = \DateHelper::ageInMonths($dob, $monitoringDate);
+        $model     = new \App\Models\DspMonitoring();
+        $model->createWithZScore([
+            'enrollment_id'    => $enrollmentId,
+            'beneficiary_id'   => $beneficiaryId,
+            'monitoring_date'  => $monitoringDate,
+            'age_in_months'    => $ageMonths,
+            'sex'              => $sex,
+            'weight_kg'        => $weightKg,
+            'height_cm'        => $heightCm,
+            'muac_cm'          => $muacCm,
+            'monitored_by'     => trim($_POST['monitored_by'] ?? ''),
+            'remarks'          => trim($_POST['remarks'] ?? ''),
+            'validation_status' => 'validated',
+            'validated_by'     => Session::get('user_id'),
+            'validated_at'     => date('Y-m-d H:i:s'),
+            'created_by'       => Session::get('user_id'),
+        ]);
+
+        Session::flash('success', 'DSP monitoring record saved.');
+        $this->redirect('/programs/dsp');
+    }
+
     public function dspEnrollAll(): void
     {
         $this->requireAuth();
