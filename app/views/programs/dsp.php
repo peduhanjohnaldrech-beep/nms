@@ -44,7 +44,7 @@ $_dspDefault = count($readyToDischarge) > 0 ? 'dsp-discharge' : (count($eligible
 <!-- Tabbed Card -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white py-2 border-bottom">
-        <ul class="nav nav-pills" id="dspTabs" role="tablist">
+        <ul class="nav nav-underline" id="dspTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-eligible" data-bs-toggle="tab" data-bs-target="#dsp-eligible" type="button" role="tab">
                     Eligible

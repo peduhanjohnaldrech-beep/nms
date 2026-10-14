@@ -24,7 +24,7 @@ $__activeTab = $ageStatus ?? 'active';
     </div>
 </div>
 
-<ul class="nav nav-pills mb-3">
+<ul class="nav nav-underline mb-3">
     <li class="nav-item">
         <a class="nav-link <?= $__activeTab === 'active' ? 'active' : '' ?>"
            href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'active'])) ?>">
