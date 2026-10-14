@@ -43,41 +43,33 @@ $_dspDefault = count($readyToDischarge) > 0 ? 'dsp-discharge' : (count($eligible
 
 <!-- Tabbed Card -->
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header p-0 px-3">
-        <ul class="nav nav-tabs card-header-tabs" id="dspTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-eligible" data-bs-toggle="tab" data-bs-target="#dsp-eligible" type="button" role="tab">
-                    Eligible
-                    <?php if (count($eligible) > 0): ?>
-                    <span class="badge bg-warning text-dark ms-1"><?= count($eligible) ?></span>
-                    <?php endif; ?>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-active" data-bs-toggle="tab" data-bs-target="#dsp-active" type="button" role="tab">
-                    Active
-                    <?php if (count($active) > 0): ?>
-                    <span class="badge bg-success ms-1"><?= count($active) ?></span>
-                    <?php endif; ?>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-discharge" data-bs-toggle="tab" data-bs-target="#dsp-discharge" type="button" role="tab">
-                    Ready to Discharge
-                    <?php if (count($readyToDischarge) > 0): ?>
-                    <span class="badge bg-primary ms-1"><?= count($readyToDischarge) ?></span>
-                    <?php endif; ?>
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-history" data-bs-toggle="tab" data-bs-target="#dsp-history" type="button" role="tab">
-                    History
-                    <?php if (count($history) > 0): ?>
-                    <span class="badge bg-secondary ms-1"><?= count($history) ?></span>
-                    <?php endif; ?>
-                </button>
-            </li>
-        </ul>
+    <div class="card-header bg-white py-2 border-bottom">
+        <div class="btn-group btn-group-sm" id="dspTabs" role="group">
+            <button class="btn btn-outline-secondary" id="tab-eligible" data-bs-toggle="tab" data-bs-target="#dsp-eligible" type="button">
+                Eligible
+                <?php if (count($eligible) > 0): ?>
+                <span class="badge bg-warning text-dark ms-1"><?= count($eligible) ?></span>
+                <?php endif; ?>
+            </button>
+            <button class="btn btn-outline-secondary" id="tab-active" data-bs-toggle="tab" data-bs-target="#dsp-active" type="button">
+                Active
+                <?php if (count($active) > 0): ?>
+                <span class="badge bg-success ms-1"><?= count($active) ?></span>
+                <?php endif; ?>
+            </button>
+            <button class="btn btn-outline-secondary" id="tab-discharge" data-bs-toggle="tab" data-bs-target="#dsp-discharge" type="button">
+                Ready to Discharge
+                <?php if (count($readyToDischarge) > 0): ?>
+                <span class="badge bg-primary ms-1"><?= count($readyToDischarge) ?></span>
+                <?php endif; ?>
+            </button>
+            <button class="btn btn-outline-secondary" id="tab-history" data-bs-toggle="tab" data-bs-target="#dsp-history" type="button">
+                History
+                <?php if (count($history) > 0): ?>
+                <span class="badge bg-secondary ms-1"><?= count($history) ?></span>
+                <?php endif; ?>
+            </button>
+        </div>
     </div>
     <div class="tab-content">
 
