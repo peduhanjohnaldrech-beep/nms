@@ -88,6 +88,7 @@
                                     data-bs-toggle="modal" data-bs-target="#completeModal"
                                     data-id="<?= $r['id'] ?>"
                                     data-name="<?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>"
+                                    data-weight="<?= $r['weight_kg'] ?? '' ?>"
                                     title="Discharge">
                                 <i class="bi bi-check2-circle me-1"></i>Discharge
                             </button>
@@ -308,6 +309,7 @@
                                     data-bs-toggle="modal" data-bs-target="#completeModal"
                                     data-id="<?= $a['id'] ?>"
                                     data-name="<?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>"
+                                    data-weight="<?= $a['weight_kg'] ?? '' ?>"
                                     title="Mark Completed">
                                 <i class="bi bi-check2-circle"></i>
                             </button>
@@ -483,7 +485,8 @@
                     <p>Completing enrollment for: <strong id="completeName"></strong></p>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Post-Weight (kg)</label>
-                        <input type="number" step="0.01" name="post_weight_kg" class="form-control">
+                        <input type="number" step="0.01" name="post_weight_kg" id="completePostWeight" class="form-control">
+                        <div class="form-text" id="completeWeightNote"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -564,6 +567,11 @@ document.getElementById('completeModal').addEventListener('show.bs.modal', funct
     const btn = e.relatedTarget;
     document.getElementById('completeEnrollmentId').value = btn.dataset.id;
     document.getElementById('completeName').textContent   = btn.dataset.name;
+    const w = btn.dataset.weight || '';
+    document.getElementById('completePostWeight').value   = w;
+    document.getElementById('completeWeightNote').textContent = w
+        ? 'Auto-filled from latest assessment (' + w + ' kg). Edit if needed.'
+        : '';
 });
 document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
     const btn = e.relatedTarget;
