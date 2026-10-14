@@ -257,6 +257,7 @@ $router->get('/api/reports/outcome',      'ReportApiController@outcome');
 $router->get('/api/reports/comparison',   'ReportApiController@comparison');
 $router->get('/api/reports/distribution', 'ReportApiController@distribution');
 $router->get('/api/reports/export',      'ReportApiController@export');
+$router->get('/api/programs/puroks',     'ProgramApiController@puroks');
 
 // Users (admin only)
 $router->get('/api/users',              'UserApiController@index');

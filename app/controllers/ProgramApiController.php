@@ -16,12 +16,14 @@ class ProgramApiController extends ApiController
         $period = $_GET['period']        ?? '';
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
+        $purok    = $_GET['purok'] ?? '';
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
         $where  = ['b.deleted_at IS NULL', "b.validation_status = 'validated'", $bnsFilter, 'a.assessment_year = ?'];
         $params = [$year];
 
-        if ($period) { $where[] = 'a.period = ?'; $params[] = $period; }
-        if ($brgy)   { $where[] = 'b.barangay = ?'; $params[] = $brgy; }
+        if ($period) { $where[] = 'a.period = ?';                        $params[] = $period; }
+        if ($brgy)   { $where[] = 'b.barangay = ?';                      $params[] = $brgy; }
+        if ($purok)  { $where[] = 'LOWER(b.purok_zone) = LOWER(?)';      $params[] = $purok; }
 
         $stmt = $db->prepare(
             "SELECT a.id, a.assessment_date, a.age_in_months, a.weight_kg, a.height_cm,
@@ -373,6 +375,14 @@ class ProgramApiController extends ApiController
             ->prepare("UPDATE program_enrollments SET status=?,end_date=?,notes=? WHERE id=? AND program=?")
             ->execute([$data['status'] ?? 'Completed', $data['end_date'] ?? date('Y-m-d'), $data['notes'] ?? null, $data['id'], $code]);
         $this->success([], "Discharged from $code");
+    }
+
+    public function puroks(): void
+    {
+        $this->requireApiAuth();
+        $barangay = $_GET['barangay'] ?? '';
+        $puroks   = (new \App\Models\Beneficiary())->getPuroksByBarangay($barangay);
+        $this->success(['puroks' => $puroks]);
     }
 
     private function scopedBarangay(?string $requested): ?string
