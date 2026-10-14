@@ -305,14 +305,6 @@
                                     title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-success"
-                                    data-bs-toggle="modal" data-bs-target="#completeModal"
-                                    data-id="<?= $a['id'] ?>"
-                                    data-name="<?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>"
-                                    data-weight="<?= $a['weight_kg'] ?? '' ?>"
-                                    title="Mark Completed">
-                                <i class="bi bi-check2-circle"></i>
-                            </button>
                             <form action="<?= APP_URL ?>/programs/dsp/discharge" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <input type="hidden" name="enrollment_id" value="<?= $a['id'] ?>">
