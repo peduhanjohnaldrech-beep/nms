@@ -12,6 +12,7 @@ use App\Models\LnsSqRecord;
 use App\Models\Assessment;
 use App\Models\Program;
 use App\Models\DispensingRecord;
+use App\Models\Beneficiary;
 
 class ProgramController extends Controller
 {
@@ -115,12 +116,19 @@ $notYetWeighed = $nywStmt->fetchAll();
     {
         $this->requireAuth();
 
-        $eligible         = $this->enrollmentModel->getEligibleForDSP();
-        $active           = $this->enrollmentModel->getActive('DSP');
+        $beneModel   = new Beneficiary();
+        $barangay    = trim($_GET['barangay']    ?? '');
+        $purok       = trim($_GET['purok']       ?? '');
+        $historyYear = (int)($_GET['history_year'] ?? date('Y'));
+
+        $eligible         = $this->enrollmentModel->getEligibleForDSP($barangay, $purok);
+        $active           = $this->enrollmentModel->getActive('DSP', $barangay, $purok);
         $notEnrolled      = $this->enrollmentModel->getNotEnrolledInProgram('DSP');
-        $readyToDischarge = $this->enrollmentModel->getReadyToDischarge();
-        $historyYear      = (int)($_GET['history_year'] ?? date('Y'));
-        $history          = $this->enrollmentModel->getHistory('DSP', $historyYear);
+        $readyToDischarge = $this->enrollmentModel->getReadyToDischarge($barangay, $purok);
+        $history          = $this->enrollmentModel->getHistory('DSP', $historyYear, $barangay, $purok);
+
+        $barangays = $beneModel->getBarangays();
+        $puroks    = $beneModel->getPuroksByBarangay($barangay);
 
         $this->view('programs/dsp', [
             'eligible'         => $eligible,
@@ -129,6 +137,10 @@ $notYetWeighed = $nywStmt->fetchAll();
             'readyToDischarge' => $readyToDischarge,
             'history'          => $history,
             'historyYear'      => $historyYear,
+            'barangays'        => $barangays,
+            'puroks'           => $puroks,
+            'filterBarangay'   => $barangay,
+            'filterPurok'      => $purok,
         ]);
     }
 

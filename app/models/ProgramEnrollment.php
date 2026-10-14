@@ -55,13 +55,18 @@ class ProgramEnrollment extends Model
         ]);
     }
 
-    public function getActive(string $program): array
+    public function getActive(string $program, string $barangay = '', string $purok = ''): array
     {
+        $where  = "pe.program = ? AND pe.status = 'Active' AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59";
+        $params = [$program];
+        if ($barangay !== '') { $where .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $where .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+
         return $this->fetchAll(
             "SELECT pe.*,
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = pe.program AND pe2.id <= pe.id) AS cycle_number,
-                    b.last_name, b.first_name, b.middle_name, b.barangay, b.date_of_birth, b.sex,
+                    b.last_name, b.first_name, b.middle_name, b.barangay, b.purok_zone, b.date_of_birth, b.sex,
                     a.nutritional_status, a.wflh_status, a.assessment_date, a.muac_cm,
                     (SELECT nutritional_status FROM assessments
                      WHERE beneficiary_id = pe.beneficiary_id AND validation_status = 'validated'
@@ -77,10 +82,9 @@ class ProgramEnrollment extends Model
                  AND validation_status = 'validated'
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
-             WHERE pe.program = ? AND pe.status = 'Active'
-               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
+             WHERE $where
              ORDER BY b.last_name, b.first_name",
-            [$program]
+            $params
         );
     }
 
@@ -96,8 +100,13 @@ class ProgramEnrollment extends Model
         return $this->update($enrollmentId, ['status' => 'Dropped', 'end_date' => date('Y-m-d')]);
     }
 
-    public function getEligibleForDSP(): array
+    public function getEligibleForDSP(string $barangay = '', string $purok = ''): array
     {
+        $extra  = '';
+        $params = [];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+
         return $this->fetchAll(
             "SELECT b.*, a.nutritional_status, a.wflh_status,
                     a.weight_for_age_zscore, a.wflh_zscore, a.weight_kg, a.assessment_date
@@ -112,8 +121,9 @@ class ProgramEnrollment extends Model
              AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments WHERE program = 'DSP' AND status = 'Active'
-             )
-             ORDER BY a.wflh_status, a.nutritional_status, b.last_name"
+             )$extra
+             ORDER BY a.wflh_status, a.nutritional_status, b.last_name",
+            $params
         );
     }
 
@@ -176,18 +186,23 @@ class ProgramEnrollment extends Model
         );
     }
 
-    public function getHistory(string $program, int $year): array
+    public function getHistory(string $program, int $year, string $barangay = '', string $purok = ''): array
     {
+        $extra  = '';
+        $params = [$program, $year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+
         return $this->fetchAll(
             "SELECT pe.*,
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = pe.program AND pe2.id <= pe.id) AS cycle_number,
-                    b.last_name, b.first_name, b.barangay, b.date_of_birth
+                    b.last_name, b.first_name, b.barangay, b.purok_zone, b.date_of_birth
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE pe.program = ? AND pe.status IN ('Completed','Dropped') AND pe.cycle_year = ?
+             WHERE pe.program = ? AND pe.status IN ('Completed','Dropped') AND pe.cycle_year = ?$extra
              ORDER BY pe.end_date DESC, b.last_name",
-            [$program, $year]
+            $params
         );
     }
 
@@ -199,13 +214,18 @@ class ProgramEnrollment extends Model
         ) ?: null;
     }
 
-    public function getReadyToDischarge(): array
+    public function getReadyToDischarge(string $barangay = '', string $purok = ''): array
     {
+        $extra  = '';
+        $params = [];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+
         return $this->fetchAll(
             "SELECT pe.*,
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = 'DSP' AND pe2.id <= pe.id) AS cycle_number,
-                    b.last_name, b.first_name, b.barangay, b.date_of_birth,
+                    b.last_name, b.first_name, b.barangay, b.purok_zone, b.date_of_birth,
                     a.nutritional_status, a.wflh_status, a.assessment_date, a.weight_kg, a.muac_cm
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
@@ -214,7 +234,7 @@ class ProgramEnrollment extends Model
                  AND validation_status = 'validated'
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
-             WHERE pe.program = 'DSP' AND pe.status = 'Active'
+             WHERE pe.program = 'DSP' AND pe.status = 'Active'$extra
              AND (
                  TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) > 59
                  OR (
@@ -235,7 +255,8 @@ class ProgramEnrollment extends Model
                      ) = 2
                  )
              )
-             ORDER BY b.last_name, b.first_name"
+             ORDER BY b.last_name, b.first_name",
+            $params
         );
     }
 

@@ -10,6 +10,54 @@
     </a>
 </div>
 
+<!-- Filter Bar -->
+<form method="get" action="" class="card border-0 shadow-sm mb-3 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-semibold mb-1">Barangay</label>
+            <select name="barangay" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">— All Barangays —</option>
+                <?php foreach ($barangays as $b): ?>
+                <option value="<?= htmlspecialchars($b['barangay']) ?>" <?= $filterBarangay === $b['barangay'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($b['barangay']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold mb-1">Purok / Zone</label>
+            <select name="purok" class="form-select form-select-sm" <?= empty($puroks) ? 'disabled' : '' ?>>
+                <option value="">— All Puroks —</option>
+                <?php foreach ($puroks as $p): ?>
+                <option value="<?= htmlspecialchars($p) ?>" <?= $filterPurok === $p ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($p) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-funnel me-1"></i>Filter
+            </button>
+            <?php if ($filterBarangay !== '' || $filterPurok !== ''): ?>
+            <a href="?" class="btn btn-sm btn-outline-secondary ms-1">
+                <i class="bi bi-x-circle me-1"></i>Clear
+            </a>
+            <?php endif; ?>
+        </div>
+        <?php if ($filterBarangay !== '' || $filterPurok !== ''): ?>
+        <div class="col-auto">
+            <span class="badge bg-primary">
+                Filtered: <?= htmlspecialchars($filterBarangay ?: 'All') ?><?= $filterPurok ? ' / ' . htmlspecialchars($filterPurok) : '' ?>
+            </span>
+        </div>
+        <?php endif; ?>
+        <?php if ($historyYear): ?>
+        <input type="hidden" name="history_year" value="<?= $historyYear ?>">
+        <?php endif; ?>
+    </div>
+</form>
+
 <!-- Summary Stats -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
@@ -278,16 +326,6 @@
                         </td>
                         <td><?= DateHelper::formatDate($a['enrollment_date'], 'M j, Y') ?></td>
                         <td class="text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                    data-bs-toggle="modal" data-bs-target="#editModal"
-                                    data-id="<?= $a['id'] ?>"
-                                    data-name="<?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>"
-                                    data-pre="<?= $a['pre_weight_kg'] ?? '' ?>"
-                                    data-post="<?= $a['post_weight_kg'] ?? '' ?>"
-                                    data-intervention="<?= htmlspecialchars($a['intervention_type'] ?? '') ?>"
-                                    title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
                             <form action="<?= APP_URL ?>/programs/dsp/discharge" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <input type="hidden" name="enrollment_id" value="<?= $a['id'] ?>">
