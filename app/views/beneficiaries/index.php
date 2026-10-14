@@ -90,13 +90,13 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th><th>Name</th><th>DOB</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Last Assessed</th>
+                        <th>#</th><th>Name</th><th>DOB</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Status</th><th>Last Assessed</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rows)): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No beneficiaries found.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No beneficiaries found.</td></tr>
                     <?php endif; ?>
                     <?php $rowNum = (($page ?? 1) - 1) * 25 + 1; ?>
                     <?php foreach ($rows as $b): ?>
@@ -121,6 +121,13 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                         <td class="text-nowrap"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></td>
                         <td><?= htmlspecialchars($b['sex']) ?></td>
                         <td><?= htmlspecialchars($b['barangay']) ?></td>
+                        <td>
+                            <?php if (!empty($b['latest_status'])): ?>
+                            <span class="badge status-<?= strtolower($b['latest_status']) ?>"><?= htmlspecialchars($b['latest_status']) ?></span>
+                            <?php else: ?>
+                            <span class="text-muted small">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-nowrap small">
                             <?php if (!empty($b['last_assessed'])): ?>
                             <?php $daysAgo = (int)((time() - strtotime($b['last_assessed'])) / 86400); ?>

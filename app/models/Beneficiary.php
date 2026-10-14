@@ -65,6 +65,7 @@ class Beneficiary extends Model
         $rows = $this->fetchAll(
             "SELECT b.*,
                     (SELECT MAX(assessment_date) FROM assessments WHERE beneficiary_id = b.id) AS last_assessed,
+                    (SELECT nutritional_status FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1) AS latest_status,
                     CASE WHEN (SELECT nutritional_status FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1) = 'Normal'
                          AND EXISTS (SELECT 1 FROM assessments WHERE beneficiary_id = b.id AND nutritional_status IN ('SUW','UW'))
                          THEN 1 ELSE 0 END AS is_recovered
