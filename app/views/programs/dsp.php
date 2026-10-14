@@ -199,55 +199,9 @@
 
 <!-- Active Enrollments -->
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-success text-white fw-semibold d-flex justify-content-between align-items-center">
-        <span>
-            <i class="bi bi-check-circle me-2"></i>Active Enrollments
-            <span class="badge bg-light text-dark ms-2"><?= count($active) ?></span>
-        </span>
-        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#manualEnrollCollapse">
-            <i class="bi bi-person-plus me-1"></i>Enroll Manually
-        </button>
-    </div>
-    <!-- Manual Enrollment (inline collapsible) -->
-    <div class="collapse" id="manualEnrollCollapse">
-        <div class="card-body border-bottom bg-light">
-            <p class="small text-muted mb-2">Enroll any beneficiary regardless of nutritional status</p>
-            <form action="<?= APP_URL ?>/programs/dsp/enroll" method="post" class="row g-2 align-items-end">
-                <?= \Core\Session::csrfField() ?>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold small mb-1">Beneficiary <span class="text-danger">*</span></label>
-                    <select name="beneficiary_id" class="form-select form-select-sm" required>
-                        <option value="">— Select Beneficiary —</option>
-                        <?php foreach ($notEnrolled as $b): ?>
-                        <option value="<?= $b['id'] ?>">
-                            <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold small mb-1">Intervention Type</label>
-                    <select name="intervention_type" class="form-select form-select-sm">
-                        <option value="">— Select —</option>
-                        <option value="RUSF">RUSF (Moderately Wasted)</option>
-                        <option value="RUTF">RUTF (Severely Wasted)</option>
-                        <option value="Supplementary Feeding">Supplementary Feeding</option>
-                        <option value="Health Education">Health Education</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small mb-1">Pre-Weight (kg)</label>
-                    <input type="number" step="0.01" name="pre_weight_kg" class="form-control form-control-sm" placeholder="e.g. 10.5">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small mb-1">Notes</label>
-                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional">
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-plus-lg"></i></button>
-                </div>
-            </form>
-        </div>
+    <div class="card-header bg-success text-white fw-semibold">
+        <i class="bi bi-check-circle me-2"></i>Active Enrollments
+        <span class="badge bg-light text-dark ms-2"><?= count($active) ?></span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
