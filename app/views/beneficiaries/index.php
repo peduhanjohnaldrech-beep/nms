@@ -2,11 +2,9 @@
 $pageTitle = 'Beneficiaries';
 $__role = \Core\Session::get('user_role');
 $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
-$__tabBase = array_filter($_GET, fn($k) => !in_array($k, ['age_status', 'page']), ARRAY_FILTER_USE_KEY);
-$__activeTab = $ageStatus ?? 'active';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+<div class="d-flex justify-content-between align-items-center my-3">
     <h4 class="mb-0">
         <i class="bi bi-people-fill me-2"></i>Beneficiaries
     </h4>
@@ -24,36 +22,9 @@ $__activeTab = $ageStatus ?? 'active';
     </div>
 </div>
 
-<div class="nms-tabs">
-    <a class="<?= $__activeTab === 'active' ? 'active' : '' ?>"
-       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'active'])) ?>">
-        <i class="bi bi-people-fill"></i>Active
-    </a>
-    <a class="<?= $__activeTab === 'aged_out' ? 'active' : '' ?>"
-       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'aged_out'])) ?>">
-        Aged Out
-    </a>
-    <a class="<?= $__activeTab === 'recovered' ? 'active' : '' ?>"
-       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'recovered'])) ?>">
-        <i class="bi bi-heart-fill text-success"></i>Recovered
-    </a>
-    <a href="<?= APP_URL ?>/beneficiaries/followup">
-        <i class="bi bi-exclamation-triangle text-warning"></i>Follow-up
-    </a>
-    <?php if (in_array(\Core\Session::get('user_role'), ['admin', 'nutritionist', 'midwife'])): ?>
-    <a href="<?= APP_URL ?>/beneficiaries/validation">
-        <i class="bi bi-shield-check"></i>Validation
-        <?php if (!empty($__pendingValidation) && $__pendingValidation > 0): ?>
-        <span class="badge bg-warning text-dark"><?= $__pendingValidation ?></span>
-        <?php endif; ?>
-    </a>
-    <?php endif; ?>
-</div>
-
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <input type="hidden" name="age_status" value="<?= htmlspecialchars($__activeTab) ?>">
             <div class="col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="Search by name..."
                        value="<?= htmlspecialchars($search ?? '') ?>">
@@ -81,6 +52,16 @@ $__activeTab = $ageStatus ?? 'active';
                 </select>
             </div>
             <div class="col-md-2">
+                <select name="age_status" class="form-select">
+                    <option value="">All Ages</option>
+                    <option value="active"    <?= ($ageStatus ?? 'active') === 'active'    ? 'selected' : '' ?>>Active (0–59 mo)</option>
+                    <option value="0_23"      <?= ($ageStatus ?? '') === '0_23'      ? 'selected' : '' ?>>0–23 months</option>
+                    <option value="24_59"     <?= ($ageStatus ?? '') === '24_59'     ? 'selected' : '' ?>>24–59 months</option>
+                    <option value="aged_out"  <?= ($ageStatus ?? '') === 'aged_out'  ? 'selected' : '' ?>>Aged Out (&gt;59 mo)</option>
+                    <option value="recovered" <?= ($ageStatus ?? '') === 'recovered' ? 'selected' : '' ?>>Recovered</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search"></i></button>
             </div>
         </form>
@@ -94,21 +75,16 @@ $__activeTab = $ageStatus ?? 'active';
     </div>
 </div>
 
+<?php if (($ageStatus ?? 'active') === 'active'): ?>
+<div class="d-flex align-items-center gap-2 mb-2">
+    <span class="small text-muted"><i class="bi bi-eye-slash me-1"></i>Aged-out beneficiaries are hidden.</span>
+    <a href="?<?= http_build_query(array_merge($_GET, ['age_status' => 'aged_out'])) ?>" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-people me-1"></i>Show Aged Out
+    </a>
+</div>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <span class="fw-semibold">
-            Results
-            <?php if (!empty($total)): ?>
-            <span class="badge bg-secondary ms-1"><?= number_format($total) ?></span>
-            <?php endif; ?>
-        </span>
-        <?php if (!empty($search) || !empty($filterBar) || !empty($filterPurok) || (!empty($ageStatus) && $ageStatus !== 'active')): ?>
-        <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-x-circle me-1"></i>Clear Filters
-        </a>
-        <?php endif; ?>
-    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
