@@ -255,10 +255,10 @@ class SyncController extends ApiController
                     'assessed_by'       => $item['assessed_by'] ?? $this->apiUser['full_name'],
                     'remarks'           => $item['remarks'] ?? null,
                     'created_by'        => $this->userId(),
-                    'validation_status' => (!$this->isFieldWorker() || $bene['validation_status'] === 'validated') ? 'validated' : 'pending',
-                    'validated_by'      => (!$this->isFieldWorker() || $bene['validation_status'] === 'validated') ? $this->userId() : null,
-                    'validated_at'      => (!$this->isFieldWorker() || $bene['validation_status'] === 'validated') ? date('Y-m-d H:i:s') : null,
-                    'check_outliers'    => $this->isFieldWorker() && $bene['validation_status'] === 'validated',
+                    'validation_status' => $this->isFieldWorker() ? 'pending' : 'validated',
+                    'validated_by'      => $this->isFieldWorker() ? null : $this->userId(),
+                    'validated_at'      => $this->isFieldWorker() ? null : date('Y-m-d H:i:s'),
+                    'check_outliers'    => false,
                 ]);
 
                 $results['created'][] = ['type' => 'assessment', 'local_id' => $localId, 'server_id' => $serverId];

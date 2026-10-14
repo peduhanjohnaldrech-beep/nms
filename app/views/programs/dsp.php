@@ -46,7 +46,7 @@
             <i class="bi bi-arrow-up-circle me-2"></i>
             Ready to Discharge
             <span class="badge bg-success ms-2"><?= count($readyToDischarge) ?></span>
-            <span class="fw-normal small ms-1 text-success opacity-75">— latest assessment shows normal status</span>
+            <span class="fw-normal small ms-1 text-success opacity-75">— 2 consecutive normal assessments + MUAC recorded</span>
         </span>
         <a href="<?= APP_URL ?>/reports/export?type=dsp_ready&format=excel" class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-excel me-1"></i>Export
@@ -56,7 +56,7 @@
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>WFL/H</th><th>WFA</th><th>Last Assessment</th><th>Action</th></tr>
+                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>WFL/H</th><th>WFA</th><th>MUAC</th><th>Last Assessment</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                     <?php foreach ($readyToDischarge as $r): ?>
@@ -82,6 +82,7 @@
                             <?php else: ?><span class="badge bg-success">Normal</span><?php endif; ?>
                         </td>
                         <td><span class="badge status-<?= strtolower($r['nutritional_status']) ?>"><?= $r['nutritional_status'] ?></span></td>
+                        <td><?= !empty($r['muac_cm']) ? $r['muac_cm'] . ' cm' : '<span class="badge bg-secondary">—</span>' ?></td>
                         <td><?= DateHelper::formatDate($r['assessment_date'], 'M j, Y') ?></td>
                         <td class="text-nowrap">
                             <button type="button" class="btn btn-sm btn-success"
@@ -252,13 +253,25 @@
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Latest Status</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
+                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Latest Status</th><th>Progress</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     <?php if (empty($active)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($active as $a): ?>
+                    <?php
+                        $latestNormal = !empty($a['nutritional_status'])
+                            && !in_array($a['nutritional_status'], ['SUW','UW'])
+                            && !in_array($a['wflh_status'] ?? '', ['SW','MW']);
+                        $prevNormal = !empty($a['prev_nutritional_status'])
+                            && !in_array($a['prev_nutritional_status'], ['SUW','UW'])
+                            && !in_array($a['prev_wflh_status'] ?? '', ['SW','MW']);
+                        $consec = $latestNormal ? ($prevNormal ? 2 : 1) : 0;
+                        $overdue = !empty($a['assessment_date'])
+                            && (new DateTime())->diff(new DateTime($a['assessment_date']))->days > 30;
+                        $noMuac = empty($a['muac_cm']);
+                    ?>
                     <tr <?= ($a['age_months'] ?? 0) > 59 ? 'class="table-warning"' : '' ?>>
                         <td>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $a['beneficiary_id'] ?>" class="text-decoration-none fw-semibold">
@@ -266,6 +279,9 @@
                             </a>
                             <?php if (($a['age_months'] ?? 0) > 59): ?>
                             <span class="badge bg-secondary ms-1" title="Child is over 59 months old"><i class="bi bi-exclamation-triangle me-1"></i>Aged Out</span>
+                            <?php endif; ?>
+                            <?php if ($overdue): ?>
+                            <span class="badge bg-danger ms-1" title="Last assessment was more than 30 days ago"><i class="bi bi-clock me-1"></i>Overdue</span>
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($a['barangay']) ?></td>
@@ -286,6 +302,19 @@
                             <span class="badge status-<?= strtolower($a['nutritional_status']) ?>"><?= $a['nutritional_status'] ?></span>
                             <?php endif; ?>
                             <?php if (empty($a['wflh_status']) && empty($a['nutritional_status'])): ?>—<?php endif; ?>
+                        </td>
+                        <td class="text-nowrap">
+                            <?php if (empty($a['assessment_date'])): ?>
+                            <span class="badge bg-secondary">Not assessed</span>
+                            <?php else: ?>
+                            <span class="badge <?= $consec >= 2 ? 'bg-success' : ($consec === 1 ? 'bg-warning text-dark' : 'bg-danger') ?>"
+                                  title="<?= $consec ?>/2 consecutive normal assessments required for discharge">
+                                <?= $consec ?>/2 Normal
+                            </span>
+                            <?php if ($noMuac): ?>
+                            <span class="badge bg-warning text-dark ms-1" title="MUAC not recorded — required for discharge">No MUAC</span>
+                            <?php endif; ?>
+                            <?php endif; ?>
                         </td>
                         <td class="text-nowrap">
                             <?= !empty($a['pre_weight_kg']) ? $a['pre_weight_kg'] . ' kg' : '—' ?>

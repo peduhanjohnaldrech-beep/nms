@@ -62,7 +62,13 @@ class ProgramEnrollment extends Model
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = pe.program AND pe2.id <= pe.id) AS cycle_number,
                     b.last_name, b.first_name, b.middle_name, b.barangay, b.date_of_birth, b.sex,
-                    a.nutritional_status, a.wflh_status, a.assessment_date,
+                    a.nutritional_status, a.wflh_status, a.assessment_date, a.muac_cm,
+                    (SELECT nutritional_status FROM assessments
+                     WHERE beneficiary_id = pe.beneficiary_id AND validation_status = 'validated'
+                     ORDER BY assessment_date DESC, id DESC LIMIT 1 OFFSET 1) AS prev_nutritional_status,
+                    (SELECT wflh_status FROM assessments
+                     WHERE beneficiary_id = pe.beneficiary_id AND validation_status = 'validated'
+                     ORDER BY assessment_date DESC, id DESC LIMIT 1 OFFSET 1) AS prev_wflh_status,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
@@ -200,7 +206,7 @@ class ProgramEnrollment extends Model
                     (SELECT COUNT(*) FROM program_enrollments pe2
                      WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = 'DSP' AND pe2.id <= pe.id) AS cycle_number,
                     b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                    a.nutritional_status, a.wflh_status, a.assessment_date, a.weight_kg
+                    a.nutritional_status, a.wflh_status, a.assessment_date, a.weight_kg, a.muac_cm
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
              JOIN assessments a ON a.id = (
@@ -214,6 +220,19 @@ class ProgramEnrollment extends Model
                  OR (
                      a.nutritional_status NOT IN ('SUW', 'UW')
                      AND (a.wflh_status IS NULL OR a.wflh_status NOT IN ('SW', 'MW'))
+                     AND a.muac_cm IS NOT NULL
+                     AND (
+                         SELECT COUNT(*) FROM (
+                             SELECT nutritional_status, wflh_status
+                             FROM assessments
+                             WHERE beneficiary_id = pe.beneficiary_id
+                             AND validation_status = 'validated'
+                             ORDER BY assessment_date DESC, id DESC
+                             LIMIT 2
+                         ) last2
+                         WHERE last2.nutritional_status NOT IN ('SUW', 'UW')
+                         AND (last2.wflh_status IS NULL OR last2.wflh_status NOT IN ('SW', 'MW'))
+                     ) = 2
                  )
              )
              ORDER BY b.last_name, b.first_name"
