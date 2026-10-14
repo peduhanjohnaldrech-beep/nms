@@ -8,8 +8,7 @@ require BASE_PATH . '/config/config.php';
 require BASE_PATH . '/core/Database.php';
 
 try {
-    $db = \Core\Database::getInstance();
-    $pdo = $db->getConnection();
+    $pdo = \Core\Database::getInstance();
 
     echo "<h3>DB Connection: OK</h3>";
 
