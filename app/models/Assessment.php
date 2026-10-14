@@ -11,7 +11,13 @@ class Assessment extends Model
     public function findByBeneficiary(int $beneficiaryId): array
     {
         return $this->fetchAll(
-            "SELECT * FROM assessments WHERE beneficiary_id = ? AND validation_status = 'validated' ORDER BY assessment_date DESC",
+            "SELECT a.* FROM assessments a
+             INNER JOIN (
+                 SELECT MAX(id) AS max_id FROM assessments
+                 WHERE beneficiary_id = ? AND validation_status = 'validated'
+                 GROUP BY period, assessment_year
+             ) latest ON a.id = latest.max_id
+             ORDER BY a.assessment_date DESC",
             [$beneficiaryId]
         );
     }
