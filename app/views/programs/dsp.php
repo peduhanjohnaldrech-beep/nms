@@ -2,7 +2,7 @@
 
 <div class="d-flex justify-content-between align-items-center my-3">
     <div>
-        <h4 class="mb-0"><i class="bi bi-egg-fried me-2"></i>DSP — Dietary Supplementation Program</h4>
+        <h4 class="mb-0"><i class="bi bi-egg-fried me-2"></i>Dietary Supplementation Program</h4>
         <small class="text-muted">Feeding and nutrition intervention for malnourished children (wasted / severely wasted)</small>
     </div>
     <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= date('Y') ?>" class="btn btn-sm btn-success">
@@ -10,88 +10,43 @@
     </a>
 </div>
 
-<!-- Eligible -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-warning text-dark fw-semibold d-flex align-items-center justify-content-between">
-        <span>
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            Eligible for DSP (Wasted / Severely Wasted — Not Yet Enrolled)
-            <span class="badge bg-dark ms-2"><?= count($eligible) ?></span>
-        </span>
-        <?php if (!empty($eligible)): ?>
-        <form action="<?= APP_URL ?>/programs/dsp/enroll-all" method="post" class="d-inline">
-            <?= \Core\Session::csrfField() ?>
-            <button type="button" class="btn btn-sm btn-dark confirm-trigger"
-                    data-confirm-title="Enroll All Eligible"
-                    data-confirm-message="Enroll all <?= count($eligible) ?> eligible beneficiar<?= count($eligible) === 1 ? 'y' : 'ies' ?> in DSP automatically?"
-                    data-confirm-btn="Enroll All"
-                    data-confirm-class="btn-dark">
-                <i class="bi bi-people-fill me-1"></i>Enroll All
-            </button>
-        </form>
-        <?php endif; ?>
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-warning"><?= count($eligible) ?></div>
+            <div class="small text-muted">Eligible</div>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle">
-                <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>WFL/H</th><th>WFA</th><th>Last Assessment</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($eligible)): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-4">
-                        <?php if (!empty($active)): ?>
-                        <i class="bi bi-check-circle fs-3 d-block mb-1 text-success"></i>
-                        All malnourished children are already enrolled in DSP.
-                        <?php else: ?>
-                        <i class="bi bi-emoji-smile fs-3 d-block mb-1 text-success"></i>
-                        No malnourished children found. All children have normal nutritional status.
-                        <?php endif; ?>
-                    </td></tr>
-                    <?php endif; ?>
-                    <?php foreach ($eligible as $e): ?>
-                    <tr>
-                        <td>
-                            <a href="<?= APP_URL ?>/beneficiaries/<?= $e['id'] ?>" class="text-decoration-none fw-semibold">
-                                <?= htmlspecialchars($e['last_name'] . ', ' . $e['first_name']) ?>
-                            </a>
-                        </td>
-                        <td><?= htmlspecialchars($e['barangay']) ?></td>
-                        <td>
-                            <?php if (!empty($e['wflh_status'])): ?>
-                            <span class="badge status-<?= strtolower($e['wflh_status']) ?>"><?= $e['wflh_status'] ?></span>
-                            <?php else: ?>—<?php endif; ?>
-                        </td>
-                        <td><span class="badge status-<?= strtolower($e['nutritional_status']) ?>"><?= $e['nutritional_status'] ?></span></td>
-                        <td><?= DateHelper::formatDate($e['assessment_date'], 'M j, Y') ?></td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-warning"
-                                    data-bs-toggle="modal" data-bs-target="#enrollModal"
-                                    data-id="<?= $e['id'] ?>"
-                                    data-name="<?= htmlspecialchars($e['last_name'] . ', ' . $e['first_name']) ?>"
-                                    data-weight="<?= $e['weight_kg'] ?? '' ?>"
-                                    data-wflh="<?= htmlspecialchars($e['wflh_status'] ?? '') ?>"
-                                    data-wfa="<?= htmlspecialchars($e['nutritional_status'] ?? '') ?>"
-                                    data-date="<?= htmlspecialchars($e['assessment_date'] ?? '') ?>">
-                                <i class="bi bi-plus-circle"></i> Enroll
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-success"><?= count($active) ?></div>
+            <div class="small text-muted">Active</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-primary"><?= count($readyToDischarge) ?></div>
+            <div class="small text-muted">Ready to Discharge</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-secondary"><?= count($history) ?></div>
+            <div class="small text-muted">History (<?= $historyYear ?>)</div>
         </div>
     </div>
 </div>
 
-<!-- Ready to Discharge -->
+<!-- Ready to Discharge (shown only when relevant) -->
 <?php if (!empty($readyToDischarge)): ?>
-<div class="card border-0 shadow-sm mb-4 border-start border-4 border-success">
+<div class="card border-0 shadow-sm mb-3 border-start border-4 border-success">
     <div class="card-header bg-success bg-opacity-10 text-success fw-semibold d-flex justify-content-between align-items-center">
         <span>
             <i class="bi bi-arrow-up-circle me-2"></i>
-            Ready to Discharge — Latest Assessment Shows Normal Status
+            Ready to Discharge
             <span class="badge bg-success ms-2"><?= count($readyToDischarge) ?></span>
+            <span class="fw-normal small ms-1 text-success opacity-75">— latest assessment shows normal status</span>
         </span>
         <a href="<?= APP_URL ?>/reports/export?type=dsp_ready&format=excel" class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-excel me-1"></i>Export
@@ -110,10 +65,7 @@
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $r['beneficiary_id'] ?>" class="text-decoration-none fw-semibold">
                                 <?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>
                             </a>
-                            <?php
-                                $ageMonths = DateHelper::ageInMonths($r['date_of_birth']);
-                                if ($ageMonths > 59):
-                            ?>
+                            <?php if (DateHelper::ageInMonths($r['date_of_birth']) > 59): ?>
                             <span class="badge bg-secondary ms-1">Aged Out</span>
                             <?php endif; ?>
                         </td>
@@ -131,12 +83,12 @@
                         </td>
                         <td><span class="badge status-<?= strtolower($r['nutritional_status']) ?>"><?= $r['nutritional_status'] ?></span></td>
                         <td><?= DateHelper::formatDate($r['assessment_date'], 'M j, Y') ?></td>
-                        <td>
+                        <td class="text-nowrap">
                             <button type="button" class="btn btn-sm btn-success"
                                     data-bs-toggle="modal" data-bs-target="#completeModal"
                                     data-id="<?= $r['id'] ?>"
                                     data-name="<?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>"
-                                    title="Discharge (Mark Completed)">
+                                    title="Discharge">
                                 <i class="bi bi-check2-circle me-1"></i>Discharge
                             </button>
                             <form action="<?= APP_URL ?>/programs/dsp/discharge" method="post" class="d-inline">
@@ -161,21 +113,149 @@
 </div>
 <?php endif; ?>
 
+<!-- Eligible -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold d-flex align-items-center justify-content-between"
+         style="cursor:pointer" data-bs-toggle="collapse" data-bs-target="#eligibleCollapse">
+        <span>
+            <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+            Eligible for DSP
+            <span class="badge bg-warning text-dark ms-2"><?= count($eligible) ?></span>
+            <span class="fw-normal small text-muted ms-1">— wasted / severely wasted, not yet enrolled</span>
+        </span>
+        <div class="d-flex align-items-center gap-2">
+            <?php if (!empty($eligible)): ?>
+            <form action="<?= APP_URL ?>/programs/dsp/enroll-all" method="post" class="d-inline" onclick="event.stopPropagation()">
+                <?= \Core\Session::csrfField() ?>
+                <button type="button" class="btn btn-sm btn-warning confirm-trigger"
+                        data-confirm-title="Enroll All Eligible"
+                        data-confirm-message="Enroll all <?= count($eligible) ?> eligible beneficiar<?= count($eligible) === 1 ? 'y' : 'ies' ?> in DSP automatically?"
+                        data-confirm-btn="Enroll All"
+                        data-confirm-class="btn-dark">
+                    <i class="bi bi-people-fill me-1"></i>Enroll All
+                </button>
+            </form>
+            <?php endif; ?>
+            <i class="bi bi-chevron-down small"></i>
+        </div>
+    </div>
+    <div class="collapse <?= !empty($eligible) ? 'show' : '' ?>" id="eligibleCollapse">
+        <?php if (empty($eligible)): ?>
+        <div class="card-body text-center text-muted py-4">
+            <?php if (!empty($active)): ?>
+            <i class="bi bi-check-circle fs-3 d-block mb-1 text-success"></i>
+            All malnourished children are already enrolled in DSP.
+            <?php else: ?>
+            <i class="bi bi-emoji-smile fs-3 d-block mb-1 text-success"></i>
+            No malnourished children found — all children have normal nutritional status.
+            <?php endif; ?>
+        </div>
+        <?php else: ?>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>Name</th><th>Barangay</th><th>WFL/H</th><th>WFA</th><th>Last Assessment</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($eligible as $e): ?>
+                        <tr>
+                            <td>
+                                <a href="<?= APP_URL ?>/beneficiaries/<?= $e['id'] ?>" class="text-decoration-none fw-semibold">
+                                    <?= htmlspecialchars($e['last_name'] . ', ' . $e['first_name']) ?>
+                                </a>
+                            </td>
+                            <td><?= htmlspecialchars($e['barangay']) ?></td>
+                            <td>
+                                <?php if (!empty($e['wflh_status'])): ?>
+                                <span class="badge status-<?= strtolower($e['wflh_status']) ?>"><?= $e['wflh_status'] ?></span>
+                                <?php else: ?>—<?php endif; ?>
+                            </td>
+                            <td><span class="badge status-<?= strtolower($e['nutritional_status']) ?>"><?= $e['nutritional_status'] ?></span></td>
+                            <td><?= DateHelper::formatDate($e['assessment_date'], 'M j, Y') ?></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-warning"
+                                        data-bs-toggle="modal" data-bs-target="#enrollModal"
+                                        data-id="<?= $e['id'] ?>"
+                                        data-name="<?= htmlspecialchars($e['last_name'] . ', ' . $e['first_name']) ?>"
+                                        data-weight="<?= $e['weight_kg'] ?? '' ?>"
+                                        data-wflh="<?= htmlspecialchars($e['wflh_status'] ?? '') ?>"
+                                        data-wfa="<?= htmlspecialchars($e['nutritional_status'] ?? '') ?>"
+                                        data-date="<?= htmlspecialchars($e['assessment_date'] ?? '') ?>">
+                                    <i class="bi bi-plus-circle"></i> Enroll
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <!-- Active Enrollments -->
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-success text-white fw-semibold">
-        <i class="bi bi-check-circle me-2"></i>Active DSP Enrollments
-        <span class="badge bg-light text-dark ms-2"><?= count($active) ?></span>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-success text-white fw-semibold d-flex justify-content-between align-items-center">
+        <span>
+            <i class="bi bi-check-circle me-2"></i>Active Enrollments
+            <span class="badge bg-light text-dark ms-2"><?= count($active) ?></span>
+        </span>
+        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#manualEnrollCollapse">
+            <i class="bi bi-person-plus me-1"></i>Enroll Manually
+        </button>
+    </div>
+    <!-- Manual Enrollment (inline collapsible) -->
+    <div class="collapse" id="manualEnrollCollapse">
+        <div class="card-body border-bottom bg-light">
+            <p class="small text-muted mb-2">Enroll any beneficiary regardless of nutritional status</p>
+            <form action="<?= APP_URL ?>/programs/dsp/enroll" method="post" class="row g-2 align-items-end">
+                <?= \Core\Session::csrfField() ?>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small mb-1">Beneficiary <span class="text-danger">*</span></label>
+                    <select name="beneficiary_id" class="form-select form-select-sm" required>
+                        <option value="">— Select Beneficiary —</option>
+                        <?php foreach ($notEnrolled as $b): ?>
+                        <option value="<?= $b['id'] ?>">
+                            <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Intervention Type</label>
+                    <select name="intervention_type" class="form-select form-select-sm">
+                        <option value="">— Select —</option>
+                        <option value="RUSF">RUSF (Moderately Wasted)</option>
+                        <option value="RUTF">RUTF (Severely Wasted)</option>
+                        <option value="Supplementary Feeding">Supplementary Feeding</option>
+                        <option value="Health Education">Health Education</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Pre-Weight (kg)</label>
+                    <input type="number" step="0.01" name="pre_weight_kg" class="form-control form-control-sm" placeholder="e.g. 10.5">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Notes</label>
+                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-plus-lg"></i></button>
+                </div>
+            </form>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Pre-Weight</th><th>Post-Weight</th><th>Enrolled</th><th>Year</th><th>Actions</th></tr>
+                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     <?php if (empty($active)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($active as $a): ?>
                     <tr <?= ($a['age_months'] ?? 0) > 59 ? 'class="table-warning"' : '' ?>>
@@ -184,23 +264,27 @@
                                 <?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>
                             </a>
                             <?php if (($a['age_months'] ?? 0) > 59): ?>
-                            <span class="badge bg-secondary ms-1" title="Child is over 59 months old — should be discharged">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Aged Out
-                            </span>
+                            <span class="badge bg-secondary ms-1" title="Child is over 59 months old"><i class="bi bi-exclamation-triangle me-1"></i>Aged Out</span>
                             <?php endif; ?>
                         </td>
                         <td><?= htmlspecialchars($a['barangay']) ?></td>
-                        <td><span class="badge bg-secondary">Cycle <?= $a['cycle_number'] ?></span></td>
+                        <td>
+                            <span class="badge bg-secondary">Cycle <?= $a['cycle_number'] ?></span>
+                            <span class="text-muted small ms-1"><?= $a['cycle_year'] ?></span>
+                        </td>
                         <td>
                             <?php if (!empty($a['intervention_type'])): ?>
                             <span class="badge bg-info text-dark"><?= htmlspecialchars($a['intervention_type']) ?></span>
                             <?php else: ?>—<?php endif; ?>
                         </td>
-                        <td><?= !empty($a['pre_weight_kg']) ? $a['pre_weight_kg'] . ' kg' : '—' ?></td>
-                        <td><?= !empty($a['post_weight_kg']) ? $a['post_weight_kg'] . ' kg' : '—' ?></td>
+                        <td class="text-nowrap">
+                            <?= !empty($a['pre_weight_kg']) ? $a['pre_weight_kg'] . ' kg' : '—' ?>
+                            <?php if (!empty($a['pre_weight_kg']) || !empty($a['post_weight_kg'])): ?>
+                            <span class="text-muted">→</span> <?= !empty($a['post_weight_kg']) ? $a['post_weight_kg'] . ' kg' : '—' ?>
+                            <?php endif; ?>
+                        </td>
                         <td><?= DateHelper::formatDate($a['enrollment_date'], 'M j, Y') ?></td>
-                        <td><?= $a['cycle_year'] ?></td>
-                        <td>
+                        <td class="text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#editModal"
                                     data-id="<?= $a['id'] ?>"
@@ -208,7 +292,7 @@
                                     data-pre="<?= $a['pre_weight_kg'] ?? '' ?>"
                                     data-post="<?= $a['post_weight_kg'] ?? '' ?>"
                                     data-intervention="<?= htmlspecialchars($a['intervention_type'] ?? '') ?>"
-                                    title="Edit Weights">
+                                    title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-success"
@@ -239,58 +323,13 @@
     </div>
 </div>
 
-<!-- Manual Enrollment Card -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-primary text-white fw-semibold">
-        <i class="bi bi-person-plus me-2"></i>Manual Enrollment
-        <small class="fw-normal ms-2 opacity-75">Enroll any beneficiary regardless of nutritional status</small>
-    </div>
-    <div class="card-body">
-        <form action="<?= APP_URL ?>/programs/dsp/enroll" method="post" class="row g-3 align-items-end">
-            <?= \Core\Session::csrfField() ?>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small">Beneficiary <span class="text-danger">*</span></label>
-                <select name="beneficiary_id" class="form-select form-select-sm" required>
-                    <option value="">— Select Beneficiary —</option>
-                    <?php foreach ($notEnrolled as $b): ?>
-                    <option value="<?= $b['id'] ?>">
-                        <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold small">Intervention Type</label>
-                <select name="intervention_type" class="form-select form-select-sm">
-                    <option value="">— Select —</option>
-                    <option value="RUSF">RUSF (Moderately Wasted)</option>
-                    <option value="RUTF">RUTF (Severely Wasted)</option>
-                    <option value="Supplementary Feeding">Supplementary Feeding</option>
-                    <option value="Health Education">Health Education</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold small">Pre-Weight (kg)</label>
-                <input type="number" step="0.01" name="pre_weight_kg" class="form-control form-control-sm" placeholder="e.g. 10.5">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold small">Notes</label>
-                <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional">
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-plus-lg"></i></button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <!-- History -->
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-secondary bg-opacity-10 fw-semibold" style="cursor:pointer"
+    <div class="card-header fw-semibold" style="cursor:pointer"
          data-bs-toggle="collapse" data-bs-target="#historyCollapse">
-        <i class="bi bi-clock-history me-2"></i>DSP History — Graduated &amp; Dropped
+        <i class="bi bi-clock-history me-2 text-secondary"></i>History — Graduated &amp; Dropped
         <span class="badge bg-secondary ms-2"><?= count($history) ?></span>
-        <i class="bi bi-chevron-down float-end mt-1"></i>
+        <i class="bi bi-chevron-down small float-end mt-1"></i>
     </div>
     <div class="collapse" id="historyCollapse">
         <div class="card-body border-bottom pb-2 pt-3">
@@ -310,21 +349,13 @@
                 <table class="table table-sm mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Barangay</th>
-                            <th>Cycle</th>
-                            <th>Intervention</th>
-                            <th>Pre-Weight</th>
-                            <th>Post-Weight</th>
-                            <th>Weight Gain</th>
-                            <th>Enrolled</th>
-                            <th>Ended</th>
-                            <th>Status</th>
+                            <th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th>
+                            <th>Pre → Post Weight</th><th>Gain</th><th>Enrolled</th><th>Ended</th><th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($history)): ?>
-                        <tr><td colspan="10" class="text-center text-muted py-4">
+                        <tr><td colspan="9" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-3 d-block mb-1"></i>
                             No completed or dropped DSP enrollments for <?= $historyYear ?>.
                         </td></tr>
@@ -348,8 +379,12 @@
                                 <span class="badge bg-info text-dark"><?= htmlspecialchars($h['intervention_type']) ?></span>
                                 <?php else: ?>—<?php endif; ?>
                             </td>
-                            <td><?= !empty($h['pre_weight_kg'])  ? $h['pre_weight_kg']  . ' kg' : '—' ?></td>
-                            <td><?= !empty($h['post_weight_kg']) ? $h['post_weight_kg'] . ' kg' : '—' ?></td>
+                            <td class="text-nowrap">
+                                <?= !empty($h['pre_weight_kg']) ? $h['pre_weight_kg'] . ' kg' : '—' ?>
+                                <?php if (!empty($h['pre_weight_kg']) || !empty($h['post_weight_kg'])): ?>
+                                <span class="text-muted">→</span> <?= !empty($h['post_weight_kg']) ? $h['post_weight_kg'] . ' kg' : '—' ?>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if ($gain !== null): ?>
                                 <span class="fw-semibold <?= $gain >= 0 ? 'text-success' : 'text-danger' ?>">
@@ -388,7 +423,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="mb-2">Enrolling: <strong id="enrollName"></strong></p>
-                    <div class="alert alert-light border small py-2 mb-3" id="enrollAssessmentSummary">
+                    <div class="alert alert-light border small py-2 mb-3">
                         <span class="text-muted"><i class="bi bi-clipboard2-pulse me-1"></i>Last assessment:</span>
                         <span id="enrollSummaryDate" class="ms-1"></span> —
                         Weight: <strong id="enrollSummaryWeight"></strong> kg,
@@ -501,7 +536,6 @@ document.getElementById('enrollModal').addEventListener('show.bs.modal', functio
     document.getElementById('enrollName').textContent     = btn.dataset.name;
     document.getElementById('enrollPreWeight').value      = btn.dataset.weight || '';
 
-    // Assessment summary
     const statusColors = { SUW:'danger', UW:'warning', Normal:'success', OW:'info', OB:'secondary', SW:'danger', MW:'warning' };
     const wfa  = btn.dataset.wfa  || '—';
     const wflh = btn.dataset.wflh || '—';
@@ -509,10 +543,8 @@ document.getElementById('enrollModal').addEventListener('show.bs.modal', functio
     document.getElementById('enrollSummaryWeight').textContent = btn.dataset.weight || '—';
     const wfaEl  = document.getElementById('enrollSummaryWfa');
     const wflhEl = document.getElementById('enrollSummaryWflh');
-    wfaEl.textContent  = wfa;
-    wfaEl.className    = 'badge bg-' + (statusColors[wfa]  || 'secondary');
-    wflhEl.textContent = wflh;
-    wflhEl.className   = 'badge bg-' + (statusColors[wflh] || 'secondary');
+    wfaEl.textContent  = wfa;  wfaEl.className  = 'badge bg-' + (statusColors[wfa]  || 'secondary');
+    wflhEl.textContent = wflh; wflhEl.className = 'badge bg-' + (statusColors[wflh] || 'secondary');
 
     const sel = document.getElementById('enrollIntervention');
     if (wflh === 'SW') sel.value = 'RUTF';
@@ -522,14 +554,14 @@ document.getElementById('enrollModal').addEventListener('show.bs.modal', functio
 document.getElementById('completeModal').addEventListener('show.bs.modal', function(e) {
     const btn = e.relatedTarget;
     document.getElementById('completeEnrollmentId').value = btn.dataset.id;
-    document.getElementById('completeName').textContent = btn.dataset.name;
+    document.getElementById('completeName').textContent   = btn.dataset.name;
 });
 document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
     const btn = e.relatedTarget;
-    document.getElementById('editEnrollmentId').value = btn.dataset.id;
-    document.getElementById('editName').textContent = btn.dataset.name;
-    document.getElementById('editPreWeight').value = btn.dataset.pre || '';
-    document.getElementById('editPostWeight').value = btn.dataset.post || '';
-    document.getElementById('editIntervention').value = btn.dataset.intervention || '';
+    document.getElementById('editEnrollmentId').value    = btn.dataset.id;
+    document.getElementById('editName').textContent      = btn.dataset.name;
+    document.getElementById('editPreWeight').value       = btn.dataset.pre  || '';
+    document.getElementById('editPostWeight').value      = btn.dataset.post || '';
+    document.getElementById('editIntervention').value    = btn.dataset.intervention || '';
 });
 </script>
