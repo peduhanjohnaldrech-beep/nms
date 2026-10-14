@@ -68,6 +68,7 @@ class ProgramEnrollment extends Model
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
              LEFT JOIN assessments a ON a.id = (
                  SELECT id FROM assessments WHERE beneficiary_id = pe.beneficiary_id
+                 AND validation_status = 'validated'
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE pe.program = ? AND pe.status = 'Active'
@@ -204,6 +205,7 @@ class ProgramEnrollment extends Model
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
              JOIN assessments a ON a.id = (
                  SELECT id FROM assessments WHERE beneficiary_id = pe.beneficiary_id
+                 AND validation_status = 'validated'
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE pe.program = 'DSP' AND pe.status = 'Active'
