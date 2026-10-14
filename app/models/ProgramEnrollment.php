@@ -270,18 +270,22 @@ class ProgramEnrollment extends Model
                      dm.nutritional_status NOT IN ('SUW', 'UW')
                      AND (dm.wflh_status IS NULL OR dm.wflh_status NOT IN ('SW', 'MW'))
                      AND dm.muac_cm IS NOT NULL
-                     AND (
-                         SELECT COUNT(*) FROM (
-                             SELECT nutritional_status, wflh_status
-                             FROM dsp_monitoring
-                             WHERE enrollment_id = pe.id
-                             AND validation_status = 'validated'
-                             ORDER BY monitoring_date DESC, id DESC
-                             LIMIT 2
-                         ) last2
-                         WHERE last2.nutritional_status NOT IN ('SUW', 'UW')
-                         AND (last2.wflh_status IS NULL OR last2.wflh_status NOT IN ('SW', 'MW'))
-                     ) = 2
+                     AND 2 = (
+                         SELECT COUNT(*)
+                         FROM dsp_monitoring dm_c
+                         WHERE dm_c.enrollment_id = pe.id
+                           AND dm_c.validation_status = 'validated'
+                           AND dm_c.nutritional_status NOT IN ('SUW', 'UW')
+                           AND (dm_c.wflh_status IS NULL OR dm_c.wflh_status NOT IN ('SW', 'MW'))
+                           AND (
+                               SELECT COUNT(*)
+                               FROM dsp_monitoring dm_r
+                               WHERE dm_r.enrollment_id = pe.id
+                                 AND dm_r.validation_status = 'validated'
+                                 AND (dm_r.monitoring_date > dm_c.monitoring_date
+                                      OR (dm_r.monitoring_date = dm_c.monitoring_date AND dm_r.id > dm_c.id))
+                           ) < 2
+                     )
                  )
              )
              ORDER BY b.last_name, b.first_name",
