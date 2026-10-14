@@ -72,6 +72,48 @@ try {
         LIMIT 1");
     echo "getReadyToDischarge: OK<br>";
 
+    // Test full model methods
+    echo "<b>Testing model methods...</b><br>";
+    require BASE_PATH . '/core/Model.php';
+    require BASE_PATH . '/app/helpers/ZScoreHelper.php';
+    require BASE_PATH . '/app/helpers/DateHelper.php';
+    require BASE_PATH . '/app/models/ProgramEnrollment.php';
+    require BASE_PATH . '/app/models/Beneficiary.php';
+    require BASE_PATH . '/app/models/DspMonitoring.php';
+
+    $enrollModel = new \App\Models\ProgramEnrollment();
+    $beneModel   = new \App\Models\Beneficiary();
+
+    echo "getEligibleForDSP: ";
+    $eligible = $enrollModel->getEligibleForDSP();
+    echo "OK (" . count($eligible) . " rows)<br>";
+
+    echo "getActive DSP: ";
+    $active = $enrollModel->getActive('DSP');
+    echo "OK (" . count($active) . " rows)<br>";
+
+    echo "getNotEnrolledInProgram DSP: ";
+    $notEnrolled = $enrollModel->getNotEnrolledInProgram('DSP');
+    echo "OK (" . count($notEnrolled) . " rows)<br>";
+
+    echo "getReadyToDischarge: ";
+    $discharge = $enrollModel->getReadyToDischarge();
+    echo "OK (" . count($discharge) . " rows)<br>";
+
+    echo "getHistory DSP: ";
+    $history = $enrollModel->getHistory('DSP', date('Y'));
+    echo "OK (" . count($history) . " rows)<br>";
+
+    echo "getBarangays: ";
+    $barangays = $beneModel->getBarangays();
+    echo "OK (" . count($barangays) . " rows)<br>";
+
+    echo "getPuroksByBarangay: ";
+    $puroks = $beneModel->getPuroksByBarangay('');
+    echo "OK (" . count($puroks) . " rows)<br>";
+
+    echo "<br><b style='color:green'>All checks passed — issue is in the view file.</b><br>";
+
 } catch (\Throwable $e) {
     echo "<b style='color:red'>ERROR: " . htmlspecialchars($e->getMessage()) . "</b><br>";
     echo "<pre>" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
