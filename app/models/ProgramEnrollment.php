@@ -258,7 +258,7 @@ class ProgramEnrollment extends Model
                     dm.weight_kg, dm.muac_cm
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             JOIN dsp_monitoring dm ON dm.id = (
+             LEFT JOIN dsp_monitoring dm ON dm.id = (
                  SELECT id FROM dsp_monitoring WHERE enrollment_id = pe.id
                  AND validation_status = 'validated'
                  ORDER BY monitoring_date DESC, id DESC LIMIT 1
