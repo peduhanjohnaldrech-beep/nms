@@ -14,7 +14,7 @@ $modules = [
 $selected = array_keys(array_filter($_POST['permissions'] ?? [], fn($v) => $v == '1'));
 ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/users" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <h4 class="mb-0"><i class="bi bi-person-plus me-2"></i>Add User</h4>
 </div>

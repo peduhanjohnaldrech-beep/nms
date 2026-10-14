@@ -1,6 +1,6 @@
 <?php $pageTitle = 'For Follow-up'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>For Follow-up</h4>
     <span class="text-muted small"><?= count($rows) ?> beneficiaries with worsening status</span>
 </div>

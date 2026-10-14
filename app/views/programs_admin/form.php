@@ -1,6 +1,6 @@
 <?php $pageTitle = $editing ? 'Edit Program' : 'Add Program'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/programs-admin" class="btn btn-sm btn-outline-secondary me-3">
         <i class="bi bi-arrow-left"></i>
     </a>

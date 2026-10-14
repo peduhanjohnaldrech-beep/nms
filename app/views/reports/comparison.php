@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Period Comparison'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <div class="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
         <i class="bi bi-arrow-left-right fs-4 text-primary"></i>
@@ -65,7 +65,7 @@
 
 <!-- Chart -->
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         <i class="bi bi-bar-chart me-2 text-primary"></i>Malnutrition Rate: January vs July <?= $year ?>
     </div>
     <div class="card-body"><canvas id="comparisonChart" height="60"></canvas></div>
@@ -73,7 +73,7 @@
 
 <!-- Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         <i class="bi bi-table me-2"></i>Detailed Comparison by Barangay
     </div>
     <div class="card-body p-0">

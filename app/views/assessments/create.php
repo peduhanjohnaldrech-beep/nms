@@ -4,7 +4,7 @@ $curPeriod = (int)date('n') <= 6 ? 'January' : 'July';
 $curYear   = (int)date('Y');
 ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= isset($beneficiary) ? APP_URL . '/beneficiaries/' . $beneficiary['id'] : APP_URL . '/beneficiaries' ?>"
        class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <h4 class="mb-0"><i class="bi bi-clipboard2-plus me-2"></i>Record Assessment (OPT)</h4>
@@ -147,7 +147,7 @@ $curYear   = (int)date('Y');
             <?php if (!empty($lastAssessment)): ?>
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white fw-semibold small">
+                    <div class="card-header fw-semibold small">
                         <i class="bi bi-clock-history me-2 text-muted"></i>Previous Assessment
                         <span class="text-muted fw-normal ms-1">— <?= DateHelper::formatDate($lastAssessment['assessment_date'], 'M j, Y') ?></span>
                     </div>

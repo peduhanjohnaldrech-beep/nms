@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Summary Report'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <div class="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
         <i class="bi bi-file-earmark-bar-graph fs-4 text-success"></i>
@@ -114,7 +114,7 @@ $totMalnut   = $totals['assessed'] > 0 ? round(($totals['suw'] + $totals['uw']) 
 
 <!-- Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
         <span><i class="bi bi-table me-2"></i>By Barangay
             <span class="text-muted fw-normal small ms-1"><?= $year ?><?= $period ? " — $period" : '' ?></span>
         </span>

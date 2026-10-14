@@ -17,7 +17,7 @@ function previewable(string $mime, string $ext): bool {
 $isAdmin = \Core\Session::get('user_role') === 'admin';
 ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div class="d-flex align-items-center gap-2">
         <a href="<?= APP_URL ?>/import" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-left"></i>
@@ -54,7 +54,7 @@ if ($tab === 'imports'):
     <!-- Import Folder Sidebar -->
     <div class="col-lg-3">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold small">
+            <div class="card-header fw-semibold small">
                 <i class="bi bi-folder me-1"></i>Folders
             </div>
             <div class="list-group list-group-flush">
@@ -86,7 +86,7 @@ if ($tab === 'imports'):
     <!-- Import Files -->
     <div class="col-lg-9">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <nav aria-label="breadcrumb" class="mb-0">
                     <ol class="breadcrumb mb-0 small">
                         <li class="breadcrumb-item"><a href="<?= APP_URL ?>/import/storage?tab=imports">Beneficiary Imports</a></li>
@@ -209,7 +209,7 @@ else:
         <?php endif; ?>
 
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white fw-semibold small">
+            <div class="card-header fw-semibold small">
                 <i class="bi bi-upload me-1"></i>Upload File
             </div>
             <div class="card-body">
@@ -337,7 +337,7 @@ else:
         <!-- Folder Management (admin only) -->
         <?php if ($isAdmin): ?>
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold small">
+            <div class="card-header fw-semibold small">
                 <i class="bi bi-folder-plus me-1"></i>Folders
             </div>
             <div class="card-body pb-2">
@@ -388,7 +388,7 @@ else:
         <?php else: ?>
         <!-- Non-admin folder list -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold small"><i class="bi bi-folder me-1"></i>Folders</div>
+            <div class="card-header fw-semibold small"><i class="bi bi-folder me-1"></i>Folders</div>
             <div class="list-group list-group-flush">
                 <a href="<?= APP_URL ?>/import/storage?tab=files"
                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
@@ -413,7 +413,7 @@ else:
     <!-- Other Files List -->
     <div class="col-lg-9">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <nav aria-label="breadcrumb" class="mb-0">
                     <ol class="breadcrumb mb-0 small">
                         <li class="breadcrumb-item"><a href="<?= APP_URL ?>/import/storage?tab=files">Other Files</a></li>

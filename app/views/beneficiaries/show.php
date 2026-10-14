@@ -152,7 +152,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
     <div class="col-lg-4">
         <!-- Profile Card (always visible) -->
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
                 <span class="fw-semibold small text-muted">Profile</span>
                 <?php if (hasPerm('beneficiaries')): ?>
                 <a href="<?= APP_URL ?>/beneficiaries/<?= $beneficiary['id'] ?>/edit" class="btn btn-sm btn-outline-primary">
@@ -240,7 +240,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Record Completeness (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center py-2"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center py-2"
                  data-bs-toggle="collapse" data-bs-target="#collapseCompleteness" aria-expanded="false">
                 <span class="small fw-semibold"><i class="bi bi-check2-circle me-1 text-<?= $__color ?>"></i>Record Completeness</span>
                 <div class="d-flex align-items-center gap-2">
@@ -266,7 +266,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Personal Details (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white collapse-header fw-semibold d-flex justify-content-between align-items-center py-2"
+            <div class="card-header collapse-header fw-semibold d-flex justify-content-between align-items-center py-2"
                  data-bs-toggle="collapse" data-bs-target="#collapseDetails" aria-expanded="false">
                 <span class="small fw-semibold"><i class="bi bi-card-list me-1"></i>Personal Details</span>
                 <i class="bi bi-chevron-down small chevron"></i>
@@ -302,7 +302,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Z-Score Legend (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header py-2 d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header py-2 d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseZscore" aria-expanded="false">
                 <span class="small fw-semibold"><i class="bi bi-info-circle me-1 text-info"></i>Z-Score &amp; Status Legend</span>
                 <i class="bi bi-chevron-down small chevron"></i>
@@ -323,7 +323,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Assessment History (collapsible, OPEN by default) -->
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseAssessments" aria-expanded="true">
                 <span class="fw-semibold d-flex align-items-center gap-2">
                     <i class="bi bi-clipboard2-pulse me-1"></i>Assessment History
@@ -404,7 +404,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
         <!-- Growth Chart (collapsible, COLLAPSED by default — lazy init) -->
         <?php if (count($assessments) >= 1): ?>
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseGrowthChart" aria-expanded="false">
                 <span class="fw-semibold"><i class="bi bi-graph-up me-2 text-success"></i>Growth Chart</span>
                 <div class="d-flex align-items-center gap-2">
@@ -431,7 +431,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Program Enrollments (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseEnrollments" aria-expanded="false">
                 <span class="fw-semibold d-flex align-items-center gap-2">
                     <i class="bi bi-journal-check me-1"></i>Program Enrollments
@@ -471,7 +471,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Vitamin A Records (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseVitaminA" aria-expanded="false">
                 <span class="fw-semibold d-flex align-items-center gap-2">
                     <i class="bi bi-capsule me-1"></i>Vitamin A Records
@@ -509,7 +509,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
         <!-- MNP / LNS-SQ Records (collapsible, collapsed by default) -->
         <?php $__mnpLnsCount = count($mnpRecs ?? []) + count($lnsRecs ?? []); ?>
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseMnpLns" aria-expanded="false">
                 <span class="fw-semibold d-flex align-items-center gap-2">
                     <i class="bi bi-prescription2 me-1"></i>MNP / LNS-SQ Records
@@ -555,7 +555,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 
         <!-- Dispensing Records (collapsible, collapsed by default) -->
         <div class="card border-0 shadow-sm mb-2">
-            <div class="card-header bg-white collapse-header d-flex justify-content-between align-items-center"
+            <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseDispensing" aria-expanded="false">
                 <span class="fw-semibold d-flex align-items-center gap-2">
                     <i class="bi bi-prescription2 me-1 text-primary"></i>Medicine &amp; Supplement Dispensing

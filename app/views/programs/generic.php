@@ -7,7 +7,7 @@ $color     = htmlspecialchars($program['color']);
 $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);
 ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0">
             <i class="bi <?= htmlspecialchars($program['icon']) ?> me-2 text-<?= $color ?>"></i>
@@ -83,7 +83,7 @@ $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);
     <!-- Active Enrollments -->
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">
                     <i class="bi bi-person-check me-2"></i>Active Enrollments
                     <span class="text-muted fw-normal small ms-1">(<?= $year ?><?= $barangay ? ', ' . htmlspecialchars($barangay) : '' ?>)</span>
@@ -168,7 +168,7 @@ $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);
 
         <!-- History -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center"
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center"
                  style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#historyTable">
                 <span>
                     <i class="bi bi-clock-history me-2 text-muted"></i>
@@ -220,7 +220,7 @@ $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);
     <?php if ($canEdit): ?>
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-person-plus me-2"></i>Enroll Beneficiary
             </div>
             <div class="card-body">
@@ -256,7 +256,7 @@ $baseUrl   = APP_URL . '/programs/' . strtolower($program['code']);
 
         <!-- Quick Links -->
         <div class="card border-0 shadow-sm mt-3">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-lightning me-2 text-warning"></i>Quick Links
             </div>
             <div class="list-group list-group-flush">

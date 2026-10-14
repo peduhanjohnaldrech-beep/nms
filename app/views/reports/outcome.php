@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Program Outcome Report'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3">
         <i class="bi bi-arrow-left"></i>
     </a>
@@ -83,7 +83,7 @@ $avgGain  = count($withData) > 0
 </div>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <span class="fw-semibold">DSP Enrollees — Pre/Post Weight Comparison (<?= $year ?>)</span>
         <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>"
            class="btn btn-sm btn-success">

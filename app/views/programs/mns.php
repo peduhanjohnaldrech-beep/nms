@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Micronutrient Supplementation (MNS)'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-capsule me-2"></i>MNS — Micronutrient Supplementation</h4>
         <small class="text-muted">Vitamin A, Micronutrient Powder (MNP), and LNS-SQ distribution for children aged 6–59 months</small>
@@ -48,6 +48,47 @@
     </div>
 </div>
 
+<!-- Summary Stats -->
+<?php
+$mnsEligible = $mnsTotal = $mnsCovPct = 0;
+if ($tab === 'vitaminA') {
+    $mnsEligible = count($eligible ?? []);
+    $mnsTotal    = count($vitaRecords ?? []);
+} elseif ($tab === 'mnp') {
+    $mnsEligible = count($mnpNotYet ?? []);
+    $mnsTotal    = count($mnpRecords ?? []);
+} else {
+    $mnsEligible = count($lnsNotYet ?? []);
+    $mnsTotal    = count($lnsRecords ?? []);
+}
+$mnsGrand   = $mnsEligible + $mnsTotal;
+$mnsCovPct  = $mnsGrand > 0 ? min(100, round($mnsTotal / $mnsGrand * 100)) : 0;
+$mnsCovClass = $mnsCovPct >= 80 ? 'success' : ($mnsCovPct >= 50 ? 'warning' : 'danger');
+?>
+<div class="row g-3 mb-3">
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-secondary"><?= $mnsEligible ?></div>
+            <div class="small text-muted">Not Yet Covered</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-success"><?= $mnsTotal ?></div>
+            <div class="small text-muted">Covered</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-<?= $mnsCovClass ?>"><?= $mnsCovPct ?>%</div>
+            <div class="small text-muted">Coverage</div>
+            <div class="progress mx-3 mt-1" style="height:5px;">
+                <div class="progress-bar bg-<?= $mnsCovClass ?>" style="width:<?= $mnsCovPct ?>%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Tabs -->
 <ul class="nav nav-tabs mb-3" id="mnsTabs">
     <li class="nav-item">
@@ -78,7 +119,7 @@
     <!-- Not Yet Covered -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span>
                     <i class="bi bi-people me-1 text-primary"></i>
                     Eligible — Not Yet Covered
@@ -139,7 +180,7 @@
     <!-- Records Given + Coverage stacked on right -->
     <div class="col-lg-6 d-flex flex-column gap-3">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-check2-all me-1 text-success"></i>
                 Records Given — <?= htmlspecialchars($round) ?> <?= $year ?>
                 <span class="badge bg-success ms-1"><?= count($vitaRecords) ?></span>
@@ -194,7 +235,7 @@
         </div>
 
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-bar-chart me-1 text-success"></i>Coverage by Barangay
             </div>
             <div class="card-body p-0">
@@ -235,7 +276,7 @@
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span>
                     <i class="bi bi-people me-1 text-warning"></i>
                     Not Yet Received — <?= $year ?>
@@ -294,7 +335,7 @@
     <!-- Records Given -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-check2-all me-1 text-success"></i>
                 MNP Records Given — <?= $year ?>
                 <span class="badge bg-success ms-1"><?= count($mnpRecords) ?></span>
@@ -356,7 +397,7 @@
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span>
                     <i class="bi bi-people me-1 text-warning"></i>
                     Not Yet Received — <?= $year ?>
@@ -415,7 +456,7 @@
     <!-- Records Given -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-check2-all me-1 text-success"></i>
                 LNS-SQ Records Given — <?= $year ?>
                 <span class="badge bg-success ms-1"><?= count($lnsRecords) ?></span>

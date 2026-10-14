@@ -152,7 +152,7 @@
 
 <?php if (in_array(strtolower(\Core\Session::get('user_role','')), ['admin','nutritionist']) && ($submittedCount > 0 || !empty($recentSubmissions))): ?>
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
         <span class="fw-semibold small text-uppercase text-muted">
             <i class="bi bi-phone me-1 text-primary"></i>Mobile Submissions Inbox
         </span>
@@ -205,7 +205,7 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-2 px-3">
+            <div class="card-header border-bottom py-2 px-3">
                 <span class="fw-semibold small text-uppercase text-muted">
                     <i class="bi bi-bar-chart-fill me-1 text-primary"></i>Nutritional Status by Barangay — <?= date('Y') ?>
                 </span>
@@ -215,7 +215,7 @@
     </div>
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-2 px-3">
+            <div class="card-header border-bottom py-2 px-3">
                 <span class="fw-semibold small text-uppercase text-muted">
                     <i class="bi bi-pie-chart-fill me-1 text-info"></i>Program Enrollment
                 </span>
@@ -231,7 +231,7 @@
 <div class="row g-3 mb-4">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-2 px-3">
+            <div class="card-header border-bottom py-2 px-3">
                 <span class="fw-semibold small text-uppercase text-muted">
                     <i class="bi bi-graph-up me-1 text-success"></i>OPT Trend — Nutritional Status Over Periods
                 </span>
@@ -241,7 +241,7 @@
     </div>
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-bottom py-2 px-3">
+            <div class="card-header border-bottom py-2 px-3">
                 <span class="fw-semibold small text-uppercase text-muted">
                     <i class="bi bi-bar-chart me-1 text-danger"></i>Malnutrition Rate by Barangay — <?= date('Y') ?>
                 </span>

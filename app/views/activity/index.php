@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Activity Log'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-journal-text me-2"></i>Activity Log</h4>
     <span class="text-muted small"><?= number_format($total) ?> entries</span>
 </div>

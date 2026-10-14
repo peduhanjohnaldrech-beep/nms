@@ -6,7 +6,7 @@ $updateCount = count(array_filter($rows, fn($r) => $r['status'] === 'update'));
 $errorCount  = count(array_filter($rows, fn($r) => $r['status'] === 'error'));
 ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/import" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <h4 class="mb-0"><i class="bi bi-eye me-2"></i>Import Preview</h4>
 </div>

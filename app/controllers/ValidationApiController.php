@@ -365,6 +365,97 @@ class ValidationApiController extends ApiController
     }
 
     /**
+     * GET /api/validation/all
+     * Midwife: view ALL assessments for their area with any validation status
+     */
+    public function allSubmissions(): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['midwife', 'nutritionist', 'admin']);
+
+        $db     = Database::getInstance();
+        $where  = [];
+        $params = [];
+
+        if ($status = $_GET['status'] ?? null) {
+            $where[]  = 'a.validation_status = ?';
+            $params[] = $status;
+        }
+
+        if ($this->isMidwife() && $this->userBarangay()) {
+            $where[]  = 'b.barangay = ?';
+            $params[] = $this->userBarangay();
+        }
+
+        $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $stmt = $db->prepare("
+            SELECT a.id, a.beneficiary_id, a.assessment_date, a.age_in_months,
+                   a.weight_kg, a.height_cm, a.nutritional_status, a.period,
+                   a.assessment_year, a.validation_status, a.rejection_note,
+                   a.validated_at, a.created_at,
+                   b.last_name, b.first_name, b.barangay,
+                   uc.full_name AS submitted_by_name,
+                   uv.full_name AS validated_by_name
+            FROM assessments a
+            JOIN beneficiaries b ON b.id = a.beneficiary_id
+            LEFT JOIN users uc ON uc.id = a.created_by
+            LEFT JOIN users uv ON uv.id = a.validated_by
+            $whereClause
+            ORDER BY a.created_at DESC
+            LIMIT 300
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->success(['assessments' => $rows]);
+    }
+
+    /**
+     * GET /api/validation/beneficiaries/all
+     * Midwife: view ALL beneficiary registrations for their area with any validation status
+     */
+    public function allBeneficiarySubmissions(): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['midwife', 'nutritionist', 'admin']);
+
+        $db     = Database::getInstance();
+        $where  = ['b.deleted_at IS NULL'];
+        $params = [];
+
+        if ($status = $_GET['status'] ?? null) {
+            $where[]  = 'b.validation_status = ?';
+            $params[] = $status;
+        }
+
+        if ($this->isMidwife() && $this->userBarangay()) {
+            $where[]  = 'b.barangay = ?';
+            $params[] = $this->userBarangay();
+        }
+
+        $whereClause = 'WHERE ' . implode(' AND ', $where);
+
+        $stmt = $db->prepare("
+            SELECT b.id, b.last_name, b.first_name, b.middle_name, b.suffix,
+                   b.date_of_birth, b.sex, b.barangay, b.purok_zone,
+                   b.validation_status, b.rejection_note, b.validated_at, b.created_at,
+                   uc.full_name AS submitted_by_name,
+                   uv.full_name AS validated_by_name
+            FROM beneficiaries b
+            LEFT JOIN users uc ON uc.id = b.created_by
+            LEFT JOIN users uv ON uv.id = b.validated_by
+            $whereClause
+            ORDER BY b.created_at DESC
+            LIMIT 300
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->success(['beneficiaries' => $rows]);
+    }
+
+    /**
      * POST /api/validation/batch
      * Batch validate assessments or beneficiaries.
      * Body: { "type": "assessment"|"beneficiary", "ids": [1,2,3] }

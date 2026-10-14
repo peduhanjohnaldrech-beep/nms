@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Report Distribution'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-cloud-upload me-2 text-primary"></i>Report Distribution Center</h4>
         <p class="text-muted small mb-0 mt-1">Generate ready-to-use reports — print or upload to Google Drive</p>
@@ -132,7 +132,7 @@
 
 <!-- Google Drive Upload Instructions -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         <i class="bi bi-google me-2 text-primary"></i>How to Upload to Google Drive
     </div>
     <div class="card-body">

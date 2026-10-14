@@ -6,16 +6,22 @@ $locked   = $lockedBarangay ?? false;
 $userBrgy = \Core\Session::get('user_barangay', '');
 ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-sm btn-outline-secondary me-3">
         <i class="bi bi-arrow-left"></i>
     </a>
     <h4 class="mb-0"><i class="bi bi-person-plus me-2"></i>Add Beneficiary</h4>
 </div>
 
-<div id="duplicateAlert" class="alert alert-warning d-none mb-3">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    A beneficiary with this name and date of birth may already exist. Please verify before saving.
+<div id="duplicateAlert" class="alert alert-danger d-none mb-3">
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-x-octagon-fill fs-5 mt-1 flex-shrink-0"></i>
+        <div>
+            <strong>Duplicate Blocked.</strong>
+            <span id="duplicateMsg">A child with this name and date of birth is already registered.</span>
+            <div id="duplicateList" class="mt-1 small"></div>
+        </div>
+    </div>
 </div>
 
 <form action="<?= APP_URL ?>/beneficiaries/create" method="post" enctype="multipart/form-data">
@@ -283,24 +289,52 @@ $userBrgy = \Core\Session::get('user_barangay', '');
 </form>
 
 <script>
-// Duplicate check
+// Duplicate check — blocks submission if exact match found
 (function() {
     let dupTimer;
+    const alert    = document.getElementById('duplicateAlert');
+    const msgEl    = document.getElementById('duplicateMsg');
+    const listEl   = document.getElementById('duplicateList');
+    const submitBtn = document.querySelector('button[type=submit]');
+
+    function setBlocked(blocked) {
+        alert.classList.toggle('d-none', !blocked);
+        if (submitBtn) submitBtn.disabled = blocked;
+    }
+
     function checkDuplicate() {
         const ln  = document.querySelector('[name=last_name]').value.trim();
         const fn  = document.querySelector('[name=first_name]').value.trim();
         const dob = document.querySelector('[name=date_of_birth]').value.trim();
-        if (!ln || !fn || !dob) return;
+        if (!ln || !fn || !dob) { setBlocked(false); return; }
         clearTimeout(dupTimer);
         dupTimer = setTimeout(() => {
             fetch(`<?= APP_URL ?>/beneficiaries/check-duplicate?last_name=${encodeURIComponent(ln)}&first_name=${encodeURIComponent(fn)}&date_of_birth=${encodeURIComponent(dob)}`)
                 .then(r => r.json())
-                .then(d => { document.getElementById('duplicateAlert').classList.toggle('d-none', !d.duplicate); });
+                .then(data => {
+                    if (data.duplicate && data.matches && data.matches.length) {
+                        const rows = data.matches.map(m =>
+                            `<div class="d-flex align-items-center gap-2 mt-1">
+                                <i class="bi bi-person-fill text-danger"></i>
+                                <span><strong>${m.name}</strong> &mdash; ${m.barangay}
+                                <span class="badge bg-secondary ms-1">${m.status}</span></span>
+                                <a href="<?= APP_URL ?>/beneficiaries/${m.id}" target="_blank"
+                                   class="btn btn-sm btn-outline-danger py-0 ms-2">View</a>
+                            </div>`
+                        ).join('');
+                        msgEl.textContent = 'This child is already registered:';
+                        listEl.innerHTML = rows;
+                        setBlocked(true);
+                    } else {
+                        setBlocked(false);
+                    }
+                });
         }, 500);
     }
+
     ['last_name','first_name','date_of_birth'].forEach(n => {
         const el = document.querySelector(`[name=${n}]`);
-        if (el) el.addEventListener('change', checkDuplicate);
+        if (el) { el.addEventListener('input', checkDuplicate); el.addEventListener('change', checkDuplicate); }
     });
 })();
 

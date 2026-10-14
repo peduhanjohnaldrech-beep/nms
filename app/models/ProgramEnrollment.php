@@ -71,16 +71,16 @@ class ProgramEnrollment extends Model
                         b.last_name, b.first_name, b.middle_name, b.barangay, b.purok_zone, b.date_of_birth, b.sex,
                         dm.nutritional_status, dm.wflh_status, dm.monitoring_date AS assessment_date, dm.muac_cm,
                         (SELECT nutritional_status FROM dsp_monitoring
-                         WHERE beneficiary_id = pe.beneficiary_id AND validation_status = 'validated'
+                         WHERE enrollment_id = pe.id AND validation_status = 'validated'
                          ORDER BY monitoring_date DESC, id DESC LIMIT 1 OFFSET 1) AS prev_nutritional_status,
                         (SELECT wflh_status FROM dsp_monitoring
-                         WHERE beneficiary_id = pe.beneficiary_id AND validation_status = 'validated'
+                         WHERE enrollment_id = pe.id AND validation_status = 'validated'
                          ORDER BY monitoring_date DESC, id DESC LIMIT 1 OFFSET 1) AS prev_wflh_status,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
                  FROM program_enrollments pe
                  JOIN beneficiaries b ON b.id = pe.beneficiary_id
                  LEFT JOIN dsp_monitoring dm ON dm.id = (
-                     SELECT id FROM dsp_monitoring WHERE beneficiary_id = pe.beneficiary_id
+                     SELECT id FROM dsp_monitoring WHERE enrollment_id = pe.id
                      AND validation_status = 'validated'
                      ORDER BY monitoring_date DESC, id DESC LIMIT 1
                  )
@@ -259,7 +259,7 @@ class ProgramEnrollment extends Model
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
              JOIN dsp_monitoring dm ON dm.id = (
-                 SELECT id FROM dsp_monitoring WHERE beneficiary_id = pe.beneficiary_id
+                 SELECT id FROM dsp_monitoring WHERE enrollment_id = pe.id
                  AND validation_status = 'validated'
                  ORDER BY monitoring_date DESC, id DESC LIMIT 1
              )
@@ -274,7 +274,7 @@ class ProgramEnrollment extends Model
                          SELECT COUNT(*) FROM (
                              SELECT nutritional_status, wflh_status
                              FROM dsp_monitoring
-                             WHERE beneficiary_id = pe.beneficiary_id
+                             WHERE enrollment_id = pe.id
                              AND validation_status = 'validated'
                              ORDER BY monitoring_date DESC, id DESC
                              LIMIT 2

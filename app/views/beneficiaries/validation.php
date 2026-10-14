@@ -1,9 +1,9 @@
 <?php $pageTitle = 'Validation Queue'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-shield-check me-2 text-warning"></i>Validation Queue</h4>
-        <p class="text-muted small mb-0 mt-1">Review and approve/reject pending beneficiary registrations from mobile</p>
+        <p class="text-muted small mb-0 mt-1">Review and approve or return pending beneficiary registrations from mobile</p>
     </div>
     <span class="badge bg-warning text-dark fs-6"><?= count($rows) ?> Pending</span>
 </div>
@@ -102,34 +102,37 @@
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
                             </form>
-                            <button class="btn btn-sm btn-outline-danger"
+                            <button class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
-                                    data-bs-target="#rejectModal<?= $b['id'] ?>"
-                                    title="Reject">
-                                <i class="bi bi-x-lg"></i> Reject
+                                    data-bs-target="#returnModal<?= $b['id'] ?>"
+                                    title="Return for Correction">
+                                <i class="bi bi-reply me-1"></i>Return
                             </button>
 
-                            <!-- Reject modal for this row -->
-                            <div class="modal fade" id="rejectModal<?= $b['id'] ?>" tabindex="-1">
+                            <!-- Return modal for this row -->
+                            <div class="modal fade" id="returnModal<?= $b['id'] ?>" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/reject" method="post">
                                             <?= \Core\Session::csrfField() ?>
                                             <div class="modal-header">
-                                                <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Reject Registration</h5>
+                                                <h5 class="modal-title"><i class="bi bi-reply text-warning me-2"></i>Return for Correction</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <p class="text-muted small mb-3">
-                                                    Rejecting: <strong><?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?></strong>
+                                                <div class="alert alert-warning py-2 small mb-3">
+                                                    <i class="bi bi-info-circle me-1"></i>This will be sent back to the BHW for correction.
+                                                </div>
+                                                <p class="text-muted small mb-2">
+                                                    Returning: <strong><?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?></strong>
                                                 </p>
-                                                <label class="form-label fw-semibold">Reason / Notes <span class="text-danger">*</span></label>
+                                                <label class="form-label fw-semibold">Note to BHW <span class="text-danger">*</span></label>
                                                 <textarea name="rejection_note" class="form-control" rows="3"
-                                                          placeholder="Explain why this registration is being rejected..." required></textarea>
+                                                          placeholder="Explain what needs to be corrected..." required></textarea>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                                                <button type="submit" class="btn btn-warning"><i class="bi bi-reply me-1"></i>Return</button>
                                             </div>
                                         </form>
                                     </div>

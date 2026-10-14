@@ -1,6 +1,6 @@
 <?php $pageTitle = 'User Management'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-person-gear me-2"></i>User Management</h4>
     <a href="<?= APP_URL ?>/users/create" class="btn btn-primary">
         <i class="bi bi-person-plus me-1"></i>Add User

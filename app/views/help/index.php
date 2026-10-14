@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Help & User Guide'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-question-circle me-2"></i>Help &amp; User Guide</h4>
 </div>
 

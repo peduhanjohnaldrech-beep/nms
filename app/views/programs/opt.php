@@ -7,7 +7,7 @@ $coverage  = $eligible > 0 ? min(100, round($weighed / $eligible * 100)) : 0;
 $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'danger');
 ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-clipboard-heart me-2"></i>OPT — Operation Timbang</h4>
         <small class="text-muted">Nutrition screening — weight and height measurement of children aged 0–59 months</small>
@@ -70,14 +70,14 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
 <!-- Not Yet Weighed -->
 <?php if (!empty($notYetWeighed)): ?>
 <div class="card border-0 shadow-sm mb-4 border-start border-warning border-3">
-    <div class="card-header bg-white fw-semibold text-warning">
+    <div class="card-header fw-semibold text-warning">
         <i class="bi bi-exclamation-circle me-2"></i>Not Yet Weighed
         <span class="badge bg-warning text-dark ms-2"><?= count($notYetWeighed) ?></span>
         <span class="text-muted fw-normal small ms-2">— eligible children with no assessment for <?= $period ? "$period $year" : $year ?></span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle">
+            <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr><th>Name</th><th>Barangay</th><th>Sex</th><th>Age</th><th></th></tr>
                 </thead>
@@ -110,7 +110,7 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
 
 <!-- Z-Score Legend -->
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-white fw-semibold" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#zscoreLegend">
+    <div class="card-header fw-semibold" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#zscoreLegend">
         <i class="bi bi-info-circle me-2 text-info"></i>Z-Score &amp; Status Legend
         <i class="bi bi-chevron-down small float-end mt-1"></i>
     </div>
@@ -146,7 +146,7 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
 
 <!-- Assessment Records -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         Weighed Children
         <span class="badge bg-secondary ms-2"><?= $weighed ?></span>
     </div>
@@ -156,13 +156,12 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                 <thead class="table-light">
                     <tr>
                         <th>Name</th><th>Barangay</th><th>Sex</th><th>Age (mo)</th>
-                        <th>Wt (kg)</th><th>Ht (cm)</th><th>WFA Z</th><th>WFA</th>
-                        <th>HFA</th><th>WFL/H</th><th>Period</th>
+                        <th>Wt / Ht</th><th>WFA</th><th>HFA</th><th>WFL/H</th><th>Period</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($rows)): ?>
-                    <tr><td colspan="11" class="text-center text-muted py-3">No records found.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-3">No records found.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($rows as $r): ?>
                     <tr>
@@ -174,9 +173,9 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                         <td><?= htmlspecialchars($r['barangay']) ?></td>
                         <td><?= htmlspecialchars($r['sex']) ?></td>
                         <td><?= $r['age_in_months'] ?></td>
-                        <td><?= $r['weight_kg'] ?></td>
-                        <td><?= $r['height_cm'] ?: '—' ?></td>
-                        <td><?= $r['weight_for_age_zscore'] !== null ? number_format($r['weight_for_age_zscore'], 2) : '—' ?></td>
+                        <td class="text-nowrap">
+                            <?= $r['weight_kg'] ?> kg<?= $r['height_cm'] ? ' / ' . $r['height_cm'] . ' cm' : '' ?>
+                        </td>
                         <td><span class="badge status-<?= strtolower($r['nutritional_status']) ?>"><?= $r['nutritional_status'] ?></span></td>
                         <td><?= !empty($r['hfa_status']) ? '<span class="badge status-' . strtolower($r['hfa_status']) . '">' . $r['hfa_status'] . '</span>' : '—' ?></td>
                         <td><?= !empty($r['wflh_status']) ? '<span class="badge status-' . strtolower($r['wflh_status']) . '">' . $r['wflh_status'] . '</span>' : '—' ?></td>

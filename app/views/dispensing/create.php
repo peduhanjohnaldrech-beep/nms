@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Record Dispensing'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= $beneficiaryId ? APP_URL . '/beneficiaries/' . $beneficiaryId : APP_URL . '/dispensing' ?>"
        class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <h4 class="mb-0"><i class="bi bi-prescription2 me-2 text-primary"></i>Record Dispensing</h4>
@@ -9,7 +9,7 @@
 <div class="row justify-content-center">
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-plus-circle me-1 text-primary"></i>New Dispensing Record
             </div>
             <div class="card-body">

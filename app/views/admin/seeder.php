@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Demo Data Seeder'; ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-database-fill-gear me-2 text-warning"></i>Demo Data Seeder</h4>
 </div>
 
@@ -13,7 +13,7 @@
 <div class="row g-3">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-database-fill-add me-2 text-success"></i>Seed Demo Data
             </div>
             <div class="card-body">
@@ -39,7 +39,7 @@
     </div>
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-database-fill-x me-2 text-danger"></i>Clear Demo Data
             </div>
             <div class="card-body">

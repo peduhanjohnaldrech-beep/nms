@@ -17,12 +17,15 @@ class BeneficiaryApiController extends ApiController
     {
         $this->requireApiAuth();
 
-        $barangay    = $_GET['barangay'] ?? null;
-        $purok       = $_GET['purok'] ?? null;
-        $search      = $_GET['search'] ?? '';
-        $page        = max(1, (int)($_GET['page'] ?? 1));
-        $perPage     = min(200, max(10, (int)($_GET['per_page'] ?? 50)));
-        $updatedSince = $_GET['updated_since'] ?? null;
+        $barangay      = $_GET['barangay'] ?? null;
+        $purok         = $_GET['purok'] ?? null;
+        $search        = $_GET['search'] ?? '';
+        $page          = max(1, (int)($_GET['page'] ?? 1));
+        $perPage       = min(500, max(10, (int)($_GET['per_page'] ?? 50)));
+        $updatedSince  = $_GET['updated_since'] ?? null;
+        $validatedOnly = !empty($_GET['validated_only']);
+        $excludePeriod = $_GET['exclude_period'] ?? null;
+        $excludeYear   = isset($_GET['exclude_year']) ? (int)$_GET['exclude_year'] : null;
 
         // BHW / BNS can only see their own barangay
         if ($this->isBhw() || $this->isBns()) {
@@ -58,6 +61,24 @@ class BeneficiaryApiController extends ApiController
         if ($updatedSince) {
             $where[]  = 'b.updated_at > ?';
             $params[] = $updatedSince;
+        }
+
+        // Only show validated beneficiaries (for OPT batch, etc.)
+        if ($validatedOnly) {
+            $where[] = "b.validation_status = 'validated'";
+        }
+
+        // Exclude beneficiaries who already have an assessment for this period/year
+        if ($excludePeriod && $excludeYear) {
+            $where[]  = "NOT EXISTS (
+                SELECT 1 FROM assessments a
+                WHERE a.beneficiary_id = b.id
+                  AND a.period = ?
+                  AND a.assessment_year = ?
+                  AND a.validation_status != 'rejected'
+            )";
+            $params[] = $excludePeriod;
+            $params[] = $excludeYear;
         }
 
         $whereClause = implode(' AND ', $where);

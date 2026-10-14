@@ -256,6 +256,7 @@ $router->get('/api/reports/mns',          'ReportApiController@mns');
 $router->get('/api/reports/outcome',      'ReportApiController@outcome');
 $router->get('/api/reports/comparison',   'ReportApiController@comparison');
 $router->get('/api/reports/distribution', 'ReportApiController@distribution');
+$router->get('/api/reports/export',      'ReportApiController@export');
 
 // Users (admin only)
 $router->get('/api/users',              'UserApiController@index');

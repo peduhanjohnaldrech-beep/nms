@@ -9,7 +9,7 @@ $pageTitle = 'MNS Report — ' . $tabLabel;
 $monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 ?>
 
-<div class="d-flex align-items-center my-3">
+<div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <div class="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
         <i class="bi bi-capsule fs-4 text-primary"></i>
@@ -163,7 +163,7 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
     <!-- MNP -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-prescription me-1 text-warning"></i>
                 MNP — <?= $monthNames[$selectedMonth] ?> <?= $year ?>
                 <span class="badge bg-secondary ms-1"><?= count($mnpMonthRecords) ?></span>
@@ -200,7 +200,7 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
     <!-- LNS-SQ -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-prescription2 me-1 text-success"></i>
                 LNS-SQ — <?= $monthNames[$selectedMonth] ?> <?= $year ?>
                 <span class="badge bg-secondary ms-1"><?= count($lnsMonthRecords) ?></span>
@@ -238,7 +238,7 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
 <?php else: ?>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         <?php if ($tab === 'vita'): ?>
             <i class="bi bi-capsule me-1 text-primary"></i>Vitamin A Distribution Records
         <?php elseif ($tab === 'mnp'): ?>

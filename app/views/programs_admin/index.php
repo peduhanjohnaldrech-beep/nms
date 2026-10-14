@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Manage Programs'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-grid-fill me-2 text-primary"></i>Program Management</h4>
     <a href="<?= APP_URL ?>/programs-admin/create" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-circle me-1"></i>Add Program

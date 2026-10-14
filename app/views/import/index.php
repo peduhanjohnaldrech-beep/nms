@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Import Data'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-file-earmark-excel me-2"></i>Import Data</h4>
     <a href="<?= APP_URL ?>/import/storage" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-hdd me-1"></i>View Storage
@@ -13,7 +13,7 @@
     <!-- Upload -->
     <div class="<?= \Core\Session::get('user_role') === 'admin' ? 'col-lg-8' : 'col-12' ?>">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-upload me-2 text-primary"></i>Upload Excel File</span>
                 <a href="<?= APP_URL ?>/import/template" class="btn btn-sm btn-success">
                     <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Template
@@ -328,7 +328,7 @@
     <?php if (\Core\Session::get('user_role') === 'admin'): ?>
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">
+            <div class="card-header fw-semibold">
                 <i class="bi bi-folder2-open me-2 text-warning"></i>Import Folders
             </div>
             <div class="card-body d-flex flex-column gap-3">
@@ -381,7 +381,7 @@
 
 <!-- Bottom: Import History (full width) -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
         <span><i class="bi bi-clock-history me-2 text-secondary"></i>Import History</span>
         <span class="text-muted small"><?= count($logs) ?> record<?= count($logs) !== 1 ? 's' : '' ?></span>
     </div>

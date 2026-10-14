@@ -66,7 +66,7 @@ class DispensingController extends Controller
         $barangays        = $beneficiaryModel->getAllBarangays();
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay
-             FROM beneficiaries WHERE deleted_at IS NULL
+             FROM beneficiaries WHERE deleted_at IS NULL AND validation_status = 'validated'
              ORDER BY last_name, first_name"
         )->fetchAll();
         $activePrograms   = (new Program())->getActive();
@@ -144,7 +144,7 @@ class DispensingController extends Controller
 
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay
-             FROM beneficiaries WHERE deleted_at IS NULL
+             FROM beneficiaries WHERE deleted_at IS NULL AND validation_status = 'validated'
              ORDER BY last_name, first_name"
         )->fetchAll();
         $activePrograms   = (new Program())->getActive();

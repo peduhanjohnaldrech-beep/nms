@@ -90,7 +90,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 
 <!-- Filters -->
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-bottom py-2 px-3">
+    <div class="card-header border-bottom py-2 px-3">
         <span class="fw-semibold small text-uppercase text-muted"><i class="bi bi-funnel me-1"></i>Filters &amp; Export</span>
     </div>
     <div class="card-body py-3">
@@ -163,7 +163,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 <!-- Supplement Breakdown -->
 <?php if (!empty($summary)): ?>
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
+    <div class="card-header border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
         <span class="fw-semibold small text-uppercase text-muted"><i class="bi bi-bar-chart me-1"></i>Breakdown by Supplement — <?= $year ?></span>
         <button class="btn btn-sm btn-link text-muted p-0 text-decoration-none" type="button"
                 data-bs-toggle="collapse" data-bs-target="#summaryCollapse">
@@ -199,7 +199,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 
 <!-- MNS Monthly Log -->
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-bottom py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="card-header border-bottom py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <span class="fw-semibold"><i class="bi bi-capsule me-1 text-primary"></i>MNS Monthly Log</span>
             <span class="text-muted small ms-1">— MNP &amp; LNS-SQ for
@@ -334,7 +334,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 
 <!-- Dispensing Records Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
+    <div class="card-header border-bottom py-2 px-3 d-flex justify-content-between align-items-center">
         <span class="fw-semibold small text-uppercase text-muted"><i class="bi bi-list-ul me-1"></i>Dispensing Records</span>
         <span class="badge bg-secondary rounded-pill"><?= count($records) ?></span>
     </div>

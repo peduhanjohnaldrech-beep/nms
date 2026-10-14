@@ -93,7 +93,7 @@
 <?php if (!empty($ageGroupStats)): ?>
 <!-- Age-Group Breakdown -->
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         <i class="bi bi-bar-chart me-2 text-primary"></i>Age-Group Breakdown
         <button class="btn btn-sm btn-outline-secondary float-end" type="button"
                 data-bs-toggle="collapse" data-bs-target="#ageGroupTable">
@@ -148,7 +148,7 @@
 <?php endif; ?>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white fw-semibold">
+    <div class="card-header fw-semibold">
         Results <span class="badge bg-secondary ms-2"><?= count($rows) ?></span>
     </div>
     <div class="card-body p-0">

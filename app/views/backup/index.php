@@ -1,6 +1,6 @@
 <?php $pageTitle = 'Database Backup'; ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-database-fill-down me-2"></i>Database Backup</h4>
     <div class="d-flex gap-2">
         <a href="<?= APP_URL ?>/backup/download" class="btn btn-outline-primary">
@@ -28,7 +28,7 @@
 
 <!-- Backup list -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white d-flex align-items-center gap-2 py-2">
+    <div class="card-header d-flex align-items-center gap-2 py-2">
         <i class="bi bi-archive text-primary"></i>
         <span class="fw-semibold">Saved Backups</span>
         <span class="badge bg-secondary ms-1"><?= count($backups) ?></span>
@@ -96,7 +96,7 @@
 
 <!-- Backup Log -->
 <div class="card border-0 shadow-sm mt-3">
-    <div class="card-header bg-white d-flex align-items-center gap-2 py-2">
+    <div class="card-header d-flex align-items-center gap-2 py-2">
         <i class="bi bi-journal-text text-secondary"></i>
         <span class="fw-semibold">Backup Log</span>
         <span class="badge bg-secondary ms-1"><?= count($logLines) ?></span>

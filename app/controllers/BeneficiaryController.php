@@ -94,6 +94,28 @@ class BeneficiaryController extends Controller
                 $data['barangay'] = $userBarangay; // BHW/BNS locked to their barangay
             }
 
+            // Block exact duplicate (same name + DOB already exists)
+            $dupes = $this->model->findDuplicatesByNameDob(
+                $data['last_name'], $data['first_name'], $data['date_of_birth']
+            );
+            if (!empty($dupes)) {
+                $d = $dupes[0];
+                Session::flash('error',
+                    '<strong>Duplicate blocked.</strong> A child named <strong>'
+                    . htmlspecialchars($d['last_name'] . ', ' . $d['first_name'])
+                    . '</strong> with the same date of birth is already registered in <strong>'
+                    . htmlspecialchars($d['barangay'])
+                    . '</strong>. Please check the existing record before adding a new one.'
+                );
+                $this->view('beneficiaries/create', [
+                    'data'             => $data,
+                    'barangays'        => $barangays,
+                    'lockedBarangay'   => $lockedBarangay,
+                    'locationDefaults' => $locationDefaults,
+                ]);
+                return;
+            }
+
             $data['created_by']        = Session::get('user_id');
             $data['source']            = 'Walk-in';
             $data['validation_status'] = in_array(Session::get('user_role'), ['bhw', 'bns', 'encoder'])
@@ -357,8 +379,17 @@ class BeneficiaryController extends Controller
         if ($excludeId) {
             $matches = array_filter($matches, fn($m) => (int)$m['id'] !== $excludeId);
         }
+        $matches = array_values($matches);
 
-        echo json_encode(['duplicate' => !empty($matches)]);
+        $summary = array_map(fn($m) => [
+            'id'       => $m['id'],
+            'name'     => $m['last_name'] . ', ' . $m['first_name'] . (!empty($m['middle_name']) ? ' ' . $m['middle_name'] : ''),
+            'barangay' => $m['barangay'],
+            'dob'      => $m['date_of_birth'],
+            'status'   => $m['validation_status'] ?? '',
+        ], $matches);
+
+        echo json_encode(['duplicate' => !empty($matches), 'matches' => $summary]);
         exit;
     }
 
