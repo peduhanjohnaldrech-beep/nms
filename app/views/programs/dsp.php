@@ -251,7 +251,7 @@
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
+                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Latest Status</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     <?php if (empty($active)): ?>
@@ -276,6 +276,15 @@
                             <?php if (!empty($a['intervention_type'])): ?>
                             <span class="badge bg-info text-dark"><?= htmlspecialchars($a['intervention_type']) ?></span>
                             <?php else: ?>—<?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($a['wflh_status'])): ?>
+                            <span class="badge status-<?= strtolower($a['wflh_status']) ?>"><?= $a['wflh_status'] ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($a['nutritional_status'])): ?>
+                            <span class="badge status-<?= strtolower($a['nutritional_status']) ?>"><?= $a['nutritional_status'] ?></span>
+                            <?php endif; ?>
+                            <?php if (empty($a['wflh_status']) && empty($a['nutritional_status'])): ?>—<?php endif; ?>
                         </td>
                         <td class="text-nowrap">
                             <?= !empty($a['pre_weight_kg']) ? $a['pre_weight_kg'] . ' kg' : '—' ?>
