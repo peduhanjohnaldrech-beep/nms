@@ -24,41 +24,31 @@ $__activeTab = $ageStatus ?? 'active';
     </div>
 </div>
 
-<ul class="nav nav-underline mb-3">
-    <li class="nav-item">
-        <a class="nav-link <?= $__activeTab === 'active' ? 'active' : '' ?>"
-           href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'active'])) ?>">
-            <i class="bi bi-people-fill me-1"></i>Active
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link <?= $__activeTab === 'aged_out' ? 'active' : '' ?>"
-           href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'aged_out'])) ?>">
-            Aged Out
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link <?= $__activeTab === 'recovered' ? 'active' : '' ?>"
-           href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'recovered'])) ?>">
-            <i class="bi bi-heart-fill me-1 text-success"></i>Recovered
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= APP_URL ?>/beneficiaries/followup">
-            <i class="bi bi-exclamation-triangle me-1 text-warning"></i>Follow-up
-        </a>
-    </li>
+<div class="nms-tabs">
+    <a class="<?= $__activeTab === 'active' ? 'active' : '' ?>"
+       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'active'])) ?>">
+        <i class="bi bi-people-fill"></i>Active
+    </a>
+    <a class="<?= $__activeTab === 'aged_out' ? 'active' : '' ?>"
+       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'aged_out'])) ?>">
+        Aged Out
+    </a>
+    <a class="<?= $__activeTab === 'recovered' ? 'active' : '' ?>"
+       href="?<?= http_build_query(array_merge($__tabBase, ['age_status' => 'recovered'])) ?>">
+        <i class="bi bi-heart-fill text-success"></i>Recovered
+    </a>
+    <a href="<?= APP_URL ?>/beneficiaries/followup">
+        <i class="bi bi-exclamation-triangle text-warning"></i>Follow-up
+    </a>
     <?php if (in_array(\Core\Session::get('user_role'), ['admin', 'nutritionist', 'midwife'])): ?>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= APP_URL ?>/beneficiaries/validation">
-            <i class="bi bi-shield-check me-1"></i>Validation
-            <?php if (!empty($__pendingValidation) && $__pendingValidation > 0): ?>
-            <span class="badge bg-warning text-dark ms-1"><?= $__pendingValidation ?></span>
-            <?php endif; ?>
-        </a>
-    </li>
+    <a href="<?= APP_URL ?>/beneficiaries/validation">
+        <i class="bi bi-shield-check"></i>Validation
+        <?php if (!empty($__pendingValidation) && $__pendingValidation > 0): ?>
+        <span class="badge bg-warning text-dark"><?= $__pendingValidation ?></span>
+        <?php endif; ?>
+    </a>
     <?php endif; ?>
-</ul>
+</div>
 
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
