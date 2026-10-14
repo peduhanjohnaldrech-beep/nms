@@ -532,6 +532,120 @@ class ValidationApiController extends ApiController
      * GET /api/validation/counts
      * Returns counts by status — useful for dashboard badges
      */
+
+    /**
+     * GET /api/validation/dsp-monitoring/pending
+     */
+    public function dspMonitoringPending(): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['midwife', 'nutritionist', 'admin']);
+
+        $db = Database::getInstance();
+
+        $where  = ["dm.validation_status = 'pending'"];
+        $params = [];
+
+        if ($this->isMidwife() && $this->userBarangay()) {
+            $where[]  = 'b.barangay = ?';
+            $params[] = $this->userBarangay();
+        }
+
+        $whereClause = 'WHERE ' . implode(' AND ', $where);
+
+        $stmt = $db->prepare("
+            SELECT dm.id, dm.enrollment_id, dm.beneficiary_id,
+                   dm.monitoring_date, dm.age_in_months,
+                   dm.weight_kg, dm.height_cm, dm.muac_cm,
+                   dm.nutritional_status, dm.wflh_status,
+                   dm.monitored_by, dm.remarks,
+                   dm.validation_status, dm.created_at,
+                   b.last_name, b.first_name, b.barangay, b.sex, b.date_of_birth,
+                   pe.intervention_type,
+                   u.full_name AS submitted_by_name
+            FROM dsp_monitoring dm
+            JOIN beneficiaries b   ON b.id  = dm.beneficiary_id
+            JOIN program_enrollments pe ON pe.id = dm.enrollment_id
+            LEFT JOIN users u ON u.id = dm.created_by
+            $whereClause
+            ORDER BY dm.created_at DESC
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->success(['records' => $rows, 'count' => count($rows)]);
+    }
+
+    /**
+     * POST /api/validation/dsp-monitoring/{id}/validate
+     */
+    public function validateDspMonitoring(string $id): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['midwife', 'nutritionist', 'admin']);
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT dm.*, b.barangay FROM dsp_monitoring dm
+            JOIN beneficiaries b ON b.id = dm.beneficiary_id
+            WHERE dm.id = ?
+        ");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$row) $this->error('Record not found', 404);
+        if ($row['validation_status'] !== 'pending') $this->error('Record is not pending', 400);
+        if ($this->isMidwife() && $this->userBarangay() && $row['barangay'] !== $this->userBarangay()) {
+            $this->error('Access denied', 403);
+        }
+
+        $db->prepare("
+            UPDATE dsp_monitoring
+            SET validation_status = 'validated', validated_by = ?, validated_at = NOW()
+            WHERE id = ?
+        ")->execute([$this->userId(), $id]);
+
+        $this->logActivity('dsp_monitoring_validate', "Validated DSP monitoring ID $id");
+        $this->success([], 'Follow-up validated');
+    }
+
+    /**
+     * POST /api/validation/dsp-monitoring/{id}/reject
+     */
+    public function rejectDspMonitoring(string $id): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['midwife', 'nutritionist', 'admin']);
+
+        $body = $this->body();
+        $note = trim($body['note'] ?? '');
+        if (!$note) $this->error('Rejection note is required', 422);
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT dm.*, b.barangay FROM dsp_monitoring dm
+            JOIN beneficiaries b ON b.id = dm.beneficiary_id
+            WHERE dm.id = ?
+        ");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$row) $this->error('Record not found', 404);
+        if ($row['validation_status'] !== 'pending') $this->error('Record is not pending', 400);
+        if ($this->isMidwife() && $this->userBarangay() && $row['barangay'] !== $this->userBarangay()) {
+            $this->error('Access denied', 403);
+        }
+
+        $db->prepare("
+            UPDATE dsp_monitoring
+            SET validation_status = 'rejected', validated_by = ?, validated_at = NOW(), remarks = ?
+            WHERE id = ?
+        ")->execute([$this->userId(), $note, $id]);
+
+        $this->logActivity('dsp_monitoring_reject', "Rejected DSP monitoring ID $id. Note: $note");
+        $this->success([], 'Follow-up rejected');
+    }
+
     public function counts(): void
     {
         $this->requireApiAuth();
@@ -555,7 +669,25 @@ class ValidationApiController extends ApiController
                 WHERE a.validation_status = 'pending' $wc
             ");
             $stmt->execute($params);
-            $this->success(['pending' => (int)$stmt->fetchColumn()]);
+            $assessPending = (int)$stmt->fetchColumn();
+
+            // DSP monitoring pending
+            $dspWhere  = ["dm.validation_status = 'pending'"];
+            $dspParams = [];
+            if ($this->isMidwife() && $this->userBarangay()) {
+                $dspWhere[]  = 'b.barangay = ?';
+                $dspParams[] = $this->userBarangay();
+            }
+            $dspWc = 'WHERE ' . implode(' AND ', $dspWhere);
+            $dspStmt = $db->prepare("
+                SELECT COUNT(*) FROM dsp_monitoring dm
+                JOIN beneficiaries b ON b.id = dm.beneficiary_id
+                $dspWc
+            ");
+            $dspStmt->execute($dspParams);
+            $dspPending = (int)$dspStmt->fetchColumn();
+
+            $this->success(['pending' => $assessPending, 'dsp_monitoring' => $dspPending]);
         } else {
             // BNS: counts of their own submissions
             $stmt = $db->prepare("

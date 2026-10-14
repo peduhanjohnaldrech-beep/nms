@@ -289,6 +289,11 @@ $router->get('/api/validation/beneficiaries/my-submissions', 'ValidationApiContr
 $router->post('/api/validation/beneficiaries/{id}/validate', 'ValidationApiController@validateBeneficiary');
 $router->post('/api/validation/beneficiaries/{id}/reject',   'ValidationApiController@rejectBeneficiary');
 
+// Validation — DSP Monitoring
+$router->get('/api/validation/dsp-monitoring/pending',          'ValidationApiController@dspMonitoringPending');
+$router->post('/api/validation/dsp-monitoring/{id}/validate',   'ValidationApiController@validateDspMonitoring');
+$router->post('/api/validation/dsp-monitoring/{id}/reject',     'ValidationApiController@rejectDspMonitoring');
+
 // ============================================================
 
 $router->dispatch();
