@@ -43,21 +43,26 @@ class VitaminARecord extends Model
         ]);
     }
 
-    public function getAllByRound(string $round, int $year): array
+    public function getAllByRound(string $round, int $year, string $barangay = '', string $purok = ''): array
     {
+        $extra = ''; $params = [$round, $year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT v.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
              FROM vitamin_a_records v
              JOIN beneficiaries b ON b.id = v.beneficiary_id
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
-               AND v.round = ? AND v.year = ?
+               AND v.round = ? AND v.year = ?$extra
              ORDER BY b.barangay, b.last_name",
-            [$round, $year]
+            $params
         );
     }
 
-    public function getCoverageByBarangay(string $round, int $year): array
+    public function getCoverageByBarangay(string $round, int $year, string $barangay = ''): array
     {
+        $extra = ''; $params = [$round, $year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?'; $params[] = $barangay; }
         return $this->fetchAll(
             "SELECT b.barangay,
                     COUNT(DISTINCT v.beneficiary_id) AS covered,
@@ -66,9 +71,9 @@ class VitaminARecord extends Model
              FROM vitamin_a_records v
              JOIN beneficiaries b ON b.id = v.beneficiary_id
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
-               AND v.round = ? AND v.year = ?
+               AND v.round = ? AND v.year = ?$extra
              GROUP BY b.barangay ORDER BY b.barangay",
-            [$round, $year]
+            $params
         );
     }
 }

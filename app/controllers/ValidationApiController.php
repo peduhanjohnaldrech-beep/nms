@@ -281,6 +281,45 @@ class ValidationApiController extends ApiController
     }
 
     /**
+     * GET /api/validation/dsp-monitoring/my-submissions
+     * BNS/BHW sees their own submitted DSP monitoring records and validation status
+     */
+    public function myDspMonitoringSubmissions(): void
+    {
+        $this->requireApiAuth();
+
+        $db     = Database::getInstance();
+        $userId = $this->userId();
+
+        $where  = ['dm.created_by = ?'];
+        $params = [$userId];
+
+        if ($status = $_GET['status'] ?? null) {
+            $where[]  = 'dm.validation_status = ?';
+            $params[] = $status;
+        }
+
+        $stmt = $db->prepare("
+            SELECT dm.id, dm.enrollment_id, dm.monitoring_date, dm.weight_kg,
+                   dm.height_cm, dm.muac_cm, dm.nutritional_status, dm.wflh_status,
+                   dm.validation_status, dm.rejection_note, dm.validated_at, dm.created_at,
+                   dm.remarks,
+                   b.last_name, b.first_name, b.barangay,
+                   pe.intervention_type,
+                   u.full_name AS validated_by_name
+            FROM dsp_monitoring dm
+            JOIN program_enrollments pe ON pe.id = dm.enrollment_id
+            JOIN beneficiaries b ON b.id = dm.beneficiary_id
+            LEFT JOIN users u ON u.id = dm.validated_by
+            WHERE " . implode(' AND ', $where) . "
+            ORDER BY dm.created_at DESC
+            LIMIT 100
+        ");
+        $stmt->execute($params);
+        $this->success(['records' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
+    }
+
+    /**
      * POST /api/validation/beneficiaries/{id}/validate
      * Midwife approves a beneficiary registration
      */

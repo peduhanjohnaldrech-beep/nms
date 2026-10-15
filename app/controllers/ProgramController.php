@@ -467,30 +467,46 @@ $notYetWeighed = $nywStmt->fetchAll();
     {
         $this->requireAuth();
 
-        $round = $_GET['round'] ?? 'February';
-        $year  = (int)($_GET['year'] ?? date('Y'));
-        $tab   = $_GET['tab'] ?? 'vitaminA';
+        $round    = $_GET['round']    ?? 'February';
+        $year     = (int)($_GET['year'] ?? date('Y'));
+        $tab      = $_GET['tab']      ?? 'vitaminA';
+        $barangay = trim($_GET['barangay'] ?? '');
+        $purok    = trim($_GET['purok']    ?? '');
 
-        $mnpModel        = new MnpRecord();
-        $lnsModel        = new LnsSqRecord();
+        // BNS/BHW scoped to their barangay
+        $role = \Core\Session::get('user_role');
+        if (in_array($role, ['bhw', 'bns'])) {
+            $barangay = \Core\Session::get('user_barangay', '');
+        }
 
-        $vitaModel       = new VitaminARecord();
-        $eligible        = $this->enrollmentModel->getEligibleForMNS($round, $year);
-        $vitaRecords     = $vitaModel->getAllByRound($round, $year);
-        $vitaCoverage    = $vitaModel->getCoverageByBarangay($round, $year);
-        $mnpCompletion   = $mnpModel->getCompletionByBarangay($year);
-        $lnsCompletion   = $lnsModel->getCompletionByBarangay($year);
-        $mnpRecords      = $mnpModel->getAllByYear($year);
-        $lnsRecords      = $lnsModel->getAllByYear($year);
+        $mnpModel  = new MnpRecord();
+        $lnsModel  = new LnsSqRecord();
+        $vitaModel = new VitaminARecord();
+
+        $eligible        = $this->enrollmentModel->getEligibleForMNS($round, $year, $barangay, $purok);
+        $vitaRecords     = $vitaModel->getAllByRound($round, $year, $barangay, $purok);
+        $vitaCoverage    = $vitaModel->getCoverageByBarangay($round, $year, $barangay);
+        $mnpCompletion   = $mnpModel->getCompletionByBarangay($year, $barangay);
+        $lnsCompletion   = $lnsModel->getCompletionByBarangay($year, $barangay);
+        $mnpRecords      = $mnpModel->getAllByYear($year, $barangay, $purok);
+        $lnsRecords      = $lnsModel->getAllByYear($year, $barangay, $purok);
         $asOfDate        = $year < (int)date('Y') ? "{$year}-12-31" : date('Y-m-d');
-        $mnpNotYet       = $mnpModel->getNotYetReceived($year, $asOfDate);
-        $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate);
+        $mnpNotYet       = $mnpModel->getNotYetReceived($year, $asOfDate, $barangay, $purok);
+        $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate, $barangay, $purok);
+
+        $beneFilter = \App\Models\Beneficiary::BNS_SUBMITTED_FILTER;
+        $brgyWhere  = $barangay !== '' ? " AND b.barangay = " . Database::getInstance()->quote($barangay) : '';
+        $purokWhere = $purok    !== '' ? " AND LOWER(b.purok_zone) = LOWER(" . Database::getInstance()->quote($purok) . ")" : '';
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) BETWEEN 6 AND 59
-             AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . " ORDER BY b.last_name, b.first_name"
+             AND $beneFilter$brgyWhere$purokWhere ORDER BY b.last_name, b.first_name"
         )->fetchAll();
+
+        $beneModel = new Beneficiary();
+        $barangays = $beneModel->getAllBarangays();
+        $puroks    = $beneModel->getPuroksByBarangay($barangay);
 
         $this->view('programs/mns', [
             'eligible'         => $eligible,
@@ -507,6 +523,10 @@ $notYetWeighed = $nywStmt->fetchAll();
             'year'             => $year,
             'tab'              => $tab,
             'asOfDate'         => $asOfDate,
+            'barangays'        => $barangays,
+            'puroks'           => $puroks,
+            'filterBarangay'   => $barangay,
+            'filterPurok'      => $purok,
         ]);
     }
 

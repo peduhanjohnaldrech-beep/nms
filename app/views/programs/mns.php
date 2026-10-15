@@ -13,7 +13,7 @@
         <form method="get" class="row g-2 align-items-end">
             <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
             <?php if ($tab === 'vitaminA'): ?>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small">Round</label>
                 <select name="round" class="form-select form-select-sm">
                     <option value="February" <?= $round === 'February' ? 'selected' : '' ?>>February</option>
@@ -23,13 +23,43 @@
             <?php else: ?>
             <input type="hidden" name="round" value="<?= htmlspecialchars($round) ?>">
             <?php endif; ?>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <label class="form-label small">Year</label>
                 <input type="number" name="year" class="form-control form-control-sm"
                        value="<?= $year ?>" min="2000" max="<?= date('Y') + 1 ?>">
             </div>
+            <?php if (!empty($barangays)): ?>
+            <div class="col-md-2">
+                <label class="form-label small">Barangay</label>
+                <select name="barangay" class="form-select form-select-sm" id="mnsBarangayFilter">
+                    <option value="">All Barangays</option>
+                    <?php foreach ($barangays as $brgy): ?>
+                    <option value="<?= htmlspecialchars($brgy) ?>" <?= $filterBarangay === $brgy ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($brgy) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Purok</label>
+                <select name="purok" class="form-select form-select-sm" id="mnsPurokFilter"
+                        <?= empty($filterBarangay) ? 'disabled' : '' ?>>
+                    <option value="">All Puroks</option>
+                    <?php foreach ($puroks as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>" <?= $filterPurok === $p ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
             <div class="col-auto">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
+                <?php if ($filterBarangay !== '' || $filterPurok !== ''): ?>
+                <a href="?tab=<?= urlencode($tab) ?>&round=<?= urlencode($round) ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary ms-1">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+                <?php endif; ?>
             </div>
             <div class="col-auto ms-auto">
                 <?php
@@ -38,12 +68,13 @@
                     'lnssq' => 'mns_lns',
                     default => 'mns_vita',
                 };
+                $exportExtra = ($filterBarangay !== '' ? '&barangay=' . urlencode($filterBarangay) : '')
+                             . ($filterPurok    !== '' ? '&purok='    . urlencode($filterPurok)    : '');
                 ?>
-                <a href="<?= APP_URL ?>/reports/export?type=<?= $exportType ?>&format=excel&year=<?= $year ?>&period=<?= urlencode($round) ?>" class="btn btn-sm btn-success">
+                <a href="<?= APP_URL ?>/reports/export?type=<?= $exportType ?>&format=excel&year=<?= $year ?>&period=<?= urlencode($round) ?><?= $exportExtra ?>" class="btn btn-sm btn-success">
                     <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
                 </a>
             </div>
-            <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
         </form>
     </div>
 </div>
@@ -90,22 +121,27 @@ $mnsCovClass = $mnsCovPct >= 80 ? 'success' : ($mnsCovPct >= 50 ? 'warning' : 'd
 </div>
 
 <!-- Tabs -->
+<?php
+$tabBase = 'round=' . urlencode($round) . '&year=' . $year
+    . ($filterBarangay !== '' ? '&barangay=' . urlencode($filterBarangay) : '')
+    . ($filterPurok    !== '' ? '&purok='    . urlencode($filterPurok)    : '');
+?>
 <ul class="nav nav-tabs mb-3" id="mnsTabs">
     <li class="nav-item">
         <a class="nav-link <?= $tab === 'vitaminA' ? 'active' : '' ?>"
-           href="?round=<?= urlencode($round) ?>&year=<?= $year ?>&tab=vitaminA">
+           href="?<?= $tabBase ?>&tab=vitaminA">
             <i class="bi bi-capsule me-1"></i>Vitamin A
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link <?= $tab === 'mnp' ? 'active' : '' ?>"
-           href="?round=<?= urlencode($round) ?>&year=<?= $year ?>&tab=mnp">
+           href="?<?= $tabBase ?>&tab=mnp">
             <i class="bi bi-prescription me-1"></i>MNP
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link <?= $tab === 'lnssq' ? 'active' : '' ?>"
-           href="?round=<?= urlencode($round) ?>&year=<?= $year ?>&tab=lnssq">
+           href="?<?= $tabBase ?>&tab=lnssq">
             <i class="bi bi-prescription2 me-1"></i>LNS-SQ
         </a>
     </li>
@@ -697,6 +733,14 @@ $mnsCovClass = $mnsCovPct >= 80 ? 'success' : ($mnsCovPct >= 50 ? 'warning' : 'd
 </div>
 
 <script>
+// Enable purok filter only when a barangay is selected
+document.getElementById('mnsBarangayFilter')?.addEventListener('change', function() {
+    const purok = document.getElementById('mnsPurokFilter');
+    if (!purok) return;
+    purok.disabled = this.value === '';
+    if (this.value === '') purok.value = '';
+});
+
 document.getElementById('vitaModal')?.addEventListener('show.bs.modal', function(e) {
     const btn = e.relatedTarget;
     document.getElementById('vitaBeneficiaryId').value = btn.dataset.id;

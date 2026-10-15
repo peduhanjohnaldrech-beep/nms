@@ -42,34 +42,42 @@ class LnsSqRecord extends Model
         ]);
     }
 
-    public function getCompletionByBarangay(int $year): array
+    public function getCompletionByBarangay(int $year, string $barangay = ''): array
     {
+        $extra = ''; $params = [$year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?'; $params[] = $barangay; }
         return $this->fetchAll(
             "SELECT b.barangay, l.age_group, COUNT(*) AS total, SUM(l.completed_routine) AS completed
              FROM lns_sq_records l JOIN beneficiaries b ON b.id = l.beneficiary_id
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?$extra
              GROUP BY b.barangay, l.age_group ORDER BY b.barangay, l.age_group",
-            [$year]
+            $params
         );
     }
 
-    public function getAllByYear(int $year): array
+    public function getAllByYear(int $year, string $barangay = '', string $purok = ''): array
     {
+        $extra = ''; $params = [$year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT l.*, b.last_name, b.first_name, b.barangay, b.date_of_birth,
                     u.full_name AS given_by_name
              FROM lns_sq_records l
              JOIN beneficiaries b ON b.id = l.beneficiary_id
              LEFT JOIN users u ON u.id = l.given_by
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND l.year = ?$extra
              ORDER BY l.date_given DESC, b.barangay, b.last_name",
-            [$year]
+            $params
         );
     }
 
-    public function getNotYetReceived(int $year, string $asOfDate = ''): array
+    public function getNotYetReceived(int $year, string $asOfDate = '', string $barangay = '', string $purok = ''): array
     {
         $ref = $asOfDate ?: date('Y-m-d');
+        $extra = ''; $params = [$ref, $ref, $year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
@@ -79,9 +87,9 @@ class LnsSqRecord extends Model
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
                AND NOT EXISTS (
                    SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
-               )
+               )$extra
              ORDER BY b.barangay, b.last_name",
-            [$ref, $ref, $year]
+            $params
         );
     }
 }

@@ -155,9 +155,12 @@ class ProgramEnrollment extends Model
         );
     }
 
-    public function getEligibleForMNS(string $round, int $year): array
+    public function getEligibleForMNS(string $round, int $year, string $barangay = '', string $purok = ''): array
     {
         $refDate = $round === 'February' ? "{$year}-02-15" : "{$year}-08-15";
+        $extra = ''; $params = [$refDate, $refDate, $round, $year];
+        if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
+        if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.*,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
@@ -169,9 +172,9 @@ class ProgramEnrollment extends Model
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM vitamin_a_records WHERE round = ? AND year = ?
-             )
+             )$extra
              ORDER BY b.barangay, b.last_name",
-            [$refDate, $refDate, $round, $year]
+            $params
         );
     }
 
