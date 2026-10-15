@@ -216,6 +216,18 @@ class ProgramApiController extends ApiController
             ? (int)$data['age_in_months']
             : \DateHelper::ageInMonths($b['date_of_birth'], $monitoringDate);
 
+        // Enforce one check per month per enrollment
+        $dupCheck = $db->prepare(
+            "SELECT COUNT(*) FROM dsp_monitoring
+             WHERE enrollment_id = ?
+               AND YEAR(monitoring_date)  = YEAR(?)
+               AND MONTH(monitoring_date) = MONTH(?)"
+        );
+        $dupCheck->execute([(int)$data['enrollment_id'], $monitoringDate, $monitoringDate]);
+        if ((int)$dupCheck->fetchColumn() > 0) {
+            $this->error('A monitoring record already exists for this enrollment this month.', 409);
+        }
+
         $model = new \App\Models\DspMonitoring();
         $id    = $model->createWithZScore([
             'local_id'         => $data['local_id'] ?? null,
