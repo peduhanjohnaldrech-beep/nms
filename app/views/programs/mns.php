@@ -34,8 +34,8 @@
                 <select name="barangay" class="form-select form-select-sm" id="mnsBarangayFilter">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $brgy): ?>
-                    <option value="<?= htmlspecialchars($brgy) ?>" <?= $filterBarangay === $brgy ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($brgy) ?>
+                    <option value="<?= htmlspecialchars($brgy['barangay']) ?>" <?= $filterBarangay === $brgy['barangay'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($brgy['barangay']) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>

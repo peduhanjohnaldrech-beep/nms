@@ -36,8 +36,8 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                 <select name="barangay" class="form-select form-select-sm" id="optBarangayFilter">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $brgy): ?>
-                    <option value="<?= htmlspecialchars($brgy) ?>" <?= $filterBarangay === $brgy ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($brgy) ?>
+                    <option value="<?= htmlspecialchars($brgy['barangay']) ?>" <?= $filterBarangay === $brgy['barangay'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($brgy['barangay']) ?>
                     </option>
                     <?php endforeach; ?>
                 </select>
