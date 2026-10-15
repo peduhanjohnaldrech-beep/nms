@@ -364,7 +364,7 @@
         <span class="badge bg-secondary ms-2"><?= count($history) ?></span>
         <i class="bi bi-chevron-down small float-end mt-1"></i>
     </div>
-    <div class="collapse" id="historyCollapse">
+    <div class="collapse show" id="historyCollapse">
         <div class="card-body border-bottom pb-2 pt-3">
             <form method="get" action="" class="row g-2 align-items-end">
                 <div class="col-auto">
@@ -579,11 +579,8 @@
                 </div>
                 <div class="modal-body">
                     <p class="mb-3">Child: <strong id="monName"></strong></p>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
-                        <input type="date" name="monitoring_date" class="form-control"
-                               value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>" required>
-                    </div>
+                    <input type="hidden" name="monitoring_date" value="<?= date('Y-m-d') ?>">
+                    <input type="hidden" name="monitored_by" value="<?= htmlspecialchars(\Core\Session::get('user_name') ?? '') ?>">
                     <div class="row g-3">
                         <div class="col-4">
                             <label class="form-label fw-semibold">Weight (kg) <span class="text-danger">*</span></label>
@@ -597,10 +594,6 @@
                             <label class="form-label fw-semibold">MUAC (cm) <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="muac_cm" class="form-control" placeholder="e.g. 13.5" required>
                         </div>
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-semibold">Monitored By</label>
-                        <input type="text" name="monitored_by" class="form-control" placeholder="Name of BHW / Midwife">
                     </div>
                     <div class="mt-3">
                         <label class="form-label fw-semibold">Remarks</label>
