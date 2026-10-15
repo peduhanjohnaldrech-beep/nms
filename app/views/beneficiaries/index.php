@@ -61,8 +61,11 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                     <option value="recovered" <?= ($ageStatus ?? '') === 'recovered' ? 'selected' : '' ?>>Recovered</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search"></i></button>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-search me-1"></i>Search</button>
+                <?php if (!empty($search) || !empty($filterBar) || !empty($filterPurok) || !empty($ageStatus)): ?>
+                <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
             </div>
         </form>
         <script>
@@ -85,12 +88,16 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
 <?php endif; ?>
 
 <div class="card border-0 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold small"><i class="bi bi-people-fill me-1 text-primary"></i>Beneficiaries</span>
+        <span class="badge bg-secondary"><?= number_format($total ?? count($rows)) ?> found</span>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th><th>Name</th><th>DOB</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Status</th><th>Last Assessed</th>
+                        <th>#</th><th>Name</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Status</th><th>Last Assessed</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -116,8 +123,10 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                             <?php elseif (!empty($b['is_recovered'])): ?>
                             <span class="badge bg-success ms-1" title="Child was previously malnourished and has recovered to Normal status"><i class="bi bi-heart-fill me-1"></i>Recovered</span>
                             <?php endif; ?>
+                            <?php if (($b['source'] ?? '') === 'Mobile'): ?>
+                            <span class="badge bg-info text-dark ms-1" title="Submitted via mobile app"><i class="bi bi-phone me-1"></i>Mobile</span>
+                            <?php endif; ?>
                         </td>
-                        <td><?= DateHelper::formatDate($b['date_of_birth'], 'M j, Y') ?></td>
                         <td class="text-nowrap"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></td>
                         <td><?= htmlspecialchars($b['sex']) ?></td>
                         <td><?= htmlspecialchars($b['barangay']) ?></td>
@@ -178,15 +187,39 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
         </div>
     </div>
     <?php if (($totalPages ?? 1) > 1): ?>
-    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-        <span class="text-muted small">Showing <?= count($rows) ?> of <?= number_format($total) ?> beneficiaries</span>
+    <?php
+        $qBase = http_build_query(array_filter(['search' => $search ?? '', 'barangay' => $filterBar ?? '', 'purok' => $filterPurok ?? '', 'age_status' => $ageStatus ?? '']));
+        $pageUrl = fn($p) => '?' . $qBase . ($qBase ? '&' : '') . 'page=' . $p;
+        $pages = []; $delta = 2;
+        for ($i = 1; $i <= $totalPages; $i++) {
+            if ($i === 1 || $i === $totalPages || abs($i - $page) <= $delta) $pages[] = $i;
+        }
+        $rendered = []; $prev = null;
+        foreach ($pages as $p) {
+            if ($prev !== null && $p - $prev > 1) $rendered[] = '...';
+            $rendered[] = $p;
+            $prev = $p;
+        }
+    ?>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small">Showing <?= number_format(($page - 1) * 25 + 1) ?>–<?= number_format(min($page * 25, $total)) ?> of <?= number_format($total) ?></span>
         <nav>
             <ul class="pagination pagination-sm mb-0">
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-                    <a class="page-link" href="?page=<?= $i ?>&search=<?= urlencode($search ?? '') ?>&barangay=<?= urlencode($filterBar ?? '') ?>&age_status=<?= urlencode($ageStatus ?? '') ?>"><?= $i ?></a>
+                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                    <a class="page-link" href="<?= $pageUrl($page - 1) ?>"><i class="bi bi-chevron-left"></i></a>
                 </li>
-                <?php endfor; ?>
+                <?php foreach ($rendered as $p): ?>
+                <?php if ($p === '...'): ?>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                <?php else: ?>
+                <li class="page-item <?= $p === $page ? 'active' : '' ?>">
+                    <a class="page-link" href="<?= $pageUrl($p) ?>"><?= $p ?></a>
+                </li>
+                <?php endif; ?>
+                <?php endforeach; ?>
+                <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                    <a class="page-link" href="<?= $pageUrl($page + 1) ?>"><i class="bi bi-chevron-right"></i></a>
+                </li>
             </ul>
         </nav>
     </div>
