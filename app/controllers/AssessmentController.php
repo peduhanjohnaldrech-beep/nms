@@ -76,9 +76,6 @@ class AssessmentController extends Controller
                 'created_by'      => Session::get('user_id'),
             ]);
 
-            $enrollmentModel = new ProgramEnrollment();
-            $dspEnrollmentId = $enrollmentModel->autoEnrollDSP($assessmentId);
-
             $saved = $this->model->findById($assessmentId);
             $parts = [sprintf('WFA: %s (Z=%s)', $saved['nutritional_status'], number_format($saved['weight_for_age_zscore'] ?? 0, 2))];
             if (!empty($saved['hfa_status']))  $parts[] = sprintf('HFA: %s (Z=%s)', $saved['hfa_status'],  number_format($saved['height_for_age_zscore'] ?? 0, 2));
@@ -189,7 +186,6 @@ class AssessmentController extends Controller
             $year        = (int)date('Y', strtotime($date));
             $saved       = 0;
             $skipped     = 0;
-            $dspEnrolled = 0;
 
             $assessedBy = trim($_POST['assessed_by'] ?? Session::get('user_name', ''));
 
@@ -216,15 +212,11 @@ class AssessmentController extends Controller
                     'created_by'      => Session::get('user_id'),
                 ]);
 
-                if ((new ProgramEnrollment())->autoEnrollDSP($assessmentId)) $dspEnrolled++;
                 $saved++;
             }
 
             \ActivityLog::log('batch_assessment', "Batch assessment: $saved saved, $skipped skipped — barangay: $selectedBarangay");
             $flashMsg = "$saved assessment" . ($saved !== 1 ? 's' : '') . " saved, $skipped skipped (no weight entered).";
-            if ($dspEnrolled > 0) {
-                $flashMsg .= " <strong>$dspEnrolled " . ($dspEnrolled !== 1 ? 'children were' : 'child was') . " auto-enrolled in DSP.</strong>";
-            }
             Session::flash('success', $flashMsg);
             $this->redirect('/beneficiaries');
         }

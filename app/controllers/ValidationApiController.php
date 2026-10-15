@@ -127,8 +127,6 @@ class ValidationApiController extends ApiController
             WHERE id = ?
         ")->execute([$this->userId(), $id]);
 
-        (new ProgramEnrollment())->autoEnrollDSP((int)$id);
-
         $this->logActivity('assessment_validate', "Validated assessment ID $id");
         $this->success([], 'Assessment validated');
     }
@@ -538,7 +536,6 @@ class ValidationApiController extends ApiController
                     SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL
                     WHERE id=?
                 ")->execute([$uid, $id]);
-                (new ProgramEnrollment())->autoEnrollDSP($id);
                 $validated++;
             }
         } else {

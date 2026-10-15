@@ -22,6 +22,7 @@
                     <a class="nav-link py-1 px-2 rounded" href="#import">Import</a>
                     <a class="nav-link py-1 px-2 rounded" href="#admin">Admin Panel</a>
                     <a class="nav-link py-1 px-2 rounded" href="#backup">Backup</a>
+                    <a class="nav-link py-1 px-2 rounded" href="#mobile">Mobile App</a>
                     <a class="nav-link py-1 px-2 rounded" href="#privacy">Data Privacy</a>
                 </nav>
             </div>
@@ -35,8 +36,12 @@
         <div class="card border-0 shadow-sm mb-4" id="overview">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>System Overview</h5>
-                <p>The <strong>Nutrition Monitoring System (NMS)</strong> is an offline, desktop-based system designed for the City Health Nutrition Department to manage child beneficiary records, conduct nutritional assessments, monitor program enrollments, and generate reports.</p>
-                <p class="mb-0">The system operates fully offline — no internet connection is required for day-to-day use. All data is stored locally in a secure SQLite database file on the computer.</p>
+                <p>The <strong>Nutrition Monitoring System (NMS)</strong> is a cloud-based system developed for the City Health Nutrition Department of Kabankalan City to manage child beneficiary records, conduct nutritional assessments, monitor program enrollments, and generate reports.</p>
+                <p>The system consists of two components:</p>
+                <ul class="mb-0">
+                    <li><strong>Web System</strong> — accessible via any browser at <a href="https://kabnms.duckdns.org" target="_blank">https://kabnms.duckdns.org</a>. Used by the Nutritionist and Admin for program management, validation, and report generation.</li>
+                    <li><strong>Mobile App (NMS Mobile)</strong> — an Android application used by BNS, BHW, and Midwife for field data collection. Supports offline data entry and automatically syncs to the server when internet is available.</li>
+                </ul>
             </div>
         </div>
 
@@ -44,15 +49,21 @@
         <div class="card border-0 shadow-sm mb-4" id="login">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-box-arrow-in-right me-2"></i>Logging In</h5>
-                <ol class="mb-0">
-                    <li>Double-click <strong>start.bat</strong> to launch the system server.</li>
-                    <li>A browser window will open automatically at <code>http://127.0.0.1:3000</code>.</li>
+                <p class="mb-2"><strong>Web System:</strong></p>
+                <ol>
+                    <li>Open a browser and go to <a href="https://kabnms.duckdns.org" target="_blank">https://kabnms.duckdns.org</a>.</li>
                     <li>Enter your <strong>Username</strong> and <strong>Password</strong>, then click <strong>Sign In</strong>.</li>
-                    <li>To close the system, double-click <strong>stop.bat</strong>.</li>
+                    <li>Your session will automatically expire after <strong>1 hour of inactivity</strong> for security.</li>
+                </ol>
+                <p class="mb-2"><strong>Mobile App:</strong></p>
+                <ol class="mb-0">
+                    <li>Open the <strong>NMS Mobile</strong> app on your Android device.</li>
+                    <li>Enter your assigned username and password, then tap <strong>Sign In</strong>.</li>
+                    <li>Your login session lasts <strong>30 days</strong> before re-authentication is required.</li>
                 </ol>
                 <div class="alert alert-warning mt-3 mb-0 py-2">
                     <i class="bi bi-exclamation-triangle me-1"></i>
-                    Never share your password. The system logs all login activity.
+                    Never share your password. The system logs all login activity. BNS, BHW, and Midwife accounts can only log in via the mobile app.
                 </div>
             </div>
         </div>
@@ -113,13 +124,13 @@
         <div class="card border-0 shadow-sm mb-4" id="programs">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-grid me-2"></i>Programs</h5>
-                <p>Tracks enrollment in nutrition intervention programs.</p>
+                <p>Tracks nutrition intervention programs for eligible child beneficiaries.</p>
                 <ul>
-                    <li><strong>OPT (Operation Timbang)</strong> — weight monitoring program. Enroll beneficiaries and track admission/discharge weight.</li>
-                    <li><strong>DSP (Dietary Supplementation Program)</strong> — supplemental feeding. Records feeding sessions and food packets.</li>
-                    <li><strong>MNS (Micronutrient Supplementation)</strong> — tracks Vitamin A, MNP, and LNS-SQ distributions.</li>
+                    <li><strong>OPT Plus (Operation Timbang)</strong> — semi-annual weighing program (January and July). Tracks nutritional status coverage per barangay and identifies children not yet weighed.</li>
+                    <li><strong>DSP (Dietary Supplementation Program)</strong> — manages enrollment of malnourished children (SUW/UW) into feeding intervention cycles. Tracks monitoring visits, weight progress, and discharge status. Enrollment is <strong>manual</strong> — not all eligible children are enrolled due to budget constraints.</li>
+                    <li><strong>MNS (Micronutrient Supplementation)</strong> — tracks Vitamin A (6–59 months), MNP, and LNS-SQ (6–23 months) distributions by barangay and round.</li>
                 </ul>
-                <p class="mb-0">To enroll a beneficiary: click <em>Enroll</em> on the program page and search for the beneficiary. To discharge: click <em>Discharge</em> on the enrolled record.</p>
+                <p class="mb-0">To enroll a beneficiary in DSP: click <em>Enroll</em> on the DSP page. To discharge: click <em>Discharge</em> on the enrolled record once graduation criteria are met (2 consecutive normal validated checks).</p>
             </div>
         </div>
 
@@ -127,10 +138,14 @@
         <div class="card border-0 shadow-sm mb-4" id="reports">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Reports</h5>
-                <ul>
-                    <li><strong>OPT Reports</strong> — summary tables of nutritional status by barangay and age group for a selected quarter and year. Exportable to Excel.</li>
-                    <li><strong>Outcome Report</strong> — shows improvement or deterioration of nutritional status for enrolled beneficiaries between two assessment periods.</li>
-                    <li><strong>Report Distribution</strong> — upload and store completed report files (PDF, Excel) for record-keeping.</li>
+                <ul class="mb-0">
+                    <li><strong>OPT Report</strong> — nutritional status summary by barangay and age group for a selected period and year. Exportable to Excel.</li>
+                    <li><strong>DSP Report</strong> — list of enrolled, graduated, and dropped beneficiaries with intervention details.</li>
+                    <li><strong>MNS Report</strong> — Vitamin A, MNP, and LNS-SQ coverage summary.</li>
+                    <li><strong>Outcome Report</strong> — pre vs. post weight comparison for DSP enrollees showing nutritional improvement.</li>
+                    <li><strong>Summary Report</strong> — per-barangay coverage rates, malnutrition rates, DSP and Vitamin A summary.</li>
+                    <li><strong>Period Comparison</strong> — January vs. July OPT side-by-side showing change in malnutrition rate per barangay.</li>
+                    <li><strong>Report Distribution</strong> — upload and store finalized report files (PDF, Excel) for record-keeping.</li>
                 </ul>
             </div>
         </div>
@@ -181,16 +196,35 @@
         <div class="card border-0 shadow-sm mb-4" id="backup">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-database-down me-2"></i>Backup</h5>
-                <p>The system stores all data in a single file: <code>database/nms.sqlite</code> inside the NMS folder.</p>
+                <p>The system data is stored in a MySQL database on the cloud server (DigitalOcean). Regular backups are strongly recommended.</p>
                 <p><strong>To back up your data:</strong></p>
                 <ol>
                     <li>Go to the <strong>Dashboard</strong> and click the <strong><i class="bi bi-database-down"></i> Backup Database</strong> button (Admin only).</li>
-                    <li>A copy of the database file will be downloaded to your computer.</li>
+                    <li>A SQL dump file will be downloaded to your computer.</li>
                     <li>Save the downloaded file to a USB drive or external storage.</li>
                 </ol>
                 <div class="alert alert-warning mb-0 py-2">
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     <strong>Recommended:</strong> Perform a backup at least once a week, especially after bulk data entry or imports.
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile App -->
+        <div class="card border-0 shadow-sm mb-4" id="mobile">
+            <div class="card-body">
+                <h5 class="fw-bold text-primary"><i class="bi bi-phone me-2"></i>Mobile App (NMS Mobile)</h5>
+                <p>The NMS Mobile app is for <strong>BNS, BHW, and Midwife</strong> field workers. It is not available on the web system.</p>
+                <ul>
+                    <li><strong>Beneficiary Registration</strong> — register new child beneficiaries in the field. Submissions are sent to the Nutritionist for validation.</li>
+                    <li><strong>OPT Batch Weighing</strong> — record weight, height, and MUAC for multiple children at once. Submitted records appear in the web system after validation.</li>
+                    <li><strong>DSP Follow-up</strong> — submit monitoring follow-up records for DSP-enrolled children.</li>
+                    <li><strong>My Submissions</strong> — view the status of all your submitted records (Pending, Validated, Returned).</li>
+                    <li><strong>Offline Mode</strong> — data can be entered without internet and will sync automatically when a connection is available.</li>
+                </ul>
+                <div class="alert alert-info mb-0 py-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Mobile accounts are app-only — they cannot log in to the web system.
                 </div>
             </div>
         </div>

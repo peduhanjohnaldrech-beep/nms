@@ -6,8 +6,18 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+            ini_set('session.gc_maxlifetime', 3600);
+            session_set_cookie_params(['lifetime' => 3600, 'httponly' => true, 'samesite' => 'Lax']);
             session_start();
         }
+
+        // Auto-logout after 1 hour of inactivity
+        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 3600) {
+            session_unset();
+            session_destroy();
+            session_start();
+        }
+        $_SESSION['last_activity'] = time();
     }
 
     public static function set(string $key, mixed $value): void

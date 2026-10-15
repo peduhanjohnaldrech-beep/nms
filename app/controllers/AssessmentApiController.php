@@ -181,11 +181,6 @@ class AssessmentApiController extends ApiController
             throw $e;
         }
 
-        // Auto-enroll in DSP if admin/nutritionist (already validated, no queue needed)
-        if ($autoValidated) {
-            (new ProgramEnrollment())->autoEnrollDSP($id);
-        }
-
         $stmt = $db->prepare('SELECT * FROM assessments WHERE id = ?');
         $stmt->execute([$id]);
         $created = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -333,10 +328,6 @@ class AssessmentApiController extends ApiController
                     'validated_at'     => $autoValidated ? date('Y-m-d H:i:s') : null,
                     'check_outliers'   => $checkOutliers,
                 ]);
-                // Auto-enroll in DSP if admin/nutritionist (already validated)
-                if ($autoValidated) {
-                    (new ProgramEnrollment())->autoEnrollDSP($newId);
-                }
                 $created[] = $newId;
             } catch (\PDOException $e) {
                 if ($e->getCode() === '23000') {
