@@ -195,6 +195,80 @@ class AssessmentApiController extends ApiController
     }
 
     /**
+     * PUT /api/assessments/{id}  — edit a rejected/pending assessment and resubmit
+     */
+    public function update(string $id): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+
+        $id   = (int)$id;
+        $data = $this->body();
+        $db   = Database::getInstance();
+
+        $stmt = $db->prepare(
+            "SELECT a.*, b.sex, b.date_of_birth FROM assessments a
+             JOIN beneficiaries b ON b.id = a.beneficiary_id WHERE a.id = ?"
+        );
+        $stmt->execute([$id]);
+        $assessment = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$assessment) $this->error('Assessment not found', 404);
+
+        if (!in_array($assessment['validation_status'], ['rejected', 'pending'])) {
+            $this->error('Only rejected or pending assessments can be edited', 403);
+        }
+        if ($this->isFieldWorker() && (int)$assessment['created_by'] !== $this->userId()) {
+            $this->error('You can only edit your own assessments', 403);
+        }
+
+        $weightKg = isset($data['weight_kg']) ? (float)$data['weight_kg'] : 0;
+        if ($weightKg <= 0) $this->error('weight_kg required', 422);
+
+        $heightCm = !empty($data['height_cm']) ? (float)$data['height_cm'] : null;
+        $muacCm   = !empty($data['muac_cm'])   ? (float)$data['muac_cm']   : null;
+
+        $sex = $assessment['sex'];
+        $age = (int)$assessment['age_in_months'];
+
+        $wfaZscore = \ZScoreHelper::computeWFA($weightKg, $age, $sex);
+        $wfaStatus = $wfaZscore !== null ? \ZScoreHelper::classifyWFA($wfaZscore) : 'Pending';
+        $hfaZscore = $hfaStatus = $wflhZscore = $wflhStatus = null;
+        if ($heightCm !== null) {
+            $hfaZscore = \ZScoreHelper::computeHFA($heightCm, $age, $sex);
+            $hfaStatus = $hfaZscore !== null ? \ZScoreHelper::classifyHFA($hfaZscore) : null;
+            $wflh = \ZScoreHelper::computeWFLH($weightKg, $heightCm, $sex);
+            if ($wflh) { $wflhZscore = $wflh['zscore']; $wflhStatus = $wflh['status']; }
+        }
+
+        $db->prepare(
+            "UPDATE assessments SET
+                weight_kg = ?, height_cm = ?, muac_cm = ?,
+                weight_for_age_zscore = ?, nutritional_status = ?,
+                height_for_age_zscore = ?, hfa_status = ?,
+                wflh_zscore = ?, wflh_status = ?,
+                remarks = ?,
+                validation_status = 'pending',
+                validated_by = NULL, validated_at = NULL, rejection_note = NULL,
+                updated_at = NOW()
+             WHERE id = ?"
+        )->execute([
+            $weightKg, $heightCm, $muacCm,
+            $wfaZscore !== null ? round($wfaZscore, 3) : null, $wfaStatus,
+            $hfaZscore !== null ? round($hfaZscore, 3) : null, $hfaStatus,
+            $wflhZscore, $wflhStatus,
+            $data['remarks'] ?? $assessment['remarks'],
+            $id,
+        ]);
+
+        $stmt = $db->prepare("SELECT * FROM assessments WHERE id = ?");
+        $stmt->execute([$id]);
+        $updated = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        $this->logActivity('assessment_update', "Updated assessment ID $id (resubmitted)");
+        $this->success(['assessment' => $updated], 'Assessment updated and resubmitted');
+    }
+
+    /**
      * DELETE /api/assessments/{id}
      */
     public function destroy(string $id): void

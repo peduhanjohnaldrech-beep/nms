@@ -209,6 +209,7 @@ $router->get('/api/assessments',            'AssessmentApiController@index');
 $router->post('/api/assessments',           'AssessmentApiController@store');
 $router->post('/api/assessments/batch',     'AssessmentApiController@batch');
 $router->get('/api/assessments/{id}',       'AssessmentApiController@show');
+$router->put('/api/assessments/{id}',       'AssessmentApiController@update');
 $router->delete('/api/assessments/{id}',    'AssessmentApiController@destroy');
 
 // Offline Sync
