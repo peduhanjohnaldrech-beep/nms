@@ -73,13 +73,36 @@ function __navActive(string $path): string {
 
 // Breadcrumbs
 $__labelMap = [
-    'dashboard'=>'Dashboard','beneficiaries'=>'Beneficiaries','assessments'=>'Assessments',
-    'programs'=>'Programs','reports'=>'Reports','dispensing'=>'Dispensing','import'=>'Import',
-    'users'=>'Users','activity'=>'Activity Log','programs-admin'=>'Program Manager',
-    'help'=>'Help','opt'=>'OPT','dsp'=>'DSP','mns'=>'MNS','create'=>'New',
-    'edit'=>'Edit','batch'=>'Batch Assessment','followup'=>'For Follow-up',
-    'storage'=>'Storage Browser','outcome'=>'Outcome Report','distribution'=>'Distribution Report',
-    'backup'=>'Backup',
+    'dashboard'   => 'Dashboard',
+    'beneficiaries'=> 'Beneficiaries',
+    'assessments' => 'Assessments',
+    'programs'    => 'Programs',
+    'reports'     => 'Reports',
+    'dispensing'  => 'Dispensing Tracker',
+    'import'      => 'Import',
+    'users'       => 'User Management',
+    'activity'    => 'Activity Log',
+    'programs-admin' => 'Program Manager',
+    'help'        => 'Help',
+    'opt'         => 'OPT Plus',
+    'dsp'         => 'DSP',
+    'mns'         => 'MNS',
+    'create'      => 'New',
+    'edit'        => 'Edit',
+    'batch'       => 'Batch Assessment',
+    'followup'    => 'For Follow-up',
+    'validation'  => 'Validation Queue',
+    'storage'     => 'Storage Browser',
+    'outcome'     => 'Outcome Report',
+    'distribution'=> 'Distribution Report',
+    'comparison'  => 'Period Comparison',
+    'summary'     => 'Summary Report',
+    'barangays'   => 'Barangay Directory',
+    'backup'      => 'Database Backup',
+    'trash'       => 'Trash',
+    'preview'     => 'Preview',
+    'masterlist'  => 'Master List',
+    'monitoring'  => 'Monitoring',
 ];
 $__crumbSegs   = array_values(array_filter(explode('/', trim($__relPath, '/'))));
 $__breadcrumbs = [];
@@ -146,10 +169,11 @@ foreach ($__crumbSegs as $seg) {
             </a>
 
             <?php if (in_array($userRole, ['midwife','admin','nutritionist'])): ?>
+            <?php $__totalPending = $__pendingValidation + $__pendingAssessments; ?>
             <a class="nav-link d-flex align-items-center <?= __navActive('/beneficiaries/validation') ?>" href="<?= APP_URL ?>/beneficiaries/validation">
                 <i class="bi bi-shield-check me-2"></i>Validation Queue
-                <?php if ($__pendingValidation > 0): ?>
-                <span class="sidebar-badge ms-auto"><?= $__pendingValidation ?></span>
+                <?php if ($__totalPending > 0): ?>
+                <span class="sidebar-badge ms-auto"><?= $__totalPending ?></span>
                 <?php endif; ?>
             </a>
             <?php endif; ?>
