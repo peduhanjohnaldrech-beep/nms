@@ -114,7 +114,9 @@ class ProgramApiController extends ApiController
         $brgy   = $this->scopedBarangay($_GET['barangay'] ?? null);
 
         $bnsFilter2 = Beneficiary::BNS_SUBMITTED_FILTER;
-        $where  = ["pe.program = 'DSP'", "pe.cycle_year = ?", "b.validation_status = 'validated'", $bnsFilter2];
+        // Active enrollments span years; completed/dropped are filtered by cycle_year
+        $where  = ["pe.program = 'DSP'", "b.validation_status = 'validated'", $bnsFilter2,
+                   "(pe.status = 'Active' OR pe.cycle_year = ?)"];
         $params = [$year];
         if ($status) { $where[] = 'pe.status = ?'; $params[] = $status; }
         if ($brgy)   { $where[] = 'b.barangay = ?'; $params[] = $brgy; }
