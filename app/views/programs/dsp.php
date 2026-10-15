@@ -5,9 +5,14 @@
         <h4 class="mb-0"><i class="bi bi-egg-fried me-2"></i>Dietary Supplementation Program</h4>
         <small class="text-muted">Feeding and nutrition intervention for malnourished children (wasted / severely wasted)</small>
     </div>
-    <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= date('Y') ?>" class="btn btn-sm btn-success">
-        <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= APP_URL ?>/programs/dsp/masterlist<?= $filterBarangay ? '?barangay=' . urlencode($filterBarangay) : '' ?>" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-journal-text me-1"></i>Masterlist
+        </a>
+        <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= date('Y') ?>" class="btn btn-sm btn-success">
+            <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+        </a>
+    </div>
 </div>
 
 <!-- Filter Bar -->

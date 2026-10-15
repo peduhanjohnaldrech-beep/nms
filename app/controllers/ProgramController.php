@@ -164,6 +164,79 @@ $notYetWeighed = $nywStmt->fetchAll();
         ]);
     }
 
+    public function dspMasterlist(): void
+    {
+        $this->requireAuth();
+        $db       = Database::getInstance();
+        $role     = \Core\Session::get('user_role');
+        $barangay = trim($_GET['barangay'] ?? '');
+        $year     = (int)($_GET['year'] ?? date('Y'));
+
+        // BNS/BHW scoped to their barangay
+        if (in_array($role, ['bhw', 'bns'])) {
+            $barangay = \Core\Session::get('user_barangay', '');
+        }
+
+        $where  = "pe.program = 'DSP' AND pe.cycle_year = ?";
+        $params = [$year];
+        if ($barangay !== '') { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
+
+        $stmt = $db->prepare(
+            "SELECT pe.id, pe.enrollment_date, pe.pre_weight_kg, pe.post_weight_kg,
+                    pe.status, pe.end_date, pe.intervention_type, pe.cycle_number, pe.cycle_year,
+                    b.last_name, b.first_name, b.middle_name, b.date_of_birth, b.sex,
+                    b.barangay, b.purok_zone,
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, pe.enrollment_date) AS age_at_enrollment
+             FROM program_enrollments pe
+             JOIN beneficiaries b ON b.id = pe.beneficiary_id
+             WHERE $where
+             ORDER BY b.barangay, b.last_name, b.first_name"
+        );
+        $stmt->execute($params);
+        $enrollments = $stmt->fetchAll();
+
+        // Batch-fetch validated monitoring records
+        $monByEnrollment = [];
+        $ids = array_column($enrollments, 'id');
+        if (!empty($ids)) {
+            $ph = implode(',', array_fill(0, count($ids), '?'));
+            $monStmt = $db->prepare(
+                "SELECT enrollment_id, monitoring_date, weight_kg, muac_cm, nutritional_status, wflh_status
+                 FROM dsp_monitoring
+                 WHERE enrollment_id IN ($ph) AND validation_status = 'validated'
+                 ORDER BY monitoring_date ASC"
+            );
+            $monStmt->execute($ids);
+            foreach ($monStmt->fetchAll() as $m) {
+                $monByEnrollment[(int)$m['enrollment_id']][] = $m;
+            }
+        }
+
+        // Attach baseline / mid / endline to each enrollment
+        foreach ($enrollments as &$e) {
+            $recs = $monByEnrollment[$e['id']] ?? [];
+            $n    = count($recs);
+            $e['check_count'] = $n;
+            $e['baseline'] = $n >= 1 ? $recs[0]           : null;
+            $e['midpoint'] = $n >= 3 ? $recs[(int)($n/2)] : ($n === 2 ? $recs[0] : null);
+            $e['endline']  = $n >= 1 ? $recs[$n - 1]      : null;
+        }
+        unset($e);
+
+        $barangays = (new Beneficiary())->getAllBarangays();
+        $yStmt     = $db->query("SELECT DISTINCT cycle_year FROM program_enrollments WHERE program = 'DSP' ORDER BY cycle_year DESC");
+        $years     = $yStmt->fetchAll(\PDO::FETCH_COLUMN);
+        if (empty($years)) $years = [date('Y')];
+
+        $this->view('programs/dsp_masterlist', [
+            'enrollments'    => $enrollments,
+            'barangays'      => $barangays,
+            'years'          => $years,
+            'filterBarangay' => $barangay,
+            'filterYear'     => $year,
+        ]);
+    }
+
     public function dspMonitoringCreate(): void
     {
         $this->requireAuth();
