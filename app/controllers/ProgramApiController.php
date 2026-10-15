@@ -133,6 +133,25 @@ class ProgramApiController extends ApiController
         $counts = ['Active' => 0, 'Completed' => 0, 'Dropped' => 0];
         foreach ($rows as $r) { if (isset($counts[$r['status']])) $counts[$r['status']]++; }
 
+        // Attach monitoring records for each enrollment (one extra batch query)
+        $ids = array_column($rows, 'id');
+        if (!empty($ids)) {
+            $ph = implode(',', array_fill(0, count($ids), '?'));
+            $monStmt = $db->prepare(
+                "SELECT id, enrollment_id, monitoring_date, weight_kg, muac_cm, height_cm, nutritional_status, validation_status
+                 FROM dsp_monitoring WHERE enrollment_id IN ($ph) ORDER BY monitoring_date ASC"
+            );
+            $monStmt->execute($ids);
+            $monByEnrollment = [];
+            foreach ($monStmt->fetchAll() as $m) {
+                $monByEnrollment[$m['enrollment_id']][] = $m;
+            }
+            foreach ($rows as &$row) {
+                $row['monitoring_records'] = $monByEnrollment[$row['id']] ?? [];
+            }
+            unset($row);
+        }
+
         $this->success(['enrollments' => $rows, 'counts' => $counts, 'year' => $year]);
     }
 
