@@ -39,13 +39,44 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-auto">
+            <div class="col-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/comparison" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+                <a href="?year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>&export=excel"
+                   class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
             </div>
         </form>
     </div>
 </div>
+
+<?php
+// Excel export
+if (!empty($_GET['export']) && $_GET['export'] === 'excel' && !empty($rows) && class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')):
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet()->setTitle('Comparison');
+    $headers = ['Barangay','Jan Assessed','Jan SUW','Jan UW','Jan Rate %','Jul Assessed','Jul SUW','Jul UW','Jul Rate %','Change %'];
+    foreach ($headers as $i => $h) {
+        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i+1) . '1';
+        $sheet->setCellValue($cell, $h);
+        $sheet->getStyle($cell)->getFont()->setBold(true);
+        $sheet->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('D6E4F0');
+    }
+    foreach ($rows as $ri => $r) {
+        $rowData = [
+            $r['barangay'], $r['janTotal'], $r['jan']['SUW'] ?? 0, $r['jan']['UW'] ?? 0, $r['janRate'],
+            $r['julTotal'], $r['jul']['SUW'] ?? 0, $r['jul']['UW'] ?? 0, $r['julRate'], $r['change'],
+        ];
+        foreach ($rowData as $ci => $val) {
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($ci+1) . ($ri+2), $val);
+        }
+    }
+    foreach (range(1, count($headers)) as $c) $sheet->getColumnDimensionByColumn($c)->setAutoSize(true);
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"Period_Comparison_{$year}.xlsx\"");
+    (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save('php://output');
+    exit;
+endif;
+?>
 
 <div class="alert alert-info border-0 shadow-sm small mb-3">
     <i class="bi bi-info-circle me-1"></i>
@@ -137,6 +168,34 @@
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
+                <?php if (!empty($rows)):
+                    $tJanTotal = array_sum(array_column($rows, 'janTotal'));
+                    $tJulTotal = array_sum(array_column($rows, 'julTotal'));
+                    $tJanSuw   = array_sum(array_map(fn($r) => $r['jan']['SUW'] ?? 0, $rows));
+                    $tJanUw    = array_sum(array_map(fn($r) => $r['jan']['UW']  ?? 0, $rows));
+                    $tJulSuw   = array_sum(array_map(fn($r) => $r['jul']['SUW'] ?? 0, $rows));
+                    $tJulUw    = array_sum(array_map(fn($r) => $r['jul']['UW']  ?? 0, $rows));
+                    $tJanRate  = $tJanTotal > 0 ? round(($tJanSuw + $tJanUw) / $tJanTotal * 100, 1) : null;
+                    $tJulRate  = $tJulTotal > 0 ? round(($tJulSuw + $tJulUw) / $tJulTotal * 100, 1) : null;
+                    $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJanRate, 1) : null;
+                ?>
+                <tfoot class="table-secondary fw-semibold">
+                    <tr>
+                        <td>TOTAL</td>
+                        <td class="text-center border-start"><?= $tJanTotal ?></td>
+                        <td class="text-center text-danger"><?= $tJanSuw ?></td>
+                        <td class="text-center text-warning"><?= $tJanUw ?></td>
+                        <td class="text-center"><?= $tJanRate !== null ? '<span class="badge bg-' . ($tJanRate >= 30 ? 'danger' : ($tJanRate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tJanRate . '%</span>' : '—' ?></td>
+                        <td class="text-center border-start"><?= $tJulTotal ?></td>
+                        <td class="text-center text-danger"><?= $tJulSuw ?></td>
+                        <td class="text-center text-warning"><?= $tJulUw ?></td>
+                        <td class="text-center"><?= $tJulRate !== null ? '<span class="badge bg-' . ($tJulRate >= 30 ? 'danger' : ($tJulRate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tJulRate . '%</span>' : '—' ?></td>
+                        <td class="text-center border-start fw-bold <?= $tChange !== null ? ($tChange < 0 ? 'text-success' : ($tChange > 0 ? 'text-danger' : 'text-muted')) : '' ?>">
+                            <?= $tChange !== null ? ($tChange > 0 ? '+' : '') . $tChange . '%' : '—' ?>
+                        </td>
+                    </tr>
+                </tfoot>
+                <?php endif; ?>
             </table>
         </div>
     </div>

@@ -54,33 +54,74 @@
 </div>
 
 <?php
-$withData = array_filter($rows, fn($r) => $r['pre_weight_kg'] && $r['post_weight_kg']);
-$improved = array_filter($withData, fn($r) => $r['post_weight_kg'] > $r['pre_weight_kg']);
-$avgGain  = count($withData) > 0
+$withData   = array_filter($rows, fn($r) => $r['pre_weight_kg'] && $r['post_weight_kg']);
+$improved   = array_filter($withData, fn($r) => $r['post_weight_kg'] > $r['pre_weight_kg']);
+$notImproved= array_filter($withData, fn($r) => $r['post_weight_kg'] <= $r['pre_weight_kg']);
+$avgGain    = count($withData) > 0
     ? array_sum(array_map(fn($r) => $r['post_weight_kg'] - $r['pre_weight_kg'], $withData)) / count($withData)
     : 0;
+$improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) * 100) : 0;
 ?>
 
 <div class="row g-3 mb-4">
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         <div class="card border-0 shadow-sm text-center py-3">
             <div class="fs-2 fw-bold text-primary"><?= count($rows) ?></div>
             <div class="text-muted small">Total DSP Enrollees</div>
         </div>
     </div>
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         <div class="card border-0 shadow-sm text-center py-3">
             <div class="fs-2 fw-bold text-success"><?= count($improved) ?></div>
             <div class="text-muted small">Gained Weight</div>
         </div>
     </div>
-    <div class="col-sm-4">
+    <div class="col-sm-3">
         <div class="card border-0 shadow-sm text-center py-3">
             <div class="fs-2 fw-bold text-info"><?= number_format($avgGain, 2) ?> kg</div>
             <div class="text-muted small">Avg. Weight Gain</div>
         </div>
     </div>
+    <div class="col-sm-3">
+        <div class="card border-0 shadow-sm text-center py-3">
+            <div class="fs-2 fw-bold text-<?= $improvedPct >= 70 ? 'success' : ($improvedPct >= 40 ? 'warning' : 'danger') ?>"><?= $improvedPct ?>%</div>
+            <div class="text-muted small">Improvement Rate</div>
+            <div class="progress mx-3 mt-1" style="height:5px;">
+                <div class="progress-bar bg-<?= $improvedPct >= 70 ? 'success' : ($improvedPct >= 40 ? 'warning' : 'danger') ?>" style="width:<?= $improvedPct ?>%"></div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<?php if (!empty($withData)): ?>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold">
+        <i class="bi bi-bar-chart me-2 text-success"></i>Pre vs Post Weight — DSP Enrollees (<?= $year ?>)
+    </div>
+    <div class="card-body"><canvas id="outcomeChart" height="70"></canvas></div>
+</div>
+<script>
+(function(){
+    const data = <?= json_encode(array_values(array_filter($rows, fn($r) => $r['pre_weight_kg'] && $r['post_weight_kg']))) ?>;
+    const labels = data.map(r => r.last_name + ', ' + r.first_name.charAt(0) + '.');
+    new Chart(document.getElementById('outcomeChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Pre-Weight (kg)',  data: data.map(r => r.pre_weight_kg),  backgroundColor: '#3b82f688', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3 },
+                { label: 'Post-Weight (kg)', data: data.map(r => r.post_weight_kg), backgroundColor: '#22c55e88', borderColor: '#22c55e', borderWidth: 1, borderRadius: 3 },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: false, ticks: { callback: v => v + ' kg' } } },
+        },
+    });
+})();
+</script>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">

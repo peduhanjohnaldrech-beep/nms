@@ -112,6 +112,30 @@ $totMalnut   = $totals['assessed'] > 0 ? round(($totals['suw'] + $totals['uw']) 
     <?php endforeach; ?>
 </div>
 
+<!-- Chart -->
+<?php if (!empty($summaryRows)): ?>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold">
+        <i class="bi bi-bar-chart me-2 text-danger"></i>Malnutrition Rate by Barangay
+        <span class="text-muted fw-normal small ms-1"><?= $year ?><?= $period ? " — $period" : '' ?></span>
+    </div>
+    <div class="card-body"><canvas id="summaryChart" height="60"></canvas></div>
+</div>
+<script>
+(function(){
+    const labels = <?= json_encode(array_column($summaryRows, 'barangay')) ?>;
+    const rates  = <?= json_encode(array_column($summaryRows, 'malnut_rate')) ?>;
+    const colors = rates.map(r => r >= 30 ? '#ef444488' : (r >= 10 ? '#f59e0b88' : '#22c55e88'));
+    const borders= rates.map(r => r >= 30 ? '#ef4444'   : (r >= 10 ? '#f59e0b'   : '#22c55e'));
+    new Chart(document.getElementById('summaryChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Malnutrition Rate (%)', data: rates, backgroundColor: colors, borderColor: borders, borderWidth: 1, borderRadius: 4 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } } },
+    });
+})();
+</script>
+<?php endif; ?>
+
 <!-- Table -->
 <div class="card border-0 shadow-sm">
     <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
