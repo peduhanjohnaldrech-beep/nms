@@ -255,11 +255,11 @@
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Latest Status</th><th>Progress</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Actions</th></tr>
+                    <tr><th>Name</th><th>Barangay</th><th>Cycle</th><th>Intervention</th><th>Latest Status</th><th>Progress</th><th>Pre → Post Weight</th><th>Enrolled</th><th>Checks</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     <?php if (empty($active)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i>No active DSP enrollments.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($active as $a): ?>
                     <?php
@@ -325,6 +325,18 @@
                             <?php endif; ?>
                         </td>
                         <td><?= DateHelper::formatDate($a['enrollment_date'], 'M j, Y') ?></td>
+                        <?php $monRecords = $monitoringByEnrollment[$a['id']] ?? []; ?>
+                        <td class="text-center">
+                            <?php if (!empty($monRecords)): ?>
+                            <button class="btn btn-sm btn-outline-info" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#mon-<?= $a['id'] ?>"
+                                    title="View monthly checks">
+                                <i class="bi bi-clock-history me-1"></i><?= count($monRecords) ?>
+                            </button>
+                            <?php else: ?>
+                            <span class="text-muted small">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-nowrap">
                             <button type="button" class="btn btn-sm btn-primary" title="Record Follow-up"
                                     data-bs-toggle="modal" data-bs-target="#monitoringModal"
@@ -349,6 +361,52 @@
                             </form>
                         </td>
                     </tr>
+                    <?php if (!empty($monRecords)): ?>
+                    <tr class="collapse" id="mon-<?= $a['id'] ?>">
+                        <td colspan="10" class="p-0">
+                            <div class="bg-light border-top border-bottom px-3 py-2">
+                                <div class="small fw-semibold text-info mb-2">
+                                    <i class="bi bi-clock-history me-1"></i>Monthly Monitoring Records — <?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>
+                                </div>
+                                <table class="table table-sm table-bordered mb-0" style="font-size:.85rem">
+                                    <thead class="table-info">
+                                        <tr>
+                                            <th>#</th><th>Date</th><th>Weight</th><th>Height</th><th>MUAC</th>
+                                            <th>WFA Status</th><th>WFL/H</th><th>Monitored By</th><th>Validation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach (array_reverse($monRecords) as $ri => $r): ?>
+                                        <tr>
+                                            <td class="text-muted"><?= count($monRecords) - $ri ?></td>
+                                            <td><?= htmlspecialchars($r['monitoring_date']) ?></td>
+                                            <td><?= $r['weight_kg'] ? $r['weight_kg'] . ' kg' : '—' ?></td>
+                                            <td><?= $r['height_cm'] ? $r['height_cm'] . ' cm' : '—' ?></td>
+                                            <td><?= $r['muac_cm']   ? $r['muac_cm']   . ' cm' : '—' ?></td>
+                                            <td>
+                                                <?php if (!empty($r['nutritional_status'])): ?>
+                                                <span class="badge status-<?= strtolower($r['nutritional_status']) ?>"><?= $r['nutritional_status'] ?></span>
+                                                <?php else: ?>—<?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (!empty($r['wflh_status'])): ?>
+                                                <span class="badge status-<?= strtolower($r['wflh_status']) ?>"><?= $r['wflh_status'] ?></span>
+                                                <?php else: ?>—<?php endif; ?>
+                                            </td>
+                                            <td><?= htmlspecialchars($r['monitored_by'] ?? '—') ?></td>
+                                            <td>
+                                                <span class="badge <?= ($r['validation_status'] ?? '') === 'validated' ? 'bg-success' : 'bg-warning text-dark' ?>">
+                                                    <?= ucfirst($r['validation_status'] ?? 'pending') ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                     <?php endforeach; ?>
                 </tbody>
             </table>

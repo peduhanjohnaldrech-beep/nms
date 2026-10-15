@@ -127,20 +127,37 @@ $notYetWeighed = $nywStmt->fetchAll();
         $readyToDischarge = $this->enrollmentModel->getReadyToDischarge($barangay, $purok);
         $history          = $this->enrollmentModel->getHistory('DSP', $historyYear, $barangay, $purok);
 
+        // Batch-fetch monitoring records for all active enrollments
+        $monitoringByEnrollment = [];
+        $activeIds = array_column($active, 'id');
+        if (!empty($activeIds)) {
+            $ph      = implode(',', array_fill(0, count($activeIds), '?'));
+            $monStmt = Database::getInstance()->prepare(
+                "SELECT id, enrollment_id, monitoring_date, weight_kg, height_cm, muac_cm,
+                        nutritional_status, wflh_status, monitored_by, validation_status
+                 FROM dsp_monitoring WHERE enrollment_id IN ($ph) ORDER BY monitoring_date ASC"
+            );
+            $monStmt->execute($activeIds);
+            foreach ($monStmt->fetchAll() as $m) {
+                $monitoringByEnrollment[(int)$m['enrollment_id']][] = $m;
+            }
+        }
+
         $barangays = $beneModel->getAllBarangays();
         $puroks    = $beneModel->getPuroksByBarangay($barangay);
 
         $this->view('programs/dsp', [
-            'eligible'         => $eligible,
-            'active'           => $active,
-            'notEnrolled'      => $notEnrolled,
-            'readyToDischarge' => $readyToDischarge,
-            'history'          => $history,
-            'historyYear'      => $historyYear,
-            'barangays'        => $barangays,
-            'puroks'           => $puroks,
-            'filterBarangay'   => $barangay,
-            'filterPurok'      => $purok,
+            'eligible'               => $eligible,
+            'active'                 => $active,
+            'notEnrolled'            => $notEnrolled,
+            'readyToDischarge'       => $readyToDischarge,
+            'history'                => $history,
+            'historyYear'            => $historyYear,
+            'monitoringByEnrollment' => $monitoringByEnrollment,
+            'barangays'              => $barangays,
+            'puroks'                 => $puroks,
+            'filterBarangay'         => $barangay,
+            'filterPurok'            => $purok,
         ]);
     }
 
