@@ -612,6 +612,24 @@ thead.table-light th {
     color: #fff;
 }
 
+/* ── Neutralize Bootstrap-colored card headers (all modes) ─ */
+/* Specificity [0,2,0] beats Bootstrap's .bg-* [0,1,0] single-class rules */
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-info,
+.card-header.bg-warning,
+.card-header.bg-danger,
+.card-header.bg-secondary {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+}
+/* Restore correct text color when paired with Bootstrap text helpers */
+.card-header.text-white,
+.card-header.text-dark,
+.card-header.text-body {
+    color: var(--text-main) !important;
+}
+
 /* ── Dark mode bg-white card header fix ─────────────────── */
 [data-theme="dark"] .card-header.bg-white,
 [data-theme="dark"] .card-footer.bg-light {
