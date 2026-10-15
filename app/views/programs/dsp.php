@@ -338,15 +338,6 @@
                             <?php endif; ?>
                         </td>
                         <td class="text-nowrap">
-                            <button type="button" class="btn btn-sm btn-primary" title="Record Follow-up"
-                                    data-bs-toggle="modal" data-bs-target="#monitoringModal"
-                                    data-enrollment="<?= $a['id'] ?>"
-                                    data-beneficiary="<?= $a['beneficiary_id'] ?>"
-                                    data-name="<?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>"
-                                    data-dob="<?= $a['date_of_birth'] ?>"
-                                    data-sex="<?= $a['sex'] ?>">
-                                <i class="bi bi-clipboard2-pulse"></i>
-                            </button>
                             <form action="<?= APP_URL ?>/programs/dsp/discharge" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <input type="hidden" name="enrollment_id" value="<?= $a['id'] ?>">
@@ -679,52 +670,6 @@
     </div>
 </div>
 
-<!-- DSP Monitoring Modal -->
-<div class="modal fade" id="monitoringModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="<?= APP_URL ?>/programs/dsp/monitoring" method="post">
-                <?= \Core\Session::csrfField() ?>
-                <input type="hidden" name="enrollment_id"  id="monEnrollmentId">
-                <input type="hidden" name="beneficiary_id" id="monBeneficiaryId">
-                <input type="hidden" name="date_of_birth"  id="monDob">
-                <input type="hidden" name="sex"            id="monSex">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i>Record DSP Follow-up</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-3">Child: <strong id="monName"></strong></p>
-                    <input type="hidden" name="monitoring_date" value="<?= date('Y-m-d') ?>">
-                    <input type="hidden" name="monitored_by" value="<?= htmlspecialchars(\Core\Session::get('user_name') ?? '') ?>">
-                    <div class="row g-3">
-                        <div class="col-4">
-                            <label class="form-label fw-semibold">Weight (kg) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="weight_kg" class="form-control" placeholder="e.g. 10.5" required>
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label fw-semibold">Height (cm)</label>
-                            <input type="number" step="0.01" name="height_cm" class="form-control" placeholder="e.g. 85.0">
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label fw-semibold">MUAC (cm) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="muac_cm" class="form-control" placeholder="e.g. 13.5" required>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-semibold">Remarks</label>
-                        <textarea name="remarks" class="form-control" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Record</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
 document.getElementById('enrollModal').addEventListener('show.bs.modal', function(e) {
     const btn = e.relatedTarget;
@@ -764,13 +709,5 @@ document.getElementById('editModal').addEventListener('show.bs.modal', function(
     document.getElementById('editPreWeight').value       = btn.dataset.pre  || '';
     document.getElementById('editPostWeight').value      = btn.dataset.post || '';
     document.getElementById('editIntervention').value    = btn.dataset.intervention || '';
-});
-document.getElementById('monitoringModal').addEventListener('show.bs.modal', function(e) {
-    const btn = e.relatedTarget;
-    document.getElementById('monEnrollmentId').value  = btn.dataset.enrollment;
-    document.getElementById('monBeneficiaryId').value = btn.dataset.beneficiary;
-    document.getElementById('monDob').value           = btn.dataset.dob;
-    document.getElementById('monSex').value           = btn.dataset.sex;
-    document.getElementById('monName').textContent    = btn.dataset.name;
 });
 </script>
