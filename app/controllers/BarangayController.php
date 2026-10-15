@@ -26,7 +26,7 @@ class BarangayController extends Controller
         $stmt = $db->query(
             "SELECT barangay,
                     COUNT(*) AS total,
-                    SUM(CASE WHEN date_of_birth >= DATE_SUB(NOW(), INTERVAL 59 MONTH) THEN 1 ELSE 0 END) AS active,
+                    SUM(CASE WHEN date_of_birth >= DATE_SUB(NOW(), INTERVAL 59 MONTH) AND validation_status = 'validated' THEN 1 ELSE 0 END) AS active,
                     SUM(CASE WHEN validation_status = 'pending' THEN 1 ELSE 0 END) AS pending
              FROM beneficiaries
              WHERE deleted_at IS NULL AND barangay IS NOT NULL AND barangay != ''
