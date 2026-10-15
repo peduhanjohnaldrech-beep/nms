@@ -17,12 +17,12 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-1">
                 <label class="form-label small">Year</label>
                 <input type="number" name="year" class="form-control form-control-sm"
                        value="<?= $year ?>" min="2000" max="<?= date('Y') + 1 ?>">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small">Period</label>
                 <select name="period" class="form-select form-select-sm">
                     <option value="">All Periods</option>
@@ -30,15 +30,55 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                     <option value="July"    <?= $period === 'July'    ? 'selected' : '' ?>>July</option>
                 </select>
             </div>
+            <?php if (!empty($barangays)): ?>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
+                <label class="form-label small">Barangay</label>
+                <select name="barangay" class="form-select form-select-sm" id="optBarangayFilter">
+                    <option value="">All Barangays</option>
+                    <?php foreach ($barangays as $brgy): ?>
+                    <option value="<?= htmlspecialchars($brgy) ?>" <?= $filterBarangay === $brgy ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($brgy) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
-            <div class="col-md-4 text-end">
-                <a href="<?= APP_URL ?>/reports/export?type=opt&format=excel&year=<?= $year ?>&period=<?= urlencode($period) ?>" class="btn btn-sm btn-success">
+            <div class="col-md-2">
+                <label class="form-label small">Purok</label>
+                <select name="purok" class="form-select form-select-sm" id="optPurokFilter"
+                        <?= empty($filterBarangay) ? 'disabled' : '' ?>>
+                    <option value="">All Puroks</option>
+                    <?php foreach ($puroks as $p): ?>
+                    <option value="<?= htmlspecialchars($p) ?>" <?= $filterPurok === $p ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($p) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
+                <?php if ($filterBarangay !== '' || $filterPurok !== ''): ?>
+                <a href="?year=<?= $year ?>&period=<?= urlencode($period) ?>" class="btn btn-sm btn-outline-secondary ms-1">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+                <?php endif; ?>
+            </div>
+            <div class="col-auto ms-auto">
+                <?php $exportExtra = ($filterBarangay !== '' ? '&barangay=' . urlencode($filterBarangay) : '')
+                                   . ($filterPurok    !== '' ? '&purok='    . urlencode($filterPurok)    : ''); ?>
+                <a href="<?= APP_URL ?>/reports/export?type=opt&format=excel&year=<?= $year ?>&period=<?= urlencode($period) ?><?= $exportExtra ?>" class="btn btn-sm btn-success">
                     <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
                 </a>
             </div>
         </form>
+        <script>
+        document.getElementById('optBarangayFilter')?.addEventListener('change', function() {
+            const purok = document.getElementById('optPurokFilter');
+            if (!purok) return;
+            purok.disabled = this.value === '';
+            if (this.value === '') purok.value = '';
+        });
+        </script>
     </div>
 </div>
 

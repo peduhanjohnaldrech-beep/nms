@@ -33,8 +33,16 @@ class ProgramController extends Controller
     {
         $this->requireAuth();
 
-        $year   = (int)($_GET['year'] ?? date('Y'));
-        $period = $_GET['period'] ?? '';
+        $year     = (int)($_GET['year']     ?? date('Y'));
+        $period   = $_GET['period']         ?? '';
+        $barangay = trim($_GET['barangay']  ?? '');
+        $purok    = trim($_GET['purok']     ?? '');
+
+        // BNS/BHW scoped to their barangay
+        $role = Session::get('user_role');
+        if (in_array($role, ['bhw', 'bns'])) {
+            $barangay = Session::get('user_barangay', '');
+        }
 
         $statusData = (new Assessment())->getNutritionalStatus($year, $period);
 
@@ -42,8 +50,9 @@ class ProgramController extends Controller
         $params = [$year];
         $where  = 'a.assessment_year = ?';
 
-        if ($period) { $where .= ' AND a.period = ?'; $params[] = $period; }
-        if (in_array(Session::get('user_role'), ['bhw', 'bns'])) { $where .= ' AND b.barangay = ?'; $params[] = Session::get('user_barangay'); }
+        if ($period)     { $where .= ' AND a.period = ?';                       $params[] = $period; }
+        if ($barangay)   { $where .= ' AND b.barangay = ?';                     $params[] = $barangay; }
+        if ($purok)      { $where .= ' AND LOWER(b.purok_zone) = LOWER(?)';     $params[] = $purok; }
 
         $stmt = $db->prepare(
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
@@ -72,43 +81,47 @@ class ProgramController extends Controller
             AND " . \App\Models\Beneficiary::BNS_SUBMITTED_FILTER . "
             AND b.date_of_birth <= ?
             AND b.date_of_birth >= DATE_SUB(?, INTERVAL 59 MONTH)";
-        if (in_array(Session::get('user_role'), ['bhw', 'bns'])) {
-            $eligibleWhere .= ' AND b.barangay = ?';
-            $eligibleParams[] = Session::get('user_barangay');
-        }
+        if ($barangay) { $eligibleWhere .= ' AND b.barangay = ?';                    $eligibleParams[] = $barangay; }
+        if ($purok)    { $eligibleWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)';    $eligibleParams[] = $purok; }
 
         $eligStmt = $db->prepare("SELECT COUNT(*) FROM beneficiaries b WHERE $eligibleWhere");
         $eligStmt->execute($eligibleParams);
         $totalEligible = (int)$eligStmt->fetchColumn();
 
-   // Not yet weighed: eligible but no assessment this period/year
-$nywParams = $eligibleParams;   // bind $eligibleWhere's placeholders first (DOB range, + barangay if bhw)
-$nywParams[] = $year;
-$periodClause = '';
-if ($period) {
-    $periodClause = ' AND a.period = ?';
-    $nywParams[] = $period;
-}
-$nywStmt = $db->prepare(
-    "SELECT b.id, b.last_name, b.first_name, b.barangay, b.sex, b.date_of_birth,
-            TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
-     FROM beneficiaries b
-     WHERE $eligibleWhere
-     AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
-     AND b.id NOT IN (
-         SELECT a.beneficiary_id FROM assessments a WHERE a.assessment_year = ?$periodClause
-     )
-     ORDER BY b.barangay, b.last_name"
-);
-$nywStmt->execute($nywParams);
-$notYetWeighed = $nywStmt->fetchAll();
+        // Not yet weighed: eligible but no assessment this period/year
+        $nywParams    = $eligibleParams;
+        $nywParams[]  = $year;
+        $periodClause = '';
+        if ($period) { $periodClause = ' AND a.period = ?'; $nywParams[] = $period; }
+        $nywStmt = $db->prepare(
+            "SELECT b.id, b.last_name, b.first_name, b.barangay, b.sex, b.date_of_birth,
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
+             FROM beneficiaries b
+             WHERE $eligibleWhere
+             AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
+             AND b.id NOT IN (
+                 SELECT a.beneficiary_id FROM assessments a WHERE a.assessment_year = ?$periodClause
+             )
+             ORDER BY b.barangay, b.last_name"
+        );
+        $nywStmt->execute($nywParams);
+        $notYetWeighed = $nywStmt->fetchAll();
+
+        $beneModel = new Beneficiary();
+        $barangays = $beneModel->getAllBarangays();
+        $puroks    = $beneModel->getPuroksByBarangay($barangay);
+
         $this->view('programs/opt', [
-            'rows'          => $rows,
-            'statusData'    => $statusData,
-            'year'          => $year,
-            'period'        => $period,
-            'totalEligible' => $totalEligible,
-            'notYetWeighed' => $notYetWeighed,
+            'rows'           => $rows,
+            'statusData'     => $statusData,
+            'year'           => $year,
+            'period'         => $period,
+            'totalEligible'  => $totalEligible,
+            'notYetWeighed'  => $notYetWeighed,
+            'barangays'      => $barangays,
+            'puroks'         => $puroks,
+            'filterBarangay' => $barangay,
+            'filterPurok'    => $purok,
         ]);
     }
 
