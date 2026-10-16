@@ -61,6 +61,7 @@
                 </a>
                 <?php endif; ?>
             </div>
+            <?php if ($tab !== 'defaulter'): ?>
             <div class="col-auto ms-auto">
                 <?php
                 $exportType = match($tab) {
@@ -75,6 +76,7 @@
                     <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
                 </a>
             </div>
+            <?php endif; ?>
         </form>
     </div>
 </div>
@@ -88,6 +90,9 @@ if ($tab === 'vitaminA') {
 } elseif ($tab === 'mnp') {
     $mnsEligible = count($mnpNotYet ?? []);
     $mnsTotal    = count($mnpRecords ?? []);
+} elseif ($tab === 'defaulter') {
+    $mnsEligible = count($defaulterList ?? []);
+    $mnsTotal    = 0;
 } else {
     $mnsEligible = count($lnsNotYet ?? []);
     $mnsTotal    = count($lnsRecords ?? []);
@@ -99,14 +104,14 @@ $mnsCovClass = $mnsCovPct >= 80 ? 'success' : ($mnsCovPct >= 50 ? 'warning' : 'd
 <div class="row g-3 mb-3">
     <div class="col-4">
         <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-2 fw-bold text-secondary"><?= $mnsEligible ?></div>
-            <div class="small text-muted">Not Yet Covered</div>
+            <div class="fs-2 fw-bold text-<?= $tab === 'defaulter' ? 'danger' : 'secondary' ?>"><?= $mnsEligible ?></div>
+            <div class="small text-muted"><?= $tab === 'defaulter' ? 'Need Follow-up' : 'Not Yet Covered' ?></div>
         </div>
     </div>
     <div class="col-4">
         <div class="card border-0 shadow-sm text-center py-3">
             <div class="fs-2 fw-bold text-success"><?= $mnsTotal ?></div>
-            <div class="small text-muted">Covered</div>
+            <div class="small text-muted"><?= $tab === 'defaulter' ? '—' : 'Covered' ?></div>
         </div>
     </div>
     <div class="col-4">
@@ -143,6 +148,12 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
         <a class="nav-link <?= $tab === 'lnssq' ? 'active' : '' ?>"
            href="?<?= $tabBase ?>&tab=lnssq">
             <i class="bi bi-prescription2 me-1"></i>LNS-SQ
+        </a>
+    </li>
+    <li class="nav-item ms-auto">
+        <a class="nav-link <?= $tab === 'defaulter' ? 'active text-danger' : 'text-danger' ?>"
+           href="?<?= $tabBase ?>&tab=defaulter">
+            <i class="bi bi-exclamation-triangle me-1"></i>Defaulter List
         </a>
     </li>
 </ul>
@@ -380,11 +391,11 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Done</th></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($mnpRecords)): ?>
-                            <tr><td colspan="5" class="text-center text-muted py-4">No MNP records for <?= $year ?>.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">No MNP records for <?= $year ?>.</td></tr>
                             <?php endif; ?>
                             <?php foreach ($mnpRecords as $m): ?>
                             <tr>
@@ -396,6 +407,13 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                 <td><?= htmlspecialchars($m['barangay']) ?></td>
                                 <td><span class="badge bg-secondary"><?= htmlspecialchars($m['age_group']) ?></span></td>
                                 <td><?= htmlspecialchars($m['date_given']) ?></td>
+                                <td class="text-center">
+                                    <?php if (isset($m['sachets_distributed']) && $m['sachets_distributed'] !== null): ?>
+                                    <span class="badge bg-secondary"><?= (int)$m['sachets_distributed'] ?></span>
+                                    <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($m['completed_routine']): ?>
                                     <span class="badge bg-success">Yes</span>
@@ -422,7 +440,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
 </div>
 
 <!-- ── LNS-SQ Tab ── -->
-<?php else: ?>
+<?php elseif ($tab === 'lnssq'): ?>
 <?php if ($year < (int)date('Y')): ?>
 <div class="alert alert-info py-2 mb-3">
     <i class="bi bi-info-circle me-1"></i>
@@ -501,11 +519,11 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Done</th></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($lnsRecords)): ?>
-                            <tr><td colspan="5" class="text-center text-muted py-4">No LNS-SQ records for <?= $year ?>.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">No LNS-SQ records for <?= $year ?>.</td></tr>
                             <?php endif; ?>
                             <?php foreach ($lnsRecords as $l): ?>
                             <tr>
@@ -517,6 +535,13 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                 <td><?= htmlspecialchars($l['barangay']) ?></td>
                                 <td><span class="badge bg-secondary"><?= htmlspecialchars($l['age_group']) ?></span></td>
                                 <td><?= htmlspecialchars($l['date_given']) ?></td>
+                                <td class="text-center">
+                                    <?php if (isset($l['sachets_distributed']) && $l['sachets_distributed'] !== null): ?>
+                                    <span class="badge bg-secondary"><?= (int)$l['sachets_distributed'] ?></span>
+                                    <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($l['completed_routine']): ?>
                                     <span class="badge bg-success">Yes</span>
@@ -538,6 +563,79 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Defaulter List Tab ── -->
+<?php else: ?>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <span class="fw-semibold">Children missing at least one supplement — <?= $year ?></span>
+        <?php if ($filterBarangay !== ''): ?>
+        <span class="ms-2 text-muted small">(<?= htmlspecialchars($filterBarangay) ?><?= $filterPurok !== '' ? ' · ' . htmlspecialchars($filterPurok) : '' ?>)</span>
+        <?php endif; ?>
+    </div>
+    <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Print List
+    </button>
+</div>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0 align-middle">
+                <thead class="table-warning">
+                    <tr>
+                        <th rowspan="2" class="align-middle">Name</th>
+                        <th rowspan="2" class="align-middle">Barangay</th>
+                        <th rowspan="2" class="align-middle">Purok</th>
+                        <th rowspan="2" class="align-middle text-center">Age<br><small>(mo)</small></th>
+                        <th colspan="2" class="text-center">Vitamin A</th>
+                        <th rowspan="2" class="align-middle text-center">MNP</th>
+                        <th rowspan="2" class="align-middle text-center">LNS-SQ</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center">Feb</th>
+                        <th class="text-center">Aug</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($defaulterList)): ?>
+                    <tr><td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>
+                        All eligible children covered for <?= $year ?>!
+                    </td></tr>
+                    <?php endif; ?>
+                    <?php foreach ($defaulterList as $d):
+                        $cols = [
+                            ['elig' => (bool)$d['elig_vita_feb'], 'got' => (bool)$d['got_vita_feb']],
+                            ['elig' => (bool)$d['elig_vita_aug'], 'got' => (bool)$d['got_vita_aug']],
+                            ['elig' => (bool)$d['elig_mnp'],      'got' => (bool)$d['got_mnp']],
+                            ['elig' => (bool)$d['elig_lns'],      'got' => (bool)$d['got_lns']],
+                        ];
+                    ?>
+                    <tr>
+                        <td>
+                            <a href="<?= APP_URL ?>/beneficiaries/<?= $d['id'] ?>" class="text-decoration-none fw-semibold">
+                                <?= htmlspecialchars($d['last_name'] . ', ' . $d['first_name']) ?>
+                            </a>
+                        </td>
+                        <td><?= htmlspecialchars($d['barangay']) ?></td>
+                        <td><?= htmlspecialchars($d['purok_zone'] ?? '—') ?></td>
+                        <td class="text-center"><?= $d['age_months'] ?></td>
+                        <?php foreach ($cols as $col): ?>
+                            <?php if (!$col['elig']): ?>
+                            <td class="text-center text-muted bg-light small">N/A</td>
+                            <?php elseif ($col['got']): ?>
+                            <td class="text-center text-success fw-bold">✓</td>
+                            <?php else: ?>
+                            <td class="text-center text-danger fw-bold">✗</td>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -660,13 +758,20 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-semibold">Notes</label>
-                        <input type="text" name="notes" class="form-control" placeholder="Optional">
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Sachets Distributed</label>
+                            <input type="number" name="sachets_distributed" class="form-control" min="1" max="60" placeholder="e.g. 15">
+                            <div class="form-text">60-sachet routine total</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Notes</label>
+                            <input type="text" name="notes" class="form-control" placeholder="Optional">
+                        </div>
                     </div>
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" name="completed_routine" value="1" id="mnpComplete">
-                        <label class="form-check-label" for="mnpComplete">Routine completed</label>
+                        <label class="form-check-label" for="mnpComplete">60-day routine completed</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -714,9 +819,16 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                             </select>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-semibold">Notes</label>
-                        <input type="text" name="notes" class="form-control" placeholder="Optional">
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Sachets Distributed</label>
+                            <input type="number" name="sachets_distributed" class="form-control" min="1" max="30" placeholder="e.g. 15">
+                            <div class="form-text">Monthly routine sachets</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Notes</label>
+                            <input type="text" name="notes" class="form-control" placeholder="Optional">
+                        </div>
                     </div>
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" name="completed_routine" value="1" id="lnsComplete">

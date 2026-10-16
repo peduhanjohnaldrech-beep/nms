@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     username      VARCHAR(100)  NOT NULL UNIQUE,
     password_hash VARCHAR(255)  NOT NULL,
     full_name     VARCHAR(200),
-    role          VARCHAR(20)   NOT NULL DEFAULT 'encoder',
+    role          ENUM('admin','nutritionist','bhw','bns','midwife','encoder') NOT NULL DEFAULT 'encoder',
     barangay      VARCHAR(200),
     permissions   TEXT,
     is_active     TINYINT(1)    NOT NULL DEFAULT 1,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     is_indigenous_people     TINYINT(1)    NOT NULL DEFAULT 0,
     ip_group                 VARCHAR(100),
     photo                    VARCHAR(255),
-    source                   VARCHAR(100),
+    source                   ENUM('Walk-in','Excel Import','Mobile'),
     validation_status        VARCHAR(20)   NOT NULL DEFAULT 'validated',
     validated_by             INT,
     validated_at             DATETIME,
@@ -151,15 +151,16 @@ CREATE INDEX idx_vita_bene  ON vitamin_a_records(beneficiary_id);
 CREATE INDEX idx_vita_round ON vitamin_a_records(round, year);
 
 CREATE TABLE IF NOT EXISTS mnp_records (
-    id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    beneficiary_id    INT           NOT NULL,
-    given_by          INT,
-    date_given        DATE          NOT NULL,
-    year              INT           NOT NULL,
-    age_group         VARCHAR(50)   NOT NULL,
-    completed_routine TINYINT(1)    NOT NULL DEFAULT 0,
-    notes             TEXT,
-    created_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                    INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    beneficiary_id        INT           NOT NULL,
+    given_by              INT,
+    date_given            DATE          NOT NULL,
+    year                  INT           NOT NULL,
+    age_group             VARCHAR(50)   NOT NULL,
+    completed_routine     TINYINT(1)    NOT NULL DEFAULT 0,
+    sachets_distributed   INT           DEFAULT NULL,
+    notes                 TEXT,
+    created_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id) ON DELETE CASCADE,
     FOREIGN KEY (given_by)       REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -168,15 +169,16 @@ CREATE INDEX idx_mnp_bene ON mnp_records(beneficiary_id);
 CREATE INDEX idx_mnp_year ON mnp_records(year);
 
 CREATE TABLE IF NOT EXISTS lns_sq_records (
-    id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    beneficiary_id    INT           NOT NULL,
-    given_by          INT,
-    date_given        DATE          NOT NULL,
-    year              INT           NOT NULL,
-    age_group         VARCHAR(50)   NOT NULL,
-    completed_routine TINYINT(1)    NOT NULL DEFAULT 0,
-    notes             TEXT,
-    created_at        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id                    INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    beneficiary_id        INT           NOT NULL,
+    given_by              INT,
+    date_given            DATE          NOT NULL,
+    year                  INT           NOT NULL,
+    age_group             VARCHAR(50)   NOT NULL,
+    completed_routine     TINYINT(1)    NOT NULL DEFAULT 0,
+    sachets_distributed   INT           DEFAULT NULL,
+    notes                 TEXT,
+    created_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id) ON DELETE CASCADE,
     FOREIGN KEY (given_by)       REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -286,6 +288,14 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 CREATE INDEX idx_api_token   ON api_tokens(token);
 CREATE INDEX idx_api_user    ON api_tokens(user_id);
 CREATE INDEX idx_api_expires ON api_tokens(expires_at);
+
+-- Performance indexes
+CREATE INDEX idx_bene_validation        ON beneficiaries(validation_status);
+CREATE INDEX idx_assess_bene_valid_date ON assessments(beneficiary_id, validation_status, assessment_date);
+CREATE INDEX idx_assess_date            ON assessments(assessment_date);
+CREATE INDEX idx_enroll_dsp_active      ON program_enrollments(program, status, enrollment_date);
+CREATE INDEX idx_disp_date_prog         ON dispensing_records(date_dispensed, program);
+CREATE INDEX idx_api_token_expiry       ON api_tokens(token, expires_at);
 
 SET FOREIGN_KEY_CHECKS = 1;
 

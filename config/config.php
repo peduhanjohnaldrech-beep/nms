@@ -14,12 +14,12 @@ if (file_exists($envFile)) {
 
 date_default_timezone_set('Asia/Manila');
 
-define('APP_NAME',     $_ENV['APP_NAME']     ?? 'NMS');
-define('APP_URL',      $_ENV['APP_URL']      ?? 'http://localhost/nms/public');
-define('APP_ENV',      $_ENV['APP_ENV']      ?? 'development');
-define('APP_REGION',   $_ENV['APP_REGION']   ?? '');
-define('APP_PROVINCE', $_ENV['APP_PROVINCE'] ?? '');
-define('APP_CITY',     $_ENV['APP_CITY']     ?? '');
+define('APP_NAME',     getenv('APP_NAME')     ?: ($_ENV['APP_NAME']     ?? 'NMS'));
+define('APP_URL',      getenv('APP_URL')      ?: ($_ENV['APP_URL']      ?? 'http://localhost/nms/public'));
+define('APP_ENV',      getenv('APP_ENV')      ?: ($_ENV['APP_ENV']      ?? 'development'));
+define('APP_REGION',   getenv('APP_REGION')   ?: ($_ENV['APP_REGION']   ?? ''));
+define('APP_PROVINCE', getenv('APP_PROVINCE') ?: ($_ENV['APP_PROVINCE'] ?? ''));
+define('APP_CITY',     getenv('APP_CITY')     ?: ($_ENV['APP_CITY']     ?? ''));
 
 // Google Drive file picker keys (optional — leave blank to disable)
 define('GOOGLE_API_KEY',   $_ENV['GOOGLE_API_KEY']   ?? '');

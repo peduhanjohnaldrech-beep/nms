@@ -31,7 +31,7 @@ class LnsSqRecord extends Model
         if ($this->hasDuplicate((int)$data['beneficiary_id'], (int)$data['year'], $data['age_group'])) {
             throw new \RuntimeException('LNS-SQ record already exists for ' . $data['age_group'] . ' / ' . $data['year']);
         }
-        return $this->insert([
+        $row = [
             'beneficiary_id'    => $data['beneficiary_id'],
             'given_by'          => $data['given_by'] ?? null,
             'date_given'        => $data['date_given'],
@@ -39,7 +39,11 @@ class LnsSqRecord extends Model
             'age_group'         => $data['age_group'],
             'completed_routine' => (int)($data['completed_routine'] ?? 0),
             'notes'             => $data['notes'] ?? null,
-        ]);
+        ];
+        if (isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== '') {
+            $row['sachets_distributed'] = (int)$data['sachets_distributed'];
+        }
+        return $this->insert($row);
     }
 
     public function getCompletionByBarangay(int $year, string $barangay = ''): array

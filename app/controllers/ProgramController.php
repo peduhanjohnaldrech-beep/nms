@@ -510,6 +510,38 @@ class ProgramController extends Controller
         $beneFilter = \App\Models\Beneficiary::BNS_SUBMITTED_FILTER;
         $brgyWhere  = $barangay !== '' ? " AND b.barangay = " . Database::getInstance()->quote($barangay) : '';
         $purokWhere = $purok    !== '' ? " AND LOWER(b.purok_zone) = LOWER(" . Database::getInstance()->quote($purok) . ")" : '';
+
+        $defaulterList = [];
+        if ($tab === 'defaulter') {
+            $febDate = "{$year}-02-15";
+            $augDate = "{$year}-08-15";
+            $defaulterList = Database::getInstance()->query(
+                "SELECT b.id, b.last_name, b.first_name, b.barangay, b.purok_zone,
+                        TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59) AS elig_vita_feb,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59) AS elig_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_mnp,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_lns,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'February' AND v.year = $year) AS got_vita_feb,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'August' AND v.year = $year) AS got_vita_aug,
+                        EXISTS(SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = $year) AS got_mnp,
+                        EXISTS(SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = $year) AS got_lns
+                 FROM beneficiaries b
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+                 AND $beneFilter$brgyWhere$purokWhere
+                 AND (
+                     TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23
+                 )
+                 HAVING (elig_vita_feb AND NOT got_vita_feb)
+                     OR (elig_vita_aug AND NOT got_vita_aug)
+                     OR (elig_mnp AND NOT got_mnp)
+                     OR (elig_lns AND NOT got_lns)
+                 ORDER BY b.barangay, b.last_name"
+            )->fetchAll();
+        }
+
         $allBeneficiaries = Database::getInstance()->query(
             "SELECT id, last_name, first_name, barangay, date_of_birth FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
@@ -540,6 +572,7 @@ class ProgramController extends Controller
             'puroks'           => $puroks,
             'filterBarangay'   => $barangay,
             'filterPurok'      => $purok,
+            'defaulterList'    => $defaulterList,
         ]);
     }
 
@@ -628,13 +661,14 @@ class ProgramController extends Controller
             $year = (int)($_POST['year'] ?? date('Y'));
 
             (new MnpRecord())->recordDistribution([
-                'beneficiary_id'    => $bid,
-                'given_by'          => Session::get('user_id'),
-                'date_given'        => $date,
-                'year'              => $year,
-                'age_group'         => $_POST['age_group'] ?? '',
-                'completed_routine' => isset($_POST['completed_routine']) ? 1 : 0,
-                'notes'             => trim($_POST['notes'] ?? ''),
+                'beneficiary_id'      => $bid,
+                'given_by'            => Session::get('user_id'),
+                'date_given'          => $date,
+                'year'                => $year,
+                'age_group'           => $_POST['age_group'] ?? '',
+                'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
+                'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
+                'notes'               => trim($_POST['notes'] ?? ''),
             ]);
 
             (new DispensingRecord())->recordDispensing([
@@ -669,13 +703,14 @@ class ProgramController extends Controller
             $year = (int)($_POST['year'] ?? date('Y'));
 
             (new LnsSqRecord())->recordDistribution([
-                'beneficiary_id'    => $bid,
-                'given_by'          => Session::get('user_id'),
-                'date_given'        => $date,
-                'year'              => $year,
-                'age_group'         => $_POST['age_group'] ?? '',
-                'completed_routine' => isset($_POST['completed_routine']) ? 1 : 0,
-                'notes'             => trim($_POST['notes'] ?? ''),
+                'beneficiary_id'      => $bid,
+                'given_by'            => Session::get('user_id'),
+                'date_given'          => $date,
+                'year'                => $year,
+                'age_group'           => $_POST['age_group'] ?? '',
+                'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
+                'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
+                'notes'               => trim($_POST['notes'] ?? ''),
             ]);
 
             (new DispensingRecord())->recordDispensing([
