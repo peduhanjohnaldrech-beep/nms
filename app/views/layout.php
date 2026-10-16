@@ -251,19 +251,9 @@ foreach ($__crumbSegs as $seg) {
             <?php endif; /* programs */ ?>
 
             <?php if (hasPerm('reports')): ?>
-            <?php /* Reports dropdown */ ?>
-            <a class="nav-link d-flex justify-content-between align-items-center <?= $__reportsOpen ? '' : 'collapsed' ?>"
-               data-bs-toggle="collapse" href="#sidebarReports" role="button"
-               aria-expanded="<?= $__reportsOpen ? 'true' : 'false' ?>">
-                <span><i class="bi bi-bar-chart-fill me-2"></i>Reports</span>
-                <i class="bi bi-chevron-down small sidebar-chevron"></i>
+            <a class="nav-link <?= __navActive('/reports') ?>" href="<?= APP_URL ?>/reports">
+                <i class="bi bi-bar-chart-fill me-2"></i>Reports
             </a>
-            <div class="collapse <?= $__reportsOpen ? 'show' : '' ?>" id="sidebarReports">
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/reports">
-                    <i class="bi bi-bar-chart-fill me-2"></i>All Reports
-                </a>
-            </div>
-
             <?php endif; /* reports */ ?>
 
             <?php if (hasPerm('dispensing')): ?>
