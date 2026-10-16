@@ -268,6 +268,22 @@ class ReportController extends Controller
         $period   = $_GET['period']       ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $purok    = $_GET['purok']        ?? '';
+
+        // Serve from cache if available (15-min TTL)
+        $cacheKey     = \ReportCache::key('summary', (string)$year, $period, $barangay, $purok);
+        $cachedPayload = \ReportCache::get($cacheKey);
+        if ($cachedPayload !== null) {
+            $beneModel = new Beneficiary();
+            $this->view('reports/summary', array_merge($cachedPayload, [
+                'year'      => $year,
+                'period'    => $period,
+                'barangay'  => $barangay,
+                'purok'     => $purok,
+                'barangays' => $beneModel->getAllBarangays(),
+            ]));
+            return;
+        }
+
         $db       = Database::getInstance();
 
         $bWhere  = '';
@@ -394,6 +410,9 @@ class ReportController extends Controller
         }
 
         $beneModel = new Beneficiary();
+        // Cache the computed rows (exclude barangays/puroks — those are cheap lookups)
+        \ReportCache::set($cacheKey, ['summaryRows' => $summaryRows,
+            'puroks' => $beneModel->getPuroksByBarangay($barangay)]);
         $this->view('reports/summary', [
             'summaryRows' => $summaryRows,
             'year'        => $year,

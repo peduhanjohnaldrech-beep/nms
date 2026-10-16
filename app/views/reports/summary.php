@@ -1,11 +1,14 @@
 <?php $pageTitle = 'Summary Report'; ?>
 
 <div class="d-flex align-items-center mt-3 mb-2">
-    <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
+    <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3" aria-label="Back to Reports"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
     <div class="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
-        <i class="bi bi-file-earmark-bar-graph fs-4 text-success"></i>
+        <i class="bi bi-file-earmark-bar-graph fs-4 text-success" aria-hidden="true"></i>
     </div>
-    <h4 class="mb-0">Summary Report</h4>
+    <div>
+        <h4 class="mb-0">Summary Report</h4>
+        <p class="text-muted small mb-0">Coverage, malnutrition rate, and DSP/Vitamin-A status by barangay</p>
+    </div>
 </div>
 
 <!-- Filters -->
@@ -115,11 +118,16 @@ $totMalnut   = $totals['assessed'] > 0 ? round(($totals['suw'] + $totals['uw']) 
 <!-- Chart -->
 <?php if (!empty($summaryRows)): ?>
 <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header fw-semibold">
-        <i class="bi bi-bar-chart me-2 text-danger"></i>Malnutrition Rate by Barangay
-        <span class="text-muted fw-normal small ms-1"><?= $year ?><?= $period ? " — $period" : '' ?></span>
+    <div class="card-header fw-semibold d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span><i class="bi bi-bar-chart me-2 text-danger" aria-hidden="true"></i>Malnutrition Rate by Barangay
+        <span class="text-muted fw-normal small ms-1"><?= $year ?><?= $period ? " — $period" : '' ?></span></span>
+        <span class="d-flex gap-2 align-items-center" style="font-size:.78rem">
+            <span class="d-inline-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width:10px;height:10px;background:#ef4444"></span> ≥30% Critical</span>
+            <span class="d-inline-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width:10px;height:10px;background:#f59e0b"></span> 10–29% High</span>
+            <span class="d-inline-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width:10px;height:10px;background:#22c55e"></span> &lt;10% Low</span>
+        </span>
     </div>
-    <div class="card-body"><canvas id="summaryChart" height="60"></canvas></div>
+    <div class="card-body"><canvas id="summaryChart" height="60" role="img" aria-label="Bar chart of malnutrition rate by barangay for <?= $year ?><?= $period ? ", $period" : '' ?>"></canvas></div>
 </div>
 <script>
 (function(){

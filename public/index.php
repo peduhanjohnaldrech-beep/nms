@@ -12,6 +12,7 @@ require BASE_PATH . '/app/helpers/DateHelper.php';
 require BASE_PATH . '/app/helpers/ZScoreHelper.php';
 require BASE_PATH . '/app/helpers/ActivityLog.php';
 require BASE_PATH . '/app/helpers/BackupScheduler.php';
+require BASE_PATH . '/app/helpers/ReportCache.php';
 
 function hasPerm(string $m): bool {
     static $isAdm, $isMid, $perms;

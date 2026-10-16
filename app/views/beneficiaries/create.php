@@ -36,37 +36,37 @@ $userBrgy = \Core\Session::get('user_barangay', '');
             <div class="row g-3">
                 <!-- Name -->
                 <div class="col-md-4">
-                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                    <input type="text" name="last_name" class="form-control" required
+                    <label class="form-label" for="inp_last_name">Last Name <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                    <input type="text" id="inp_last_name" name="last_name" class="form-control" required
                            value="<?= htmlspecialchars($d['last_name'] ?? '') ?>">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">First Name <span class="text-danger">*</span></label>
-                    <input type="text" name="first_name" class="form-control" required
+                    <label class="form-label" for="inp_first_name">First Name <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                    <input type="text" id="inp_first_name" name="first_name" class="form-control" required
                            value="<?= htmlspecialchars($d['first_name'] ?? '') ?>">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Middle Name</label>
-                    <input type="text" name="middle_name" class="form-control"
+                    <label class="form-label" for="inp_middle_name">Middle Name</label>
+                    <input type="text" id="inp_middle_name" name="middle_name" class="form-control"
                            value="<?= htmlspecialchars($d['middle_name'] ?? '') ?>">
                 </div>
                 <div class="col-md-1">
-                    <label class="form-label">Suffix</label>
-                    <input type="text" name="suffix" class="form-control"
+                    <label class="form-label" for="inp_suffix">Suffix</label>
+                    <input type="text" id="inp_suffix" name="suffix" class="form-control"
                            value="<?= htmlspecialchars($d['suffix'] ?? '') ?>">
                 </div>
 
                 <!-- DOB + Sex -->
                 <div class="col-md-3">
-                    <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                    <input type="date" name="date_of_birth" class="form-control" required
+                    <label class="form-label" for="inp_dob">Date of Birth <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                    <input type="date" id="inp_dob" name="date_of_birth" class="form-control" required
                            max="<?= date('Y-m-d') ?>"
                            value="<?= htmlspecialchars($d['date_of_birth'] ?? '') ?>">
                     <div class="form-text">0–59 months old</div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Sex <span class="text-danger">*</span></label>
-                    <select name="sex" class="form-select" required>
+                    <label class="form-label" for="inp_sex">Sex <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                    <select id="inp_sex" name="sex" class="form-select" required>
                         <option value="">Select…</option>
                         <option value="Male"   <?= ($d['sex'] ?? '') === 'Male'   ? 'selected' : '' ?>>Male</option>
                         <option value="Female" <?= ($d['sex'] ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
@@ -75,15 +75,15 @@ $userBrgy = \Core\Session::get('user_barangay', '');
 
                 <!-- IP Status -->
                 <div class="col-md-3">
-                    <label class="form-label">Belongs to IP Group?</label>
+                    <label class="form-label" for="ipSelect">Belongs to IP Group?</label>
                     <select name="is_indigenous_people" id="ipSelect" class="form-select">
                         <option value="0" <?= empty($d['is_indigenous_people']) ? 'selected' : '' ?>>No</option>
                         <option value="1" <?= !empty($d['is_indigenous_people']) ? 'selected' : '' ?>>Yes</option>
                     </select>
                 </div>
                 <div class="col-md-4" id="ipGroupWrapper" <?= empty($d['is_indigenous_people']) ? 'style="display:none"' : '' ?>>
-                    <label class="form-label">IP Group Name</label>
-                    <input type="text" name="ip_group" class="form-control"
+                    <label class="form-label" for="inp_ip_group">IP Group Name</label>
+                    <input type="text" id="inp_ip_group" name="ip_group" class="form-control"
                            value="<?= htmlspecialchars($d['ip_group'] ?? '') ?>">
                 </div>
             </div>
@@ -99,45 +99,45 @@ $userBrgy = \Core\Session::get('user_barangay', '');
             <div class="row g-3">
                 <!-- Region -->
                 <div class="col-md-3">
-                    <label class="form-label">Region</label>
+                    <label class="form-label" for="inp_region">Region</label>
                     <?php if (!empty($loc['region'])): ?>
-                    <input type="text" name="region" class="form-control bg-light"
-                           value="<?= htmlspecialchars($loc['region']) ?>" readonly>
+                    <input type="text" id="inp_region" name="region" class="form-control bg-light"
+                           value="<?= htmlspecialchars($loc['region']) ?>" readonly aria-readonly="true">
                     <?php else: ?>
-                    <input type="text" name="region" class="form-control"
+                    <input type="text" id="inp_region" name="region" class="form-control"
                            value="<?= htmlspecialchars($d['region'] ?? '') ?>">
                     <?php endif; ?>
                 </div>
                 <!-- Province -->
                 <div class="col-md-3">
-                    <label class="form-label">Province</label>
+                    <label class="form-label" for="inp_province">Province</label>
                     <?php if (!empty($loc['province'])): ?>
-                    <input type="text" name="province" class="form-control bg-light"
-                           value="<?= htmlspecialchars($loc['province']) ?>" readonly>
+                    <input type="text" id="inp_province" name="province" class="form-control bg-light"
+                           value="<?= htmlspecialchars($loc['province']) ?>" readonly aria-readonly="true">
                     <?php else: ?>
-                    <input type="text" name="province" class="form-control"
+                    <input type="text" id="inp_province" name="province" class="form-control"
                            value="<?= htmlspecialchars($d['province'] ?? '') ?>">
                     <?php endif; ?>
                 </div>
                 <!-- City/Municipality -->
                 <div class="col-md-3">
-                    <label class="form-label">City/Municipality</label>
+                    <label class="form-label" for="inp_city">City/Municipality</label>
                     <?php if (!empty($loc['city_municipality'])): ?>
-                    <input type="text" name="city_municipality" class="form-control bg-light"
-                           value="<?= htmlspecialchars($loc['city_municipality']) ?>" readonly>
+                    <input type="text" id="inp_city" name="city_municipality" class="form-control bg-light"
+                           value="<?= htmlspecialchars($loc['city_municipality']) ?>" readonly aria-readonly="true">
                     <?php else: ?>
-                    <input type="text" name="city_municipality" class="form-control"
+                    <input type="text" id="inp_city" name="city_municipality" class="form-control"
                            value="<?= htmlspecialchars($d['city_municipality'] ?? '') ?>">
                     <?php endif; ?>
                 </div>
                 <!-- Barangay -->
                 <div class="col-md-3">
-                    <label class="form-label">Barangay <span class="text-danger">*</span></label>
+                    <label class="form-label" for="inp_barangay">Barangay <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
                     <?php if ($locked): ?>
-                    <input type="text" class="form-control bg-light" value="<?= htmlspecialchars($userBrgy) ?>" readonly>
+                    <input type="text" id="inp_barangay" class="form-control bg-light" value="<?= htmlspecialchars($userBrgy) ?>" readonly aria-readonly="true">
                     <input type="hidden" name="barangay" value="<?= htmlspecialchars($userBrgy) ?>">
                     <?php else: ?>
-                    <select name="barangay" class="form-select" required>
+                    <select id="inp_barangay" name="barangay" class="form-select" required>
                         <option value="">— Select Barangay —</option>
                         <?php foreach ($barangays as $b): ?>
                         <option value="<?= htmlspecialchars($b['barangay']) ?>"
@@ -150,8 +150,8 @@ $userBrgy = \Core\Session::get('user_barangay', '');
                 </div>
                 <!-- Purok -->
                 <div class="col-md-4">
-                    <label class="form-label">Purok / Zone / Block</label>
-                    <input type="text" name="purok_zone" class="form-control"
+                    <label class="form-label" for="inp_purok">Purok / Zone / Block</label>
+                    <input type="text" id="inp_purok" name="purok_zone" class="form-control"
                            placeholder="e.g. Purok 3, Block 5"
                            value="<?= htmlspecialchars($d['purok_zone'] ?? '') ?>">
                 </div>

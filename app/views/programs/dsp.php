@@ -251,10 +251,12 @@
 </div>
 
 <!-- Active Enrollments -->
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-success text-white fw-semibold">
-        <i class="bi bi-check-circle me-2"></i>Active Enrollments
-        <span class="badge bg-light text-dark ms-2"><?= count($active) ?></span>
+<div class="card border-0 shadow-sm mb-3 border-start border-4 border-success">
+    <div class="card-header fw-semibold d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
+        <span>Active Enrollments</span>
+        <span class="badge bg-success ms-1"><?= count($active) ?></span>
+        <span class="fw-normal small text-muted ms-1">— currently enrolled in DSP</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

@@ -32,6 +32,23 @@ class Router
 
     public function dispatch(): void
     {
+        // Security headers
+        header("X-Content-Type-Options: nosniff");
+        header("X-Frame-Options: SAMEORIGIN");
+        header("X-XSS-Protection: 1; mode=block");
+        header("Referrer-Policy: strict-origin-when-cross-origin");
+        header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
+        header(
+            "Content-Security-Policy: " .
+            "default-src 'self'; " .
+            "script-src 'self' 'unsafe-inline'; " .   // unsafe-inline needed for inline <script> blocks
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
+            "font-src 'self' https://fonts.gstatic.com data:; " .
+            "img-src 'self' data: blob:; " .
+            "connect-src 'self'; " .
+            "frame-ancestors 'none';"
+        );
+
         // Handle CORS preflight
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             header('Access-Control-Allow-Origin: *');

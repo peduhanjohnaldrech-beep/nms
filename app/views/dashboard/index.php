@@ -33,14 +33,14 @@
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/beneficiaries" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/beneficiaries" class="text-decoration-none" aria-label="<?= number_format($totalBeneficiaries) ?> Total Beneficiaries">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-people-fill fs-5 text-primary"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-primary"><?= number_format($totalBeneficiaries) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-primary" aria-hidden="true"><?= number_format($totalBeneficiaries) ?></div>
                     <div class="text-muted small mt-1">Total Beneficiaries</div>
                 </div>
             </div>
@@ -48,14 +48,14 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/programs/opt" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/programs/opt" class="text-decoration-none" aria-label="<?= number_format($activeOpt) ?> OPT Assessed">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-clipboard-heart fs-5 text-success"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-success"><?= number_format($activeOpt) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-success" aria-hidden="true"><?= number_format($activeOpt) ?></div>
                     <div class="text-muted small mt-1">OPT Assessed</div>
                 </div>
             </div>
@@ -63,14 +63,14 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/programs/dsp" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/programs/dsp" class="text-decoration-none" aria-label="<?= number_format($activeDsp) ?> Active DSP">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-egg-fried fs-5 text-warning"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-warning"><?= number_format($activeDsp) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-warning" aria-hidden="true"><?= number_format($activeDsp) ?></div>
                     <div class="text-muted small mt-1">Active DSP</div>
                 </div>
             </div>
@@ -78,14 +78,14 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/programs/mns" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/programs/mns" class="text-decoration-none" aria-label="<?= number_format($mnsCoverage) ?> MNS Coverage">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-capsule fs-5 text-info"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-info"><?= number_format($mnsCoverage) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-info" aria-hidden="true"><?= number_format($mnsCoverage) ?></div>
                     <div class="text-muted small mt-1">MNS Coverage</div>
                 </div>
             </div>
@@ -93,17 +93,17 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/beneficiaries/followup" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/beneficiaries/followup" class="text-decoration-none" aria-label="<?= number_format($followupCount) ?> For Follow-up<?= $followupCount > 0 ? ' — needs attention' : '' ?>">
         <div class="card border-0 shadow-sm h-100 card-hover <?= $followupCount > 0 ? 'border-danger border-2 card-pulse' : '' ?>">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-exclamation-triangle-fill fs-5 text-danger <?= $followupCount > 0 ? 'icon-shake' : '' ?>"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-danger"><?= number_format($followupCount) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-danger" aria-hidden="true"><?= number_format($followupCount) ?></div>
                     <div class="text-muted small mt-1">For Follow-up</div>
                     <?php if ($followupCount > 0): ?>
-                    <div class="text-danger" style="font-size:0.7rem;"><i class="bi bi-exclamation-circle me-1"></i>Needs attention</div>
+                    <div class="text-danger" style="font-size:0.7rem;" aria-hidden="true"><i class="bi bi-exclamation-circle me-1"></i>Needs attention</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -111,16 +111,16 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/beneficiaries?age_status=active" class="text-decoration-none">
+        <a href="<?= APP_URL ?>/beneficiaries?age_status=active" class="text-decoration-none" aria-label="<?= number_format($notAssessedCount) ?> Not Yet Assessed this <?= $periodLabel ?> <?= $currentYear ?> period">
         <div class="card border-0 shadow-sm h-100 card-hover <?= $notAssessedCount > 0 ? 'border-warning border-2' : '' ?>">
             <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px">
+                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
                     <i class="bi bi-clipboard2-x fs-5 text-warning"></i>
                 </div>
                 <div>
-                    <div class="fs-3 fw-bold lh-1 text-warning"><?= number_format($notAssessedCount) ?></div>
+                    <div class="fs-3 fw-bold lh-1 text-warning" aria-hidden="true"><?= number_format($notAssessedCount) ?></div>
                     <div class="text-muted small mt-1">Not Yet Assessed</div>
-                    <div class="text-muted" style="font-size:0.7rem;"><?= $periodLabel ?> <?= $currentYear ?></div>
+                    <div class="text-muted" style="font-size:0.7rem;" aria-hidden="true"><?= $periodLabel ?> <?= $currentYear ?></div>
                 </div>
             </div>
         </div>
@@ -165,11 +165,11 @@
         <table class="table table-sm table-hover mb-0 align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>Beneficiary</th>
-                    <th>Barangay</th>
-                    <th>Submitted By (BNS)</th>
-                    <th>Submitted At</th>
-                    <th></th>
+                    <th scope="col">Beneficiary</th>
+                    <th scope="col">Barangay</th>
+                    <th scope="col">Submitted By (BNS)</th>
+                    <th scope="col">Submitted At</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -210,7 +210,7 @@
                     <i class="bi bi-bar-chart-fill me-1 text-primary"></i>Nutritional Status by Barangay — <?= date('Y') ?>
                 </span>
             </div>
-            <div class="card-body pt-3"><canvas id="barangayChart" height="100"></canvas></div>
+            <div class="card-body pt-3"><canvas id="barangayChart" height="100" role="img" aria-label="Bar chart of nutritional status by barangay for <?= date('Y') ?>"></canvas></div>
         </div>
     </div>
     <div class="col-lg-4">
@@ -221,7 +221,7 @@
                 </span>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
-                <canvas id="enrollmentPie" height="200"></canvas>
+                <canvas id="enrollmentPie" height="200" role="img" aria-label="Pie chart of program enrollment breakdown"></canvas>
             </div>
         </div>
     </div>
@@ -236,7 +236,7 @@
                     <i class="bi bi-graph-up me-1 text-success"></i>OPT Trend — Nutritional Status Over Periods
                 </span>
             </div>
-            <div class="card-body pt-3"><canvas id="trendChart" height="120"></canvas></div>
+            <div class="card-body pt-3"><canvas id="trendChart" height="120" role="img" aria-label="Line chart of OPT nutritional status trend over periods"></canvas></div>
         </div>
     </div>
     <div class="col-lg-6">
@@ -247,7 +247,7 @@
                 </span>
                 <span class="text-muted fw-normal" style="font-size:0.7rem;"> &nbsp;% SUW + UW of assessed</span>
             </div>
-            <div class="card-body pt-3"><canvas id="malnutritionRateChart" height="120"></canvas></div>
+            <div class="card-body pt-3"><canvas id="malnutritionRateChart" height="120" role="img" aria-label="Bar chart of malnutrition rate by barangay for <?= date('Y') ?>"></canvas></div>
         </div>
     </div>
 </div>

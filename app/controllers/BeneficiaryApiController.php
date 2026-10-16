@@ -321,6 +321,12 @@ class BeneficiaryApiController extends ApiController
 
     /**
      * GET /api/beneficiaries/followup
+     *
+     * Returns children needing follow-up:
+     *   1. Underweight / severely underweight by WFA (SUW, UW) in latest assessment for the year
+     *   2. Wasted / severely wasted by WFL/H (SW, MW) in latest assessment for the year
+     *   3. Actively enrolled in DSP (regardless of current assessment status)
+     * UNION deduplicates children who appear in multiple categories.
      */
     public function followup(): void
     {
@@ -328,21 +334,45 @@ class BeneficiaryApiController extends ApiController
         $db    = Database::getInstance();
         $brgy  = $this->isBhw() ? $this->userBarangay() : ($_GET['barangay'] ?? null);
         $year  = (int)($_GET['year'] ?? date('Y'));
-        $where  = ["b.deleted_at IS NULL", "a.assessment_year = ?", "a.nutritional_status IN ('SUW','UW')"];
-        $params = [$year];
-        if ($brgy) { $where[] = 'b.barangay = ?'; $params[] = $brgy; }
+
+        $brgyWhere  = $brgy ? 'AND b.barangay = ?' : '';
+        $brgyParams = $brgy ? [$brgy] : [];
+
+        $baseSelect = "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex,
+                   b.contact_number, b.mother_name,
+                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period";
+        $baseFrom = "FROM beneficiaries b
+            JOIN assessments a ON a.id = (
+                SELECT id FROM assessments WHERE beneficiary_id = b.id
+                AND validation_status = 'validated'
+                ORDER BY assessment_date DESC LIMIT 1
+            )
+            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+            AND a.assessment_year = ?";
+
         $stmt = $db->prepare("
+            $baseSelect
+            $baseFrom AND a.nutritional_status IN ('SUW','UW') $brgyWhere
+            UNION
+            $baseSelect
+            $baseFrom AND a.wflh_status IN ('SW','MW') $brgyWhere
+            UNION
             SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex,
                    b.contact_number, b.mother_name,
-                   a.nutritional_status, a.weight_kg, a.assessment_date, a.period
+                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period
             FROM beneficiaries b
-            JOIN assessments a ON a.id = (
-                SELECT id FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC LIMIT 1
+            JOIN program_enrollments pe ON pe.beneficiary_id = b.id
+                AND pe.program = 'DSP' AND pe.status = 'Active'
+                AND pe.enrollment_date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+            LEFT JOIN assessments a ON a.id = (
+                SELECT id FROM assessments WHERE beneficiary_id = b.id
+                AND validation_status = 'validated'
+                ORDER BY assessment_date DESC LIMIT 1
             )
-            WHERE " . implode(' AND ', $where) . "
-            ORDER BY a.nutritional_status DESC, b.last_name
+            WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' $brgyWhere
+            ORDER BY nutritional_status DESC, last_name
         ");
-        $stmt->execute($params);
+        $stmt->execute(array_merge([$year], $brgyParams, [$year], $brgyParams, $brgyParams));
         $this->success(['beneficiaries' => $stmt->fetchAll(\PDO::FETCH_ASSOC), 'year' => $year]);
     }
 

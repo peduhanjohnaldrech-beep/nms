@@ -118,8 +118,9 @@ foreach ($__crumbSegs as $seg) {
 
 <nav class="navbar navbar-expand-lg sticky-top nms-navbar">
     <div class="container-fluid">
-        <button class="btn btn-outline-light btn-sm d-lg-none me-1 px-2" id="sidebarToggle" type="button">
-            <i class="bi bi-list fs-5"></i>
+        <button class="btn btn-outline-light btn-sm d-lg-none me-1 px-2" id="sidebarToggle" type="button"
+                aria-label="Toggle navigation menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="bi bi-list fs-5" aria-hidden="true"></i>
         </button>
         <a class="navbar-brand fw-bold d-flex align-items-center" href="<?= APP_URL ?>/dashboard">
             <img src="<?= APP_URL ?>/img/logo.jpg" alt="Logo" style="height:36px;width:36px;object-fit:cover;border-radius:50%;margin-right:8px;">
@@ -135,8 +136,8 @@ foreach ($__crumbSegs as $seg) {
                     </span>
                 </li>
                 <li class="nav-item d-flex align-items-center ms-1">
-                    <button id="darkModeToggle" title="Toggle dark / light mode">
-                        <i id="darkModeIcon" class="bi bi-moon-fill"></i>
+                    <button id="darkModeToggle" title="Toggle dark / light mode" aria-label="Toggle dark mode">
+                        <i id="darkModeIcon" class="bi bi-moon-fill" aria-hidden="true"></i>
                         <span id="darkModeLabel">Dark</span>
                     </button>
                 </li>
@@ -183,9 +184,9 @@ foreach ($__crumbSegs as $seg) {
             <?php /* Assessments dropdown */ ?>
             <a class="nav-link d-flex justify-content-between align-items-center <?= $__assessOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarAssessments" role="button"
-               aria-expanded="<?= $__assessOpen ? 'true' : 'false' ?>">
-                <span><i class="bi bi-clipboard2-pulse me-2"></i>Assessments</span>
-                <i class="bi bi-chevron-down small sidebar-chevron"></i>
+               aria-expanded="<?= $__assessOpen ? 'true' : 'false' ?>" aria-controls="sidebarAssessments">
+                <span><i class="bi bi-clipboard2-pulse me-2" aria-hidden="true"></i>Assessments</span>
+                <i class="bi bi-chevron-down small sidebar-chevron" aria-hidden="true"></i>
             </a>
             <div class="collapse <?= $__assessOpen ? 'show' : '' ?>" id="sidebarAssessments">
                 <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
@@ -213,9 +214,9 @@ foreach ($__crumbSegs as $seg) {
             ?>
             <a class="nav-link d-flex justify-content-between align-items-center <?= $__programsOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarPrograms" role="button"
-               aria-expanded="<?= $__programsOpen ? 'true' : 'false' ?>">
-                <span><i class="bi bi-grid me-2"></i>Programs</span>
-                <i class="bi bi-chevron-down small sidebar-chevron"></i>
+               aria-expanded="<?= $__programsOpen ? 'true' : 'false' ?>" aria-controls="sidebarPrograms">
+                <span><i class="bi bi-grid me-2" aria-hidden="true"></i>Programs</span>
+                <i class="bi bi-chevron-down small sidebar-chevron" aria-hidden="true"></i>
             </a>
             <div class="collapse <?= $__programsOpen ? 'show' : '' ?>" id="sidebarPrograms">
                 <?php if (empty($__sidebarPrograms)): ?>
@@ -277,9 +278,9 @@ foreach ($__crumbSegs as $seg) {
             <?php /* Admin dropdown */ ?>
             <a class="nav-link d-flex justify-content-between align-items-center <?= $__adminOpen ? '' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarAdmin" role="button"
-               aria-expanded="<?= $__adminOpen ? 'true' : 'false' ?>">
-                <span><i class="bi bi-gear-fill me-2"></i>Admin</span>
-                <i class="bi bi-chevron-down small sidebar-chevron"></i>
+               aria-expanded="<?= $__adminOpen ? 'true' : 'false' ?>" aria-controls="sidebarAdmin">
+                <span><i class="bi bi-gear-fill me-2" aria-hidden="true"></i>Admin</span>
+                <i class="bi bi-chevron-down small sidebar-chevron" aria-hidden="true"></i>
             </a>
             <div class="collapse <?= $__adminOpen ? 'show' : '' ?>" id="sidebarAdmin">
                 <?php if (hasPerm('activity_log')): ?>
@@ -354,7 +355,7 @@ document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
 </script>
 
 <!-- Global Confirm Modal -->
-<div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="globalConfirmModal" tabindex="-1" aria-labelledby="globalConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">

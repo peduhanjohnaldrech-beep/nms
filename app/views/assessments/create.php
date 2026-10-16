@@ -49,42 +49,44 @@ $curYear   = (int)date('Y');
                             </div>
                             <?php else: ?>
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Beneficiary <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold" for="beneSearch">Beneficiary <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
                                 <input type="hidden" name="beneficiary_id" id="beneId" required>
                                 <input type="text" id="beneSearch" class="form-control"
-                                       placeholder="Type name or barangay to search..." autocomplete="off">
+                                       placeholder="Type name or barangay to search..." autocomplete="off"
+                                       role="combobox" aria-expanded="false" aria-controls="beneDropdown" aria-autocomplete="list">
                                 <div id="beneDropdown" class="border rounded mt-1 bg-white shadow-sm d-none"
+                                     role="listbox" aria-label="Beneficiary search results"
                                      style="max-height:200px; overflow-y:auto; position:relative; z-index:10;"></div>
-                                <div id="beneInfo" class="d-none mt-2"></div>
+                                <div id="beneInfo" class="d-none mt-2" role="status"></div>
                             </div>
                             <?php endif; ?>
 
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Assessment Date <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold" for="assessmentDate">Assessment Date <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
                                 <input type="date" name="assessment_date" id="assessmentDate" class="form-control"
-                                       required value="<?= date('Y-m-d') ?>">
+                                       required value="<?= date('Y-m-d') ?>" aria-describedby="periodHint">
                                 <div class="form-text" id="periodHint"></div>
                             </div>
 
                             <div class="row g-3 mb-1">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Weight (kg) <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" min="0" max="100" name="weight_kg"
+                                    <label class="form-label fw-semibold" for="inp_weight">Weight (kg) <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span></label>
+                                    <input type="number" step="0.01" min="0" max="100" name="weight_kg" id="inp_weight"
                                            class="form-control" required placeholder="e.g. 8.50">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Height (cm)</label>
-                                    <input type="number" step="0.1" min="0" max="200" name="height_cm"
+                                    <label class="form-label fw-semibold" for="inp_height">Height (cm)</label>
+                                    <input type="number" step="0.1" min="0" max="200" name="height_cm" id="inp_height"
                                            class="form-control" placeholder="e.g. 72.5">
-                                    <div class="form-text"><i class="bi bi-info-circle text-primary"></i> Required for WFL/H z-score</div>
+                                    <div class="form-text"><i class="bi bi-info-circle text-primary" aria-hidden="true"></i> Required for WFL/H z-score</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold">MUAC (cm)</label>
+                                    <label class="form-label fw-semibold" for="muacInput">MUAC (cm)</label>
                                     <input type="number" step="0.1" min="0" max="50" name="muac_cm"
                                            id="muacInput" class="form-control" placeholder="e.g. 13.5">
                                     <div class="form-text">
-                                        <a href="#muacRef" data-bs-toggle="collapse" class="text-decoration-none small">
-                                            <i class="bi bi-question-circle"></i> MUAC reference
+                                        <a href="#muacRef" data-bs-toggle="collapse" class="text-decoration-none small" aria-expanded="false" aria-controls="muacRef">
+                                            <i class="bi bi-question-circle" aria-hidden="true"></i> MUAC reference
                                         </a>
                                     </div>
                                 </div>
@@ -114,14 +116,14 @@ $curYear   = (int)date('Y');
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Assessed By</label>
+                                <label class="form-label fw-semibold" for="inp_assessed_by">Assessed By</label>
                                 <input type="hidden" name="assessed_by" value="<?= htmlspecialchars(\Core\Session::get('user_name', '')) ?>">
-                                <input type="text" class="form-control bg-light" value="<?= htmlspecialchars(\Core\Session::get('user_name', '')) ?>" readonly>
+                                <input type="text" id="inp_assessed_by" class="form-control bg-light" value="<?= htmlspecialchars(\Core\Session::get('user_name', '')) ?>" readonly aria-readonly="true">
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label fw-semibold">Remarks</label>
-                                <textarea name="remarks" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+                                <label class="form-label fw-semibold" for="inp_remarks">Remarks</label>
+                                <textarea id="inp_remarks" name="remarks" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
                             </div>
 
                             <div class="alert alert-light border small mb-3">
