@@ -40,14 +40,6 @@
 <div class="card border-0 shadow-sm mb-3 mt-3 no-print">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-2">
-                <label for="dsp_date_from" class="form-label small mb-1">Date From</label>
-                <input type="date" id="dsp_date_from" name="date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($dateFrom ?? '') ?>">
-            </div>
-            <div class="col-md-2">
-                <label for="dsp_date_to" class="form-label small mb-1">Date To</label>
-                <input type="date" id="dsp_date_to" name="date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($dateTo ?? '') ?>">
-            </div>
             <div class="col-md-1">
                 <label for="dsp_year" class="form-label small mb-1">Year</label>
                 <select id="dsp_year" name="year" class="form-select form-select-sm">
