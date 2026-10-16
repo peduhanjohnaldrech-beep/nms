@@ -80,6 +80,15 @@
                     <option value="Excel"   <?= ($source ?? '') === 'Excel'   ? 'selected' : '' ?>>Excel Import</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <label for="dsp_status" class="form-label small mb-1">Status</label>
+                <select id="dsp_status" name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="Active"    <?= ($status ?? '') === 'Active'    ? 'selected' : '' ?>>Active</option>
+                    <option value="Completed" <?= ($status ?? '') === 'Completed' ? 'selected' : '' ?>>Graduated</option>
+                    <option value="Dropped"   <?= ($status ?? '') === 'Dropped'   ? 'selected' : '' ?>>Dropped</option>
+                </select>
+            </div>
             <?php endif; ?>
             <div class="col-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Filter</button>

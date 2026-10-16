@@ -67,16 +67,18 @@ class ReportController extends Controller
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $purok    = $_GET['purok']    ?? '';
         $source   = $_GET['source']   ?? '';
+        $status   = $_GET['status']   ?? '';
         $dateFrom = $_GET['date_from'] ?? '';
         $dateTo   = $_GET['date_to']   ?? '';
 
         $beneModel = new Beneficiary();
         $this->view('reports/dsp', [
-            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source, $dateFrom, $dateTo, $purok),
+            'rows'      => $this->getReportData('dsp', $year, '', $barangay, $source, $dateFrom, $dateTo, $purok, $status),
             'year'      => $year,
             'barangay'  => $barangay,
             'purok'     => $purok,
             'source'    => $source,
+            'status'    => $status,
             'dateFrom'  => $dateFrom,
             'dateTo'    => $dateTo,
             'isBhw'     => in_array(Session::get('user_role'), ['bhw', 'bns']),
@@ -790,7 +792,7 @@ class ReportController extends Controller
         exit;
     }
 
-    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = '', string $purok = ''): array
+    private function getReportData(string $type, int $year, string $period, string $barangay, string $source = '', string $dateFrom = '', string $dateTo = '', string $purok = '', string $status = ''): array
     {
         $db        = Database::getInstance();
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
@@ -831,6 +833,7 @@ class ReportController extends Controller
             if ($barangay) { $where .= ' AND b.barangay = ?';   $params[] = $barangay; }
             if ($purok)    { $where .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
             if ($source)   { $where .= ' AND b.source = ?';     $params[] = $source; }
+            if (in_array($status, ['Active', 'Completed', 'Dropped'])) { $where .= ' AND pe.status = ?'; $params[] = $status; }
             $stmt = $db->prepare(
                 "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
                  FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id
