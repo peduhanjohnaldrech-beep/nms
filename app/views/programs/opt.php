@@ -25,9 +25,8 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
             <div class="col-md-2">
                 <label class="form-label small">Period</label>
                 <select name="period" class="form-select form-select-sm">
-                    <option value="">All Periods</option>
-                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January</option>
-                    <option value="July"    <?= $period === 'July'    ? 'selected' : '' ?>>July</option>
+                    <option value="">All</option>
+                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January (Q1)</option>
                 </select>
             </div>
             <?php if (!empty($barangays)): ?>

@@ -23,9 +23,8 @@
             <div class="col-md-2">
                 <label class="form-label small mb-1">Period</label>
                 <select name="period" class="form-select form-select-sm">
-                    <option value="">Both Periods</option>
-                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January (1st Sem)</option>
-                    <option value="July"    <?= $period === 'July'    ? 'selected' : '' ?>>July (2nd Sem)</option>
+                    <option value="">All</option>
+                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January (Q1)</option>
                 </select>
             </div>
             <div class="col-md-2">
