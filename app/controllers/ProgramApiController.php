@@ -139,6 +139,24 @@ class ProgramApiController extends ApiController
                      OR (elig_lns AND NOT got_lns)
                  ORDER BY b.barangay, b.last_name"
             )->fetchAll();
+            // Attach reasons
+            if (!empty($rows)) {
+                $ids = array_column($rows, 'id');
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $rStmt = $db->prepare(
+                    "SELECT beneficiary_id, supplement, reason FROM mns_defaulter_reasons
+                     WHERE beneficiary_id IN ($placeholders) AND year = ?"
+                );
+                $rStmt->execute(array_merge($ids, [$year]));
+                $reasonMap = [];
+                foreach ($rStmt->fetchAll() as $r) {
+                    $reasonMap[$r['beneficiary_id']][$r['supplement']] = $r['reason'];
+                }
+                foreach ($rows as &$row) {
+                    $row['reasons'] = $reasonMap[$row['id']] ?? (object)[];
+                }
+                unset($row);
+            }
             $this->success(['defaulters' => $rows, 'tab' => 'defaulter', 'year' => $year]);
         }
     }
@@ -338,6 +356,7 @@ class ProgramApiController extends ApiController
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
+        $this->validateDistributionDate($data['date_given']);
         $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
         $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
            ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
@@ -352,10 +371,20 @@ class ProgramApiController extends ApiController
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
+        $this->validateDistributionDate($data['date_given']);
         $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
         $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
            ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
         $this->success([], 'LNS-SQ record saved');
+    }
+
+    private function validateDistributionDate(string $date): void
+    {
+        $given = strtotime($date);
+        if ($given === false) $this->error('Invalid date', 422);
+        $cutoff = strtotime('-30 days');
+        if ($given < $cutoff) $this->error('Date is too far in the past. Maximum 30 days back allowed.', 422);
+        if ($given > strtotime('+1 day')) $this->error('Date cannot be in the future', 422);
     }
 
     // ─── MNS Delete / Complete ─────────────────────────────
@@ -382,6 +411,64 @@ class ProgramApiController extends ApiController
         $this->requireRole(['encoder','nutritionist','bhw','bns']);
         Database::getInstance()->prepare("UPDATE lns_sq_records SET completed_routine = 1 WHERE id = ?")->execute([$id]);
         $this->success([], 'LNS-SQ routine marked complete');
+    }
+
+    // ─── MNS Defaulter Reason ──────────────────────────────
+
+    public function mnsDefaulterReason(): void
+    {
+        $this->requireApiAuth();
+        $db   = Database::getInstance();
+        $data = $this->body();
+        if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
+        if (empty($data['supplement']))     $this->error('supplement required', 422);
+        if (empty($data['reason']))         $this->error('reason required', 422);
+        $year = (int)($data['year'] ?? date('Y'));
+        $db->prepare(
+            "INSERT INTO mns_defaulter_reasons (beneficiary_id, year, supplement, reason, noted_by)
+             VALUES (?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE reason = VALUES(reason), noted_by = VALUES(noted_by), noted_at = NOW()"
+        )->execute([$data['beneficiary_id'], $year, $data['supplement'], $data['reason'], $this->userId()]);
+        $this->success([], 'Reason saved');
+    }
+
+    // ─── MNS Distribution Completion ───────────────────────
+
+    public function mnsDistributionComplete(): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['bns','bhw','nutritionist','admin']);
+        $db   = Database::getInstance();
+        $data = $this->body();
+        if (empty($data['supplement'])) $this->error('supplement required (mnp or lnssq)', 422);
+        $year    = (int)($data['year'] ?? date('Y'));
+        $user    = $this->apiUser;
+        $barangay = $user['barangay'] ?? '';
+        if (empty($barangay)) $this->error('User has no barangay assigned', 422);
+        $db->prepare(
+            "INSERT INTO mns_distribution_completions (user_id, barangay, year, supplement, note)
+             VALUES (?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE note = VALUES(note), completed_at = NOW()"
+        )->execute([$this->userId(), $barangay, $year, $data['supplement'], $data['note'] ?? null]);
+        $this->success([], 'Distribution marked as complete');
+    }
+
+    public function mnsDistributionStatus(): void
+    {
+        $this->requireApiAuth();
+        $db   = Database::getInstance();
+        $year = (int)($_GET['year'] ?? date('Y'));
+        $brgy = $this->scopedBarangay($_GET['barangay'] ?? null);
+        $where  = ['dc.year = ?'];
+        $params = [$year];
+        if ($brgy) { $where[] = 'dc.barangay = ?'; $params[] = $brgy; }
+        $stmt = $db->prepare(
+            "SELECT dc.*, u.full_name, u.username FROM mns_distribution_completions dc
+             JOIN users u ON u.id = dc.user_id
+             WHERE " . implode(' AND ', $where) . " ORDER BY dc.completed_at DESC"
+        );
+        $stmt->execute($params);
+        $this->success(['completions' => $stmt->fetchAll()]);
     }
 
     // ─── Generic / Custom Programs ──────────────────────────

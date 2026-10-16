@@ -289,6 +289,31 @@ CREATE INDEX idx_api_token   ON api_tokens(token);
 CREATE INDEX idx_api_user    ON api_tokens(user_id);
 CREATE INDEX idx_api_expires ON api_tokens(expires_at);
 
+CREATE TABLE IF NOT EXISTS mns_defaulter_reasons (
+    id             INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    beneficiary_id INT           NOT NULL,
+    year           INT           NOT NULL,
+    supplement     ENUM('vita_feb','vita_aug','mnp','lns') NOT NULL,
+    reason         VARCHAR(200)  NOT NULL,
+    noted_by       INT,
+    noted_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id) ON DELETE CASCADE,
+    FOREIGN KEY (noted_by)       REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_defaulter_reason (beneficiary_id, year, supplement)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS mns_distribution_completions (
+    id           INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT           NOT NULL,
+    barangay     VARCHAR(100)  NOT NULL,
+    year         INT           NOT NULL,
+    supplement   ENUM('mnp','lnssq') NOT NULL,
+    note         TEXT,
+    completed_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_dist_completion (user_id, year, supplement)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Performance indexes
 CREATE INDEX idx_bene_validation        ON beneficiaries(validation_status);
 CREATE INDEX idx_assess_bene_valid_date ON assessments(beneficiary_id, validation_status, assessment_date);

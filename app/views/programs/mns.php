@@ -372,7 +372,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th><th>Notes</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($mnpRecords)): ?>
@@ -400,6 +400,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                         <?= $m['completed_routine'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
+                                <td class="small text-muted"><?= htmlspecialchars($m['notes'] ?? '') ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -471,7 +472,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th><th>Notes</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($lnsRecords)): ?>
@@ -499,6 +500,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                         <?= $l['completed_routine'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
+                                <td class="small text-muted"><?= htmlspecialchars($l['notes'] ?? '') ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -535,6 +537,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                         <th colspan="2" class="text-center">Vitamin A</th>
                         <th rowspan="2" class="align-middle text-center">MNP</th>
                         <th rowspan="2" class="align-middle text-center">LNS-SQ</th>
+                        <th rowspan="2" class="align-middle">Reason / Note</th>
                     </tr>
                     <tr>
                         <th class="text-center">Feb</th>
@@ -543,18 +546,23 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 </thead>
                 <tbody>
                     <?php if (empty($defaulterList)): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-5">
+                    <tr><td colspan="9" class="text-center text-muted py-5">
                         <i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>
                         All eligible children covered for <?= $year ?>!
                     </td></tr>
                     <?php endif; ?>
                     <?php foreach ($defaulterList as $d):
                         $cols = [
-                            ['elig' => (bool)$d['elig_vita_feb'], 'got' => (bool)$d['got_vita_feb']],
-                            ['elig' => (bool)$d['elig_vita_aug'], 'got' => (bool)$d['got_vita_aug']],
-                            ['elig' => (bool)$d['elig_mnp'],      'got' => (bool)$d['got_mnp']],
-                            ['elig' => (bool)$d['elig_lns'],      'got' => (bool)$d['got_lns']],
+                            'vita_feb' => ['elig' => (bool)$d['elig_vita_feb'], 'got' => (bool)$d['got_vita_feb']],
+                            'vita_aug' => ['elig' => (bool)$d['elig_vita_aug'], 'got' => (bool)$d['got_vita_aug']],
+                            'mnp'      => ['elig' => (bool)$d['elig_mnp'],      'got' => (bool)$d['got_mnp']],
+                            'lns'      => ['elig' => (bool)$d['elig_lns'],      'got' => (bool)$d['got_lns']],
                         ];
+                        $reasons = $defaulterReasons[$d['id']] ?? [];
+                        // First missing supplement
+                        $firstMissing = null;
+                        foreach ($cols as $key => $col) { if ($col['elig'] && !$col['got']) { $firstMissing = $key; break; } }
+                        $existingReason = $firstMissing ? ($reasons[$firstMissing] ?? '') : '';
                     ?>
                     <tr>
                         <td>
@@ -565,15 +573,36 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                         <td><?= htmlspecialchars($d['barangay']) ?></td>
                         <td><?= htmlspecialchars($d['purok_zone'] ?? '—') ?></td>
                         <td class="text-center"><?= $d['age_months'] ?></td>
-                        <?php foreach ($cols as $col): ?>
+                        <?php foreach ($cols as $key => $col): ?>
                             <?php if (!$col['elig']): ?>
                             <td class="text-center text-muted bg-light small">N/A</td>
                             <?php elseif ($col['got']): ?>
                             <td class="text-center text-success fw-bold">✓</td>
                             <?php else: ?>
-                            <td class="text-center text-danger fw-bold">✗</td>
+                            <td class="text-center text-danger fw-bold" title="<?= htmlspecialchars($reasons[$key] ?? '') ?>">✗</td>
                             <?php endif; ?>
                         <?php endforeach; ?>
+                        <td style="min-width:180px;">
+                            <?php if ($firstMissing && hasPerm('programs')): ?>
+                            <form method="post" action="<?= APP_URL ?>/programs/mns/defaulter/reason" class="d-flex gap-1">
+                                <?= \Core\Session::csrfField() ?>
+                                <input type="hidden" name="beneficiary_id" value="<?= $d['id'] ?>">
+                                <input type="hidden" name="supplement"     value="<?= $firstMissing ?>">
+                                <input type="hidden" name="year"           value="<?= $year ?>">
+                                <select name="reason" class="form-select form-select-sm" style="font-size:.75rem;">
+                                    <option value="">— Select reason —</option>
+                                    <?php foreach (['Child was sick','Mother refused','Child moved/transferred','Not found at home','Will follow up','Other'] as $opt): ?>
+                                    <option value="<?= $opt ?>" <?= $existingReason === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size:.75rem;" title="Save reason">
+                                    <i class="bi bi-check2"></i>
+                                </button>
+                            </form>
+                            <?php elseif ($existingReason): ?>
+                            <span class="small text-muted"><?= htmlspecialchars($existingReason) ?></span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -583,6 +612,85 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
 </div>
 <?php endif; ?>
 
+<!-- ── Distribution Completions Banner ── -->
+<?php if (!empty($distributionCompletions)): ?>
+<div class="mt-4">
+    <h6 class="fw-semibold mb-2"><i class="bi bi-check2-circle me-1 text-success"></i>BNS Distribution Completed</h6>
+    <div class="d-flex flex-wrap gap-2">
+        <?php foreach ($distributionCompletions as $dc): ?>
+        <div class="alert alert-success py-1 px-3 mb-0 small d-flex align-items-center gap-2">
+            <i class="bi bi-person-check"></i>
+            <span>
+                <strong><?= htmlspecialchars($dc['full_name']) ?></strong>
+                — <?= htmlspecialchars($dc['barangay']) ?>
+                · <?= strtoupper(htmlspecialchars($dc['supplement'])) ?>
+                <span class="text-muted ms-1"><?= date('M j', strtotime($dc['completed_at'])) ?></span>
+            </span>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- ── BNS Coverage per Barangay ── -->
+<?php if (!empty($bnsCoverage)): ?>
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header fw-semibold">
+        <i class="bi bi-people-fill me-1 text-primary"></i>BNS Coverage Progress — <?= $year ?>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr><th>BNS</th><th>Barangay</th><th>Eligible (6–23mo)</th><th>MNP Covered</th><th>LNS-SQ Covered</th><th>MNP %</th><th>LNS-SQ %</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($bnsCoverage as $b):
+                        $mnpPct = $b['eligible_count'] > 0 ? min(100, round($b['mnp_covered'] / $b['eligible_count'] * 100)) : 0;
+                        $lnsPct = $b['eligible_count'] > 0 ? min(100, round($b['lns_covered'] / $b['eligible_count'] * 100)) : 0;
+                        $mnpClass = $mnpPct >= 80 ? 'success' : ($mnpPct >= 50 ? 'warning' : 'danger');
+                        $lnsClass = $lnsPct >= 80 ? 'success' : ($lnsPct >= 50 ? 'warning' : 'danger');
+                    ?>
+                    <tr>
+                        <td class="fw-semibold"><?= htmlspecialchars($b['full_name']) ?></td>
+                        <td><?= htmlspecialchars($b['barangay']) ?></td>
+                        <td class="text-center"><?= $b['eligible_count'] ?></td>
+                        <td class="text-center"><?= $b['mnp_covered'] ?></td>
+                        <td class="text-center"><?= $b['lns_covered'] ?></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px;">
+                                    <div class="progress-bar bg-<?= $mnpClass ?>" style="width:<?= $mnpPct ?>%"></div>
+                                </div>
+                                <span class="small text-<?= $mnpClass ?>"><?= $mnpPct ?>%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px;">
+                                    <div class="progress-bar bg-<?= $lnsClass ?>" style="width:<?= $lnsPct ?>%"></div>
+                                </div>
+                                <span class="small text-<?= $lnsClass ?>"><?= $lnsPct ?>%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <?php
+                            // Check if BNS marked complete
+                            $mnpDone = array_filter($distributionCompletions, fn($c) => $c['barangay'] === $b['barangay'] && $c['supplement'] === 'mnp');
+                            $lnsDone = array_filter($distributionCompletions, fn($c) => $c['barangay'] === $b['barangay'] && $c['supplement'] === 'lnssq');
+                            ?>
+                            <?php if ($mnpDone): ?><span class="badge bg-success me-1">MNP Done</span><?php endif; ?>
+                            <?php if ($lnsDone): ?><span class="badge bg-success">LNS Done</span><?php endif; ?>
+                            <?php if (!$mnpDone && !$lnsDone): ?><span class="badge bg-secondary">In Progress</span><?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- ── Vitamin A Quick-Record Modal (from eligible list) ── -->
 <div class="modal fade" id="vitaModal" tabindex="-1">

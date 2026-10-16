@@ -107,6 +107,7 @@ $router->post('/programs/mns/mnp',              'ProgramController@mnsMnp');
 $router->post('/programs/mns/mnp/{id}/complete',  'ProgramController@mnsMnpComplete');
 $router->post('/programs/mns/lnssq',             'ProgramController@mnsLnsSq');
 $router->post('/programs/mns/lnssq/{id}/complete','ProgramController@mnsLnsSqComplete');
+$router->post('/programs/mns/defaulter/reason',  'ProgramController@mnsDefaulterReason');
 
 // Generic program routes (for custom programs added via admin)
 $router->get('/programs/{code}',            'ProgramController@generic');
@@ -244,8 +245,11 @@ $router->post('/api/programs/mns/vitamina',             'ProgramApiController@mn
 $router->delete('/api/programs/mns/vitamina/{id}',      'ProgramApiController@mnsVitaminADelete');
 $router->post('/api/programs/mns/mnp',                  'ProgramApiController@mnsMnp');
 $router->post('/api/programs/mns/mnp/{id}/complete',    'ProgramApiController@mnpComplete');
-$router->post('/api/programs/mns/lnssq',                'ProgramApiController@mnsLnsSq');
-$router->post('/api/programs/mns/lnssq/{id}/complete',  'ProgramApiController@lnsSqComplete');
+$router->post('/api/programs/mns/lnssq',                  'ProgramApiController@mnsLnsSq');
+$router->post('/api/programs/mns/lnssq/{id}/complete',    'ProgramApiController@lnsSqComplete');
+$router->post('/api/programs/mns/defaulter/reason',       'ProgramApiController@mnsDefaulterReason');
+$router->post('/api/programs/mns/distribution-complete',  'ProgramApiController@mnsDistributionComplete');
+$router->get('/api/programs/mns/distribution-status',     'ProgramApiController@mnsDistributionStatus');
 
 // Generic / Custom programs (must come after all specific program routes)
 $router->get('/api/programs/{code}',             'ProgramApiController@genericList');

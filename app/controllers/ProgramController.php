@@ -553,26 +553,74 @@ class ProgramController extends Controller
         $barangays = $beneModel->getAllBarangays();
         $puroks    = $beneModel->getPuroksByBarangay($barangay);
 
+        // Defaulter reasons (keyed by beneficiary_id + supplement)
+        $defaulterReasons = [];
+        if ($tab === 'defaulter' && !empty($defaulterList)) {
+            $ids = array_column($defaulterList, 'id');
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $params = array_merge($ids, [$year]);
+            $stmt = Database::getInstance()->prepare(
+                "SELECT beneficiary_id, supplement, reason FROM mns_defaulter_reasons
+                 WHERE beneficiary_id IN ($placeholders) AND year = ?"
+            );
+            $stmt->execute($params);
+            foreach ($stmt->fetchAll() as $r) {
+                $defaulterReasons[$r['beneficiary_id']][$r['supplement']] = $r['reason'];
+            }
+        }
+
+        // BNS coverage per barangay
+        $bnsCoverage = Database::getInstance()->query(
+            "SELECT u.full_name, u.username, u.barangay,
+                    (SELECT COUNT(*) FROM beneficiaries b
+                     WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+                     AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) BETWEEN 6 AND 23
+                     AND b.barangay = u.barangay) AS eligible_count,
+                    (SELECT COUNT(*) FROM mnp_records m
+                     JOIN beneficiaries b ON b.id = m.beneficiary_id
+                     WHERE m.year = $year AND b.barangay = u.barangay) AS mnp_covered,
+                    (SELECT COUNT(*) FROM lns_sq_records l
+                     JOIN beneficiaries b ON b.id = l.beneficiary_id
+                     WHERE l.year = $year AND b.barangay = u.barangay) AS lns_covered
+             FROM users u
+             WHERE u.role = 'bns' AND u.is_active = 1 AND u.barangay IS NOT NULL AND u.barangay != ''
+             ORDER BY u.barangay"
+        )->fetchAll();
+
+        // Distribution completions
+        $completions = Database::getInstance()->prepare(
+            "SELECT dc.barangay, dc.supplement, dc.completed_at, u.full_name
+             FROM mns_distribution_completions dc
+             JOIN users u ON u.id = dc.user_id
+             WHERE dc.year = ?" . ($barangay !== '' ? " AND dc.barangay = " . Database::getInstance()->quote($barangay) : '') . "
+             ORDER BY dc.completed_at DESC"
+        );
+        $completions->execute([$year]);
+        $distributionCompletions = $completions->fetchAll();
+
         $this->view('programs/mns', [
-            'eligible'         => $eligible,
-            'vitaRecords'      => $vitaRecords,
-            'coverage'         => $vitaCoverage,
-            'mnpCompletion'    => $mnpCompletion,
-            'lnsCompletion'    => $lnsCompletion,
-            'mnpRecords'       => $mnpRecords,
-            'lnsRecords'       => $lnsRecords,
-            'mnpNotYet'        => $mnpNotYet,
-            'lnsNotYet'        => $lnsNotYet,
-            'allBeneficiaries' => $allBeneficiaries,
-            'round'            => $round,
-            'year'             => $year,
-            'tab'              => $tab,
-            'asOfDate'         => $asOfDate,
-            'barangays'        => $barangays,
-            'puroks'           => $puroks,
-            'filterBarangay'   => $barangay,
-            'filterPurok'      => $purok,
-            'defaulterList'    => $defaulterList,
+            'eligible'               => $eligible,
+            'vitaRecords'            => $vitaRecords,
+            'coverage'               => $vitaCoverage,
+            'mnpCompletion'          => $mnpCompletion,
+            'lnsCompletion'          => $lnsCompletion,
+            'mnpRecords'             => $mnpRecords,
+            'lnsRecords'             => $lnsRecords,
+            'mnpNotYet'              => $mnpNotYet,
+            'lnsNotYet'              => $lnsNotYet,
+            'allBeneficiaries'       => $allBeneficiaries,
+            'round'                  => $round,
+            'year'                   => $year,
+            'tab'                    => $tab,
+            'asOfDate'               => $asOfDate,
+            'barangays'              => $barangays,
+            'puroks'                 => $puroks,
+            'filterBarangay'         => $barangay,
+            'filterPurok'            => $purok,
+            'defaulterList'          => $defaulterList,
+            'defaulterReasons'       => $defaulterReasons,
+            'bnsCoverage'            => $bnsCoverage,
+            'distributionCompletions'=> $distributionCompletions,
         ]);
     }
 
@@ -762,6 +810,30 @@ class ProgramController extends Controller
 
         Session::flash('success', 'LNS-SQ routine marked as completed.');
         $this->redirect('/programs/mns?tab=lnssq&year=' . $year);
+    }
+
+    public function mnsDefaulterReason(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('programs');
+        if (!$this->isPost()) { $this->redirect('/programs/mns?tab=defaulter'); }
+        $this->validateCsrf();
+
+        $bid        = (int)($_POST['beneficiary_id'] ?? 0);
+        $supplement = $_POST['supplement'] ?? '';
+        $reason     = trim($_POST['reason'] ?? '');
+        $year       = (int)($_POST['year'] ?? date('Y'));
+
+        if ($bid && $supplement && $reason) {
+            Database::getInstance()->prepare(
+                "INSERT INTO mns_defaulter_reasons (beneficiary_id, year, supplement, reason, noted_by)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE reason = VALUES(reason), noted_by = VALUES(noted_by), noted_at = NOW()"
+            )->execute([$bid, $year, $supplement, $reason, \Core\Session::get('user_id')]);
+            Session::flash('success', 'Reason saved.');
+        }
+
+        $this->redirect('/programs/mns?tab=defaulter&year=' . $year);
     }
 
     public function generic(string $code): void
