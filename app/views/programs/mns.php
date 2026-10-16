@@ -642,7 +642,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>BNS</th><th>Barangay</th><th>Eligible (6–23mo)</th><th>MNP Covered</th><th>LNS-SQ Covered</th><th>MNP %</th><th>LNS-SQ %</th><th>Status</th></tr>
+                    <tr><th>Barangay</th><th>BNS</th><th>Eligible (6–23mo)</th><th>MNP Covered</th><th>LNS-SQ Covered</th><th>MNP %</th><th>LNS-SQ %</th><th>Status</th></tr>
                 </thead>
                 <tbody>
                     <?php foreach ($bnsCoverage as $b):
@@ -652,8 +652,8 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                         $lnsClass = $lnsPct >= 80 ? 'success' : ($lnsPct >= 50 ? 'warning' : 'danger');
                     ?>
                     <tr>
-                        <td class="fw-semibold"><?= htmlspecialchars($b['full_name']) ?></td>
-                        <td><?= htmlspecialchars($b['barangay']) ?></td>
+                        <td class="fw-semibold"><?= htmlspecialchars($b['barangay']) ?></td>
+                        <td class="small text-muted"><?= htmlspecialchars($b['bns_names']) ?></td>
                         <td class="text-center"><?= $b['eligible_count'] ?></td>
                         <td class="text-center"><?= $b['mnp_covered'] ?></td>
                         <td class="text-center"><?= $b['lns_covered'] ?></td>

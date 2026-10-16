@@ -569,9 +569,11 @@ class ProgramController extends Controller
             }
         }
 
-        // BNS coverage per barangay
+        // BNS coverage per barangay (grouped — multiple BNS can share a barangay)
         $bnsCoverage = Database::getInstance()->query(
-            "SELECT u.full_name, u.username, u.barangay,
+            "SELECT u.barangay,
+                    GROUP_CONCAT(u.full_name ORDER BY u.full_name SEPARATOR ', ') AS bns_names,
+                    COUNT(u.id) AS bns_count,
                     (SELECT COUNT(*) FROM beneficiaries b
                      WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                      AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) BETWEEN 6 AND 23
@@ -584,6 +586,7 @@ class ProgramController extends Controller
                      WHERE l.year = $year AND b.barangay = u.barangay) AS lns_covered
              FROM users u
              WHERE u.role = 'bns' AND u.is_active = 1 AND u.barangay IS NOT NULL AND u.barangay != ''
+             GROUP BY u.barangay
              ORDER BY u.barangay"
         )->fetchAll();
 
