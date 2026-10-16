@@ -123,9 +123,6 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                             <?php elseif (!empty($b['is_recovered'])): ?>
                             <span class="badge bg-success ms-1" title="Child was previously malnourished and has recovered to Normal status"><i class="bi bi-heart-fill me-1"></i>Recovered</span>
                             <?php endif; ?>
-                            <?php if (($b['source'] ?? '') === 'Mobile'): ?>
-                            <span class="badge bg-info text-dark ms-1" title="Submitted via mobile app"><i class="bi bi-phone me-1"></i>Mobile</span>
-                            <?php endif; ?>
                         </td>
                         <td class="text-nowrap"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></td>
                         <td><?= htmlspecialchars($b['sex']) ?></td>
