@@ -323,29 +323,21 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                <span>
-                    <i class="bi bi-people me-1 text-warning"></i>
-                    Not Yet Received — <?= $year ?>
-                    <span class="badge bg-secondary ms-1"><?= count($mnpNotYet) ?></span>
-                    <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
-                </span>
-                <?php if ($canRecord): ?>
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#mnpModal">
-                    <i class="bi bi-plus-circle me-1"></i>Add MNP Record
-                </button>
-                <?php endif; ?>
+            <div class="card-header fw-semibold">
+                <i class="bi bi-people me-1 text-warning"></i>
+                Not Yet Received — <?= $year ?>
+                <span class="badge bg-secondary ms-1"><?= count($mnpNotYet) ?></span>
+                <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age (mo)</th>
-                            <?php if ($canRecord): ?><th></th><?php endif; ?></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age (mo)</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($mnpNotYet)): ?>
-                            <tr><td colspan="4" class="text-center text-muted py-4">
+                            <tr><td colspan="3" class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle fs-3 d-block mb-1 text-success"></i>
                                 All eligible children covered for <?= $year ?>.
                             </td></tr>
@@ -359,17 +351,6 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                 </td>
                                 <td><?= htmlspecialchars($b['barangay']) ?></td>
                                 <td><?= $b['age_months'] ?></td>
-                                <?php if ($canRecord): ?>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-primary mnp-quick-btn"
-                                            data-bs-toggle="modal" data-bs-target="#mnpModal"
-                                            data-id="<?= $b['id'] ?>"
-                                            data-name="<?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?>"
-                                            data-age="<?= $b['age_months'] ?>">
-                                        <i class="bi bi-prescription me-1"></i>Record
-                                    </button>
-                                </td>
-                                <?php endif; ?>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -415,19 +396,9 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if ($m['completed_routine']): ?>
-                                    <span class="badge bg-success">Yes</span>
-                                    <?php elseif ($canRecord): ?>
-                                    <form method="post" action="<?= APP_URL ?>/programs/mns/mnp/<?= $m['id'] ?>/complete" class="d-inline">
-                                        <?= \Core\Session::csrfField() ?>
-                                        <input type="hidden" name="year" value="<?= $year ?>">
-                                        <button type="submit" class="btn btn-xs btn-outline-success py-0 px-1" style="font-size:.75rem;">
-                                            <i class="bi bi-check2"></i> Mark Done
-                                        </button>
-                                    </form>
-                                    <?php else: ?>
-                                    <span class="badge bg-warning text-dark">No</span>
-                                    <?php endif; ?>
+                                    <span class="badge bg-<?= $m['completed_routine'] ? 'success' : 'warning text-dark' ?>">
+                                        <?= $m['completed_routine'] ? 'Yes' : 'No' ?>
+                                    </span>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -451,29 +422,21 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                <span>
-                    <i class="bi bi-people me-1 text-warning"></i>
-                    Not Yet Received — <?= $year ?>
-                    <span class="badge bg-secondary ms-1"><?= count($lnsNotYet) ?></span>
-                    <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
-                </span>
-                <?php if ($canRecord): ?>
-                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#lnssqModal">
-                    <i class="bi bi-plus-circle me-1"></i>Add LNS-SQ Record
-                </button>
-                <?php endif; ?>
+            <div class="card-header fw-semibold">
+                <i class="bi bi-people me-1 text-warning"></i>
+                Not Yet Received — <?= $year ?>
+                <span class="badge bg-secondary ms-1"><?= count($lnsNotYet) ?></span>
+                <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age (mo)</th>
-                            <?php if ($canRecord): ?><th></th><?php endif; ?></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age (mo)</th></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($lnsNotYet)): ?>
-                            <tr><td colspan="4" class="text-center text-muted py-4">
+                            <tr><td colspan="3" class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle fs-3 d-block mb-1 text-success"></i>
                                 All eligible children covered for <?= $year ?>.
                             </td></tr>
@@ -487,17 +450,6 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                 </td>
                                 <td><?= htmlspecialchars($b['barangay']) ?></td>
                                 <td><?= $b['age_months'] ?></td>
-                                <?php if ($canRecord): ?>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-success lns-quick-btn"
-                                            data-bs-toggle="modal" data-bs-target="#lnssqModal"
-                                            data-id="<?= $b['id'] ?>"
-                                            data-name="<?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?>"
-                                            data-age="<?= $b['age_months'] ?>">
-                                        <i class="bi bi-prescription2 me-1"></i>Record
-                                    </button>
-                                </td>
-                                <?php endif; ?>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -543,19 +495,9 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if ($l['completed_routine']): ?>
-                                    <span class="badge bg-success">Yes</span>
-                                    <?php elseif ($canRecord): ?>
-                                    <form method="post" action="<?= APP_URL ?>/programs/mns/lnssq/<?= $l['id'] ?>/complete" class="d-inline">
-                                        <?= \Core\Session::csrfField() ?>
-                                        <input type="hidden" name="year" value="<?= $year ?>">
-                                        <button type="submit" class="btn btn-xs btn-outline-success py-0 px-1" style="font-size:.75rem;">
-                                            <i class="bi bi-check2"></i> Mark Done
-                                        </button>
-                                    </form>
-                                    <?php else: ?>
-                                    <span class="badge bg-warning text-dark">No</span>
-                                    <?php endif; ?>
+                                    <span class="badge bg-<?= $l['completed_routine'] ? 'success' : 'warning text-dark' ?>">
+                                        <?= $l['completed_routine'] ? 'Yes' : 'No' ?>
+                                    </span>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -721,128 +663,6 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     </div>
 </div>
 
-<!-- ── MNP Modal ── -->
-<div class="modal fade" id="mnpModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="<?= APP_URL ?>/programs/mns/mnp" method="post">
-                <?= \Core\Session::csrfField() ?>
-                <input type="hidden" name="year" value="<?= $year ?>">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-prescription me-2"></i>Add MNP Record</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Beneficiary <span class="text-danger">*</span></label>
-                        <select name="beneficiary_id" class="form-select" required id="mnpBeneficiarySelect">
-                            <option value="">— Select Beneficiary —</option>
-                            <?php foreach ($allBeneficiaries as $b): ?>
-                            <option value="<?= $b['id'] ?>">
-                                <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Date Given</label>
-                            <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Age Group</label>
-                            <select name="age_group" class="form-select" id="mnpAgeGroupSelect">
-                                <option value="6-11 months">6–11 months</option>
-                                <option value="12-23 months">12–23 months</option>
-                                <option value="24-59 months">24–59 months</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-3 mt-1">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Sachets Distributed</label>
-                            <input type="number" name="sachets_distributed" class="form-control" min="1" max="60" placeholder="e.g. 15">
-                            <div class="form-text">60-sachet routine total</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Notes</label>
-                            <input type="text" name="notes" class="form-control" placeholder="Optional">
-                        </div>
-                    </div>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="completed_routine" value="1" id="mnpComplete">
-                        <label class="form-check-label" for="mnpComplete">60-day routine completed</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ── LNS-SQ Modal ── -->
-<div class="modal fade" id="lnssqModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="<?= APP_URL ?>/programs/mns/lnssq" method="post">
-                <?= \Core\Session::csrfField() ?>
-                <input type="hidden" name="year" value="<?= $year ?>">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-prescription2 me-2"></i>Add LNS-SQ Record</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Beneficiary <span class="text-danger">*</span></label>
-                        <select name="beneficiary_id" class="form-select" required id="lnsBeneficiarySelect">
-                            <option value="">— Select Beneficiary —</option>
-                            <?php foreach ($allBeneficiaries as $b): ?>
-                            <option value="<?= $b['id'] ?>">
-                                <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Date Given</label>
-                            <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Age Group</label>
-                            <select name="age_group" class="form-select" id="lnsAgeGroupSelect">
-                                <option value="6-11 months">6–11 months</option>
-                                <option value="12-23 months">12–23 months</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-3 mt-1">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Sachets Distributed</label>
-                            <input type="number" name="sachets_distributed" class="form-control" min="1" max="30" placeholder="e.g. 15">
-                            <div class="form-text">Monthly routine sachets</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Notes</label>
-                            <input type="text" name="notes" class="form-control" placeholder="Optional">
-                        </div>
-                    </div>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="completed_routine" value="1" id="lnsComplete">
-                        <label class="form-check-label" for="lnsComplete">Routine completed</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i>Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <script>
 // Enable purok filter only when a barangay is selected
@@ -863,25 +683,4 @@ document.getElementById('manualVitaBeneficiary')?.addEventListener('change', fun
     document.getElementById('manualVitaDob').value = this.options[this.selectedIndex].dataset.dob || '';
 });
 
-// MNP quick-record: pre-select beneficiary and age group from "Not Yet Received" list
-document.getElementById('mnpModal')?.addEventListener('show.bs.modal', function(e) {
-    const btn = e.relatedTarget;
-    if (!btn || !btn.dataset.id) return;
-    const sel = document.getElementById('mnpBeneficiarySelect');
-    if (sel) sel.value = btn.dataset.id;
-    const age = parseInt(btn.dataset.age || '0', 10);
-    const ag  = document.getElementById('mnpAgeGroupSelect');
-    if (ag) ag.value = age <= 11 ? '6-11 months' : (age <= 23 ? '12-23 months' : '24-59 months');
-});
-
-// LNS-SQ quick-record: pre-select beneficiary and age group
-document.getElementById('lnssqModal')?.addEventListener('show.bs.modal', function(e) {
-    const btn = e.relatedTarget;
-    if (!btn || !btn.dataset.id) return;
-    const sel = document.getElementById('lnsBeneficiarySelect');
-    if (sel) sel.value = btn.dataset.id;
-    const age = parseInt(btn.dataset.age || '0', 10);
-    const ag  = document.getElementById('lnsAgeGroupSelect');
-    if (ag) ag.value = age <= 11 ? '6-11 months' : '12-23 months';
-});
 </script>
