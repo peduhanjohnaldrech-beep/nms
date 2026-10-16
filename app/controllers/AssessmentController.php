@@ -61,19 +61,25 @@ class AssessmentController extends Controller
                 $this->redirect("/assessments/create?beneficiary_id={$bid}");
             }
 
+            $role             = strtolower(Session::get('user_role'));
+            $needsValidation  = in_array($role, ['bns', 'bhw']);
+
             $assessmentId = $this->model->createWithZScore([
-                'beneficiary_id'  => $bid,
-                'assessment_date' => $assessmentDate,
-                'age_in_months'   => $ageMonths,
-                'weight_kg'       => $weightKg,
-                'height_cm'       => !empty($_POST['height_cm']) ? (float)$_POST['height_cm'] : null,
-                'muac_cm'         => !empty($_POST['muac_cm'])   ? (float)$_POST['muac_cm']   : null,
-                'sex'             => $beneficiary['sex'],
-                'period'          => $period,
-                'assessment_year' => $year,
-                'assessed_by'     => trim($_POST['assessed_by'] ?? ''),
-                'remarks'         => trim($_POST['remarks'] ?? ''),
-                'created_by'      => Session::get('user_id'),
+                'beneficiary_id'    => $bid,
+                'assessment_date'   => $assessmentDate,
+                'age_in_months'     => $ageMonths,
+                'weight_kg'         => $weightKg,
+                'height_cm'         => !empty($_POST['height_cm']) ? (float)$_POST['height_cm'] : null,
+                'muac_cm'           => !empty($_POST['muac_cm'])   ? (float)$_POST['muac_cm']   : null,
+                'sex'               => $beneficiary['sex'],
+                'period'            => $period,
+                'assessment_year'   => $year,
+                'assessed_by'       => trim($_POST['assessed_by'] ?? ''),
+                'remarks'           => trim($_POST['remarks'] ?? ''),
+                'validation_status' => $needsValidation ? 'pending' : 'validated',
+                'validated_by'      => $needsValidation ? null : Session::get('user_id'),
+                'validated_at'      => $needsValidation ? null : date('Y-m-d H:i:s'),
+                'created_by'        => Session::get('user_id'),
             ]);
 
             $saved = $this->model->findById($assessmentId);
@@ -83,16 +89,11 @@ class AssessmentController extends Controller
 
             \ActivityLog::log('assessment_create', "Assessment recorded for beneficiary ID $bid ({$saved['nutritional_status']})");
 
-            $flashMsg = 'Assessment recorded. ' . implode(' | ', $parts);
-            if ($dspEnrollmentId) {
-                $wflh = $saved['wflh_status'] ?? '';
-                $wfa  = $saved['nutritional_status'] ?? '';
-                if ($wflh === 'SW' || $wfa === 'SUW')        $intervention = 'RUTF';
-                elseif ($wflh === 'MW' || $wfa === 'UW')     $intervention = 'Supplementary Feeding';
-                else                                          $intervention = 'Health Education';
-                $flashMsg .= ' — <strong>Auto-enrolled in DSP</strong> (' . $intervention . ').';
+            if ($needsValidation) {
+                Session::flash('success', 'Assessment submitted and awaiting midwife validation. ' . implode(' | ', $parts));
             } else {
-                // Check if child is currently in DSP and has now recovered
+                $flashMsg = 'Assessment recorded. ' . implode(' | ', $parts);
+                $enrollmentModel = new ProgramEnrollment();
                 $activeDsp = $enrollmentModel->getActiveDSPEnrollment($bid);
                 if ($activeDsp) {
                     $newWfa  = $saved['nutritional_status'] ?? '';
@@ -102,8 +103,8 @@ class AssessmentController extends Controller
                             . 'Consider discharging them from DSP.</strong>';
                     }
                 }
+                Session::flash('success', $flashMsg);
             }
-            Session::flash('success', $flashMsg);
             $this->redirect("/beneficiaries/{$bid}");
         }
 
@@ -187,7 +188,9 @@ class AssessmentController extends Controller
             $saved       = 0;
             $skipped     = 0;
 
-            $assessedBy = trim($_POST['assessed_by'] ?? Session::get('user_name', ''));
+            $assessedBy      = trim($_POST['assessed_by'] ?? Session::get('user_name', ''));
+            $batchRole       = strtolower(Session::get('user_role'));
+            $needsValidation = in_array($batchRole, ['bns', 'bhw']);
 
             foreach ($_POST['entries'] as $entry) {
                 $bid      = (int)($entry['beneficiary_id'] ?? 0);
@@ -199,24 +202,30 @@ class AssessmentController extends Controller
                 if (!$b) { $skipped++; continue; }
 
                 $assessmentId = $this->model->createWithZScore([
-                    'beneficiary_id'  => $bid,
-                    'assessment_date' => $date,
-                    'age_in_months'   => \DateHelper::ageInMonths($b['date_of_birth'], $date),
-                    'weight_kg'       => $weightKg,
-                    'height_cm'       => !empty($entry['height_cm']) ? (float)$entry['height_cm'] : null,
-                    'muac_cm'         => !empty($entry['muac_cm'])   ? (float)$entry['muac_cm']   : null,
-                    'sex'             => $b['sex'],
-                    'period'          => $period,
-                    'assessment_year' => $year,
-                    'assessed_by'     => $assessedBy,
-                    'created_by'      => Session::get('user_id'),
+                    'beneficiary_id'    => $bid,
+                    'assessment_date'   => $date,
+                    'age_in_months'     => \DateHelper::ageInMonths($b['date_of_birth'], $date),
+                    'weight_kg'         => $weightKg,
+                    'height_cm'         => !empty($entry['height_cm']) ? (float)$entry['height_cm'] : null,
+                    'muac_cm'           => !empty($entry['muac_cm'])   ? (float)$entry['muac_cm']   : null,
+                    'sex'               => $b['sex'],
+                    'period'            => $period,
+                    'assessment_year'   => $year,
+                    'assessed_by'       => $assessedBy,
+                    'validation_status' => $needsValidation ? 'pending' : 'validated',
+                    'validated_by'      => $needsValidation ? null : Session::get('user_id'),
+                    'validated_at'      => $needsValidation ? null : date('Y-m-d H:i:s'),
+                    'created_by'        => Session::get('user_id'),
                 ]);
 
                 $saved++;
             }
 
             \ActivityLog::log('batch_assessment', "Batch assessment: $saved saved, $skipped skipped — barangay: $selectedBarangay");
-            $flashMsg = "$saved assessment" . ($saved !== 1 ? 's' : '') . " saved, $skipped skipped (no weight entered).";
+            $flashMsg = "$saved assessment" . ($saved !== 1 ? 's' : '') . " saved" . ($skipped ? ", $skipped skipped (no weight entered)" : '') . ".";
+            if ($needsValidation && $saved > 0) {
+                $flashMsg .= " Awaiting midwife validation before appearing in reports.";
+            }
             Session::flash('success', $flashMsg);
             $this->redirect('/beneficiaries');
         }

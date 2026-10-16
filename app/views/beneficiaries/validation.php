@@ -1,11 +1,12 @@
 <?php $pageTitle = 'Validation Queue'; ?>
+<?php $totalPending = count($rows) + count($pendingAssessments ?? []); ?>
 
 <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-shield-check me-2 text-warning"></i>Validation Queue</h4>
-        <p class="text-muted small mb-0 mt-1">Review and approve or return pending beneficiary registrations from mobile</p>
+        <p class="text-muted small mb-0 mt-1">Review and approve pending beneficiary registrations and assessments</p>
     </div>
-    <span class="badge bg-warning text-dark fs-6"><?= count($rows) ?> Pending</span>
+    <span class="badge bg-warning text-dark fs-6"><?= $totalPending ?> Pending</span>
 </div>
 
 <?php if (empty($sessionBrgy) && !empty($barangays)): ?>
@@ -202,5 +203,99 @@
     <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Back to Beneficiaries
     </a>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($pendingAssessments)): ?>
+<div class="mt-4">
+    <p class="text-muted small fw-semibold text-uppercase mb-2 ps-1">
+        <i class="bi bi-clipboard-pulse me-1"></i>Pending Assessments
+        <span class="badge bg-info text-dark ms-1"><?= count($pendingAssessments) ?></span>
+    </p>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Beneficiary</th>
+                            <th>Barangay</th>
+                            <th>Date</th>
+                            <th>Period</th>
+                            <th>Age (mo)</th>
+                            <th>Weight</th>
+                            <th>Status</th>
+                            <th>Submitted By</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pendingAssessments as $a): ?>
+                        <tr>
+                            <td>
+                                <a href="<?= APP_URL ?>/beneficiaries/<?= $a['beneficiary_id'] ?>" class="fw-semibold text-decoration-none">
+                                    <?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?>
+                                </a>
+                            </td>
+                            <td><?= htmlspecialchars($a['barangay']) ?></td>
+                            <td class="text-nowrap small"><?= DateHelper::formatDate($a['assessment_date'], 'M j, Y') ?></td>
+                            <td class="small"><?= htmlspecialchars($a['period'] . ' ' . $a['assessment_year']) ?></td>
+                            <td class="small"><?= (int)$a['age_in_months'] ?></td>
+                            <td class="small"><?= number_format((float)$a['weight_kg'], 2) ?> kg</td>
+                            <td>
+                                <?php
+                                $ns = $a['nutritional_status'] ?? '—';
+                                $nsClass = match($ns) { 'Normal'=>'success','UW'=>'warning','SUW'=>'danger','OW','OB'=>'info',default=>'secondary' };
+                                ?>
+                                <span class="badge bg-<?= $nsClass ?>"><?= htmlspecialchars($ns) ?></span>
+                            </td>
+                            <td class="small text-muted"><?= htmlspecialchars($a['created_by_name'] ?? '—') ?></td>
+                            <td class="text-end">
+                                <form action="<?= APP_URL ?>/assessments/<?= $a['id'] ?>/validate" method="post" class="d-inline">
+                                    <?= \Core\Session::csrfField() ?>
+                                    <button class="btn btn-sm btn-success me-1" title="Approve">
+                                        <i class="bi bi-check-lg"></i> Approve
+                                    </button>
+                                </form>
+                                <button class="btn btn-sm btn-outline-warning"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#returnAssessmentModal<?= $a['id'] ?>"
+                                        title="Return for Correction">
+                                    <i class="bi bi-reply me-1"></i>Return
+                                </button>
+                                <div class="modal fade" id="returnAssessmentModal<?= $a['id'] ?>" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form action="<?= APP_URL ?>/assessments/<?= $a['id'] ?>/reject" method="post">
+                                                <?= \Core\Session::csrfField() ?>
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title"><i class="bi bi-reply text-warning me-2"></i>Return Assessment</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="text-muted small mb-2">
+                                                        Assessment for: <strong><?= htmlspecialchars($a['last_name'] . ', ' . $a['first_name']) ?></strong>
+                                                        (<?= htmlspecialchars($a['period'] . ' ' . $a['assessment_year']) ?>)
+                                                    </p>
+                                                    <label class="form-label fw-semibold">Note <span class="text-danger">*</span></label>
+                                                    <textarea name="rejection_note" class="form-control" rows="3"
+                                                              placeholder="Explain what needs to be corrected..." required></textarea>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-warning"><i class="bi bi-reply me-1"></i>Return</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 <?php endif; ?>

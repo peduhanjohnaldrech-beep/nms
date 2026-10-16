@@ -278,11 +278,32 @@ class BeneficiaryController extends Controller
             unset($bene);
         }
 
+        // Also load pending assessments where the beneficiary is already validated
+        $aWhere  = ["a.validation_status = 'pending'", "b.validation_status = 'validated'", 'b.deleted_at IS NULL'];
+        $aParams = [];
+        if ($filterBrgy) { $aWhere[] = 'b.barangay = ?'; $aParams[] = $filterBrgy; }
+        $aWhereClause = 'WHERE ' . implode(' AND ', $aWhere);
+        $aStmt = $db->prepare(
+            "SELECT a.id, a.beneficiary_id, a.assessment_date, a.age_in_months,
+                    a.weight_kg, a.height_cm, a.muac_cm, a.nutritional_status,
+                    a.period, a.assessment_year, a.assessed_by, a.created_at,
+                    b.last_name, b.first_name, b.barangay,
+                    u.full_name AS created_by_name
+             FROM assessments a
+             JOIN beneficiaries b ON b.id = a.beneficiary_id
+             LEFT JOIN users u ON u.id = a.created_by
+             $aWhereClause
+             ORDER BY a.created_at DESC"
+        );
+        $aStmt->execute($aParams);
+        $pendingAssessments = $aStmt->fetchAll();
+
         $this->view('beneficiaries/validation', [
-            'rows'         => $rows,
-            'barangays'    => $barangays,
-            'filterBrgy'   => $filterBrgy,
-            'sessionBrgy'  => $sessionBrgy,
+            'rows'               => $rows,
+            'pendingAssessments' => $pendingAssessments,
+            'barangays'          => $barangays,
+            'filterBrgy'         => $filterBrgy,
+            'sessionBrgy'        => $sessionBrgy,
         ]);
     }
 
@@ -358,6 +379,73 @@ class BeneficiaryController extends Controller
         \ActivityLog::log('beneficiary_reject', "Rejected beneficiary ID $id. Note: $note");
         Session::flash('warning', 'Beneficiary registration rejected.');
         $this->redirect("/beneficiaries/{$id}");
+    }
+
+    public function validateAssessment(string $id): void
+    {
+        $this->requireAuth();
+        if (!$this->isPost()) { $this->redirect('/beneficiaries/validation'); }
+        $this->validateCsrf();
+        if (!in_array(\Core\Session::get('user_role'), ['midwife','admin','nutritionist'])) {
+            \Core\Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $db   = \Core\Database::getInstance();
+        $stmt = $db->prepare("SELECT a.id, a.validation_status, b.barangay FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id WHERE a.id = ?");
+        $stmt->execute([(int)$id]);
+        $rec  = $stmt->fetch();
+        if (!$rec || $rec['validation_status'] !== 'pending') {
+            \Core\Session::flash('error', 'Assessment not found or not pending.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $brgy = \Core\Session::get('user_barangay');
+        if ($brgy && $rec['barangay'] !== $brgy) {
+            \Core\Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $db->prepare("UPDATE assessments SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE id=?")
+           ->execute([\Core\Session::get('user_id'), (int)$id]);
+
+        \ActivityLog::log('assessment_validate', "Validated assessment ID $id");
+        \Core\Session::flash('success', 'Assessment approved.');
+        $this->redirect('/beneficiaries/validation');
+    }
+
+    public function rejectAssessment(string $id): void
+    {
+        $this->requireAuth();
+        if (!$this->isPost()) { $this->redirect('/beneficiaries/validation'); }
+        $this->validateCsrf();
+        if (!in_array(\Core\Session::get('user_role'), ['midwife','admin','nutritionist'])) {
+            \Core\Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $note = trim($_POST['rejection_note'] ?? '');
+        $db   = \Core\Database::getInstance();
+        $stmt = $db->prepare("SELECT a.id, a.validation_status, b.barangay FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id WHERE a.id = ?");
+        $stmt->execute([(int)$id]);
+        $rec  = $stmt->fetch();
+        if (!$rec || $rec['validation_status'] !== 'pending') {
+            \Core\Session::flash('error', 'Assessment not found or not pending.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $brgy = \Core\Session::get('user_barangay');
+        if ($brgy && $rec['barangay'] !== $brgy) {
+            \Core\Session::flash('error', 'Access denied.');
+            $this->redirect('/beneficiaries/validation');
+        }
+
+        $db->prepare("UPDATE assessments SET validation_status='rejected', validated_by=?, validated_at=NOW(), rejection_note=? WHERE id=?")
+           ->execute([\Core\Session::get('user_id'), $note, (int)$id]);
+
+        \ActivityLog::log('assessment_reject', "Returned assessment ID $id for correction. Note: $note");
+        \Core\Session::flash('warning', 'Assessment returned for correction.');
+        $this->redirect('/beneficiaries/validation');
     }
 
     public function checkDuplicate(): void

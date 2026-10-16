@@ -85,7 +85,9 @@ $router->get('/assessments/create',    'AssessmentController@create');
 $router->post('/assessments/create',   'AssessmentController@create');
 $router->get('/assessments/batch',     'AssessmentController@batch');
 $router->post('/assessments/batch',    'AssessmentController@batch');
-$router->post('/assessments/{id}/delete', 'AssessmentController@delete');
+$router->post('/assessments/{id}/delete',   'AssessmentController@delete');
+$router->post('/assessments/{id}/validate', 'BeneficiaryController@validateAssessment');
+$router->post('/assessments/{id}/reject',   'BeneficiaryController@rejectAssessment');
 
 // Programs
 $router->get('/programs',             'ProgramController@index');
