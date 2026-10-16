@@ -340,7 +340,9 @@ class BeneficiaryApiController extends ApiController
 
         $baseSelect = "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex,
                    b.contact_number, b.mother_name,
-                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period";
+                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period,
+                   0 AS is_dsp, NULL AS dsp_enrollment_date,
+                   DATEDIFF(CURDATE(), a.assessment_date) AS days_since_assessment";
         $baseFrom = "FROM beneficiaries b
             JOIN assessments a ON a.id = (
                 SELECT id FROM assessments WHERE beneficiary_id = b.id
@@ -359,7 +361,9 @@ class BeneficiaryApiController extends ApiController
             UNION
             SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.sex,
                    b.contact_number, b.mother_name,
-                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period
+                   a.nutritional_status, a.wflh_status, a.weight_kg, a.assessment_date, a.period,
+                   1 AS is_dsp, pe.enrollment_date AS dsp_enrollment_date,
+                   DATEDIFF(CURDATE(), a.assessment_date) AS days_since_assessment
             FROM beneficiaries b
             JOIN program_enrollments pe ON pe.beneficiary_id = b.id
                 AND pe.program = 'DSP' AND pe.status = 'Active'
