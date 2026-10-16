@@ -140,14 +140,6 @@ class ProgramController extends Controller
         $readyToDischarge = $this->enrollmentModel->getReadyToDischarge($barangay, $purok);
         $history          = $this->enrollmentModel->getHistory('DSP', $historyYear, $barangay, $purok);
 
-        // Total active count including aged-out (getActive() filters <=59 months)
-        $brgyWhere = $barangay !== '' ? " AND b.barangay = " . Database::getInstance()->quote($barangay) : '';
-        $totalActiveRow = Database::getInstance()->query(
-            "SELECT COUNT(*) AS cnt FROM program_enrollments pe
-             JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE b.deleted_at IS NULL AND pe.program = 'DSP' AND pe.status = 'Active'$brgyWhere"
-        )->fetch();
-        $totalActive = (int)($totalActiveRow['cnt'] ?? count($active));
 
         // Batch-fetch monitoring records for active + history enrollments
         $monitoringByEnrollment = [];
@@ -174,7 +166,6 @@ class ProgramController extends Controller
         $this->view('programs/dsp', [
             'eligible'               => $eligible,
             'active'                 => $active,
-            'totalActive'            => $totalActive,
             'notEnrolled'            => $notEnrolled,
             'readyToDischarge'       => $readyToDischarge,
             'history'                => $history,
@@ -214,7 +205,7 @@ class ProgramController extends Controller
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, pe.enrollment_date) AS age_at_enrollment
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE b.deleted_at IS NULL AND $where
+             WHERE b.deleted_at IS NULL AND TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) <= 59 AND $where
              ORDER BY b.barangay, b.last_name, b.first_name"
         );
         $stmt->execute($params);

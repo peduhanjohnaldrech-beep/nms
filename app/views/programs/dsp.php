@@ -73,7 +73,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-2 fw-bold text-success"><?= $totalActive ?></div>
+            <div class="fs-2 fw-bold text-success"><?= count($active) ?></div>
             <div class="small text-muted">Active</div>
         </div>
     </div>
