@@ -204,7 +204,7 @@ class ProgramController extends Controller
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, pe.enrollment_date) AS age_at_enrollment
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE $where
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
              ORDER BY b.barangay, b.last_name, b.first_name"
         );
         $stmt->execute($params);
