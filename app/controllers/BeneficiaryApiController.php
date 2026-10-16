@@ -24,6 +24,7 @@ class BeneficiaryApiController extends ApiController
         $perPage       = min(500, max(10, (int)($_GET['per_page'] ?? 50)));
         $updatedSince  = $_GET['updated_since'] ?? null;
         $validatedOnly = !empty($_GET['validated_only']);
+        $activeOnly    = !empty($_GET['active_only']);
         $excludePeriod = $_GET['exclude_period'] ?? null;
         $excludeYear   = isset($_GET['exclude_year']) ? (int)$_GET['exclude_year'] : null;
 
@@ -66,6 +67,11 @@ class BeneficiaryApiController extends ApiController
         // Only show validated beneficiaries (for OPT batch, etc.)
         if ($validatedOnly) {
             $where[] = "b.validation_status = 'validated'";
+        }
+
+        // Only show active (0–59 months) beneficiaries
+        if ($activeOnly) {
+            $where[] = "TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) <= 59";
         }
 
         // Exclude beneficiaries who already have an assessment for this period/year
