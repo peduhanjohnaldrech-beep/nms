@@ -88,7 +88,7 @@ class AssessmentController extends Controller
             if (!empty($saved['wflh_status'])) $parts[] = sprintf('WFL/H: %s (Z=%s)', $saved['wflh_status'], number_format($saved['wflh_zscore'] ?? 0, 2));
 
             \ActivityLog::log('assessment_create', "Assessment recorded for beneficiary ID $bid ({$saved['nutritional_status']})");
-            \ReportCache::invalidate(); // new data — bust cached report results
+            \ReportCache::invalidate(); // new data ï¿½ bust cached report results
 
             if ($needsValidation) {
                 Session::flash('success', 'Assessment submitted and awaiting midwife validation. ' . implode(' | ', $parts));
@@ -163,6 +163,11 @@ class AssessmentController extends Controller
         $barangays        = $beneficiaryModel->getAllBarangays();
         $allBeneficiaries = $selectedBarangay !== '' ? $beneficiaryModel->findByBarangay($selectedBarangay) : [];
 
+        // Exclude aged-out beneficiaries (72+ months = 6 years old as of assessment date)
+        $allBeneficiaries = array_values(array_filter($allBeneficiaries, function ($b) use ($assessmentDate) {
+            return \DateHelper::ageInMonths($b['date_of_birth'], $assessmentDate) < 72;
+        }));
+
         $showAll        = isset($_GET['show_all']);
         $datePeriod     = (int)date('n', strtotime($assessmentDate)) <= 6 ? 'January' : 'July';
         $dateYear       = (int)date('Y', strtotime($assessmentDate));
@@ -223,7 +228,7 @@ class AssessmentController extends Controller
             }
 
             \ActivityLog::log('batch_assessment', "Batch assessment: $saved saved, $skipped skipped â€” barangay: $selectedBarangay");
-            \ReportCache::invalidate(); // new data — bust cached report results
+            \ReportCache::invalidate(); // new data ï¿½ bust cached report results
             $flashMsg = "$saved assessment" . ($saved !== 1 ? 's' : '') . " saved" . ($skipped ? ", $skipped skipped (no weight entered)" : '') . ".";
             if ($needsValidation && $saved > 0) {
                 $flashMsg .= " Awaiting midwife validation before appearing in reports.";
