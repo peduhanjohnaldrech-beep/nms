@@ -168,12 +168,12 @@
                         <i class="bi bi-arrow-left-right fs-4 text-primary" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-0">Period Comparison</h6>
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small">Jan vs Jul</span>
+                        <h6 class="fw-bold mb-0">Year-over-Year Comparison</h6>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small">Year A vs Year B</span>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">Side-by-side comparison of January and July OPT rounds — shows whether malnutrition rates improved or worsened.</p>
-                <a href="<?= APP_URL ?>/reports/comparison" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Period Comparison</a>
+                <p class="text-muted small mb-3">Compare OPT (Q1) malnutrition rates between two years — shows whether malnutrition improved or worsened over time.</p>
+                <a href="<?= APP_URL ?>/reports/comparison" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Year Comparison</a>
             </div>
         </div>
     </div>
