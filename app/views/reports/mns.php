@@ -10,15 +10,41 @@ $pageTitle = 'MNS Report — ' . $tabLabel;
 $monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 ?>
 
-<div class="d-flex align-items-center mt-3 mb-2">
+<style>
+@media print {
+    .no-print, .nms-navbar, .sidebar, nav[aria-label="breadcrumb"] { display: none !important; }
+    #wrapper { display: block !important; }
+    .page-content { margin: 0 !important; padding: 0 !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+    .table { font-size: 8pt !important; }
+    th, td { padding: 3px 5px !important; }
+    @page { size: landscape; margin: 10mm; }
+}
+</style>
+
+<div class="d-flex align-items-center mt-3 mb-2 no-print">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i></a>
     <div class="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
         <i class="bi bi-capsule fs-4 text-primary"></i>
     </div>
-    <h4 class="mb-0">MNS Report — <?= $tabLabel ?></h4>
+    <h4 class="mb-0 flex-grow-1">MNS Report — <?= $tabLabel ?></h4>
+    <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Print
+    </button>
 </div>
 
-<div class="card border-0 shadow-sm mb-3">
+<!-- Print Header -->
+<div class="d-none d-print-block text-center mb-3">
+    <h5 class="mb-0 fw-bold">MNS REPORT — <?= strtoupper($tabLabel) ?></h5>
+    <div class="small">
+        Year: <?= $year ?>
+        <?php if (!empty($round)): ?> &nbsp;|&nbsp; Round: <?= htmlspecialchars($round) ?><?php endif; ?>
+        <?php if (!empty($barangay)): ?> &nbsp;|&nbsp; Barangay: <?= htmlspecialchars($barangay) ?><?php endif; ?>
+        &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3 no-print">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
@@ -103,7 +129,7 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
 </div>
 
 <!-- Tabs -->
-<ul class="nav nav-tabs mb-3">
+<ul class="nav nav-tabs mb-3 no-print">
     <li class="nav-item">
         <a class="nav-link <?= $tab === 'vita' ? 'active' : '' ?>"
            href="?tab=vita&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>">

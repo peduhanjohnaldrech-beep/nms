@@ -1,5 +1,17 @@
 <?php $pageTitle = 'OPT Report'; ?>
 
+<style>
+@media print {
+    .no-print, .nms-navbar, .sidebar, nav[aria-label="breadcrumb"] { display: none !important; }
+    #wrapper { display: block !important; }
+    .page-content { margin: 0 !important; padding: 0 !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+    .table { font-size: 8pt !important; }
+    th, td { padding: 3px 5px !important; }
+    @page { size: landscape; margin: 10mm; }
+}
+</style>
+
 <?php
 // Pre-compute status summary from rows
 $statusCounts = ['SUW'=>0,'UW'=>0,'Normal'=>0,'OW'=>0,'OB'=>0];
@@ -13,21 +25,36 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 ?>
 
 <!-- Page Header -->
-<div class="d-flex align-items-center gap-3 mt-3 mb-4">
+<div class="d-flex align-items-center gap-3 mt-3 mb-4 no-print">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary" aria-label="Back to Reports">
         <i class="bi bi-arrow-left" aria-hidden="true"></i>
     </a>
     <div class="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px">
         <i class="bi bi-clipboard-heart fs-5 text-success" aria-hidden="true"></i>
     </div>
-    <div>
+    <div class="flex-grow-1">
         <h4 class="mb-0 fw-bold">OPT Report</h4>
         <p class="text-muted small mb-0">Operation Timbang Plus — child weight &amp; height assessments</p>
+    </div>
+    <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Print
+    </button>
+</div>
+
+<!-- Print Header -->
+<div class="d-none d-print-block text-center mb-3">
+    <h5 class="mb-0 fw-bold">OPT REPORT — OPERATION TIMBANG PLUS</h5>
+    <div class="small">
+        Year: <?= $year ?>
+        <?php if ($period): ?> &nbsp;|&nbsp; Period: <?= htmlspecialchars($period) ?><?php endif; ?>
+        <?php if ($barangay): ?> &nbsp;|&nbsp; Barangay: <?= htmlspecialchars($barangay) ?><?php endif; ?>
+        &nbsp;|&nbsp; Total Records: <?= $totalRows ?>
+        &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
     </div>
 </div>
 
 <!-- Filter Card -->
-<div class="card border-0 shadow-sm mb-3">
+<div class="card border-0 shadow-sm mb-3 no-print">
     <div class="card-header fw-semibold py-2 px-3">
         <i class="bi bi-funnel me-1 text-primary" aria-hidden="true"></i>Filters
         <?php if ($barangay || $period || ($dateFrom && $dateTo)): ?>

@@ -1,18 +1,43 @@
 <?php $pageTitle = 'DSP Report'; ?>
 
-<div class="d-flex align-items-center mt-3 mb-1">
+<style>
+@media print {
+    .no-print, .nms-navbar, .sidebar, nav[aria-label="breadcrumb"] { display: none !important; }
+    #wrapper { display: block !important; }
+    .page-content { margin: 0 !important; padding: 0 !important; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+    .table { font-size: 8pt !important; }
+    th, td { padding: 3px 5px !important; }
+    @page { size: landscape; margin: 10mm; }
+}
+</style>
+
+<div class="d-flex align-items-center mt-3 mb-1 no-print">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3" aria-label="Back to Reports"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
     <div class="rounded-3 bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width:48px;height:48px">
         <i class="bi bi-egg-fried fs-4 text-warning" aria-hidden="true"></i>
     </div>
-    <div>
+    <div class="flex-grow-1">
         <h4 class="mb-0">DSP Report</h4>
         <p class="text-muted small mb-0">Dietary Supplementation Program — enrollment and weight gain tracking</p>
+    </div>
+    <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Print
+    </button>
+</div>
+
+<!-- Print Header -->
+<div class="d-none d-print-block text-center mb-3">
+    <h5 class="mb-0 fw-bold">DSP REPORT — DIETARY SUPPLEMENTATION PROGRAM</h5>
+    <div class="small">
+        Year: <?= $year ?>
+        <?php if ($barangay): ?> &nbsp;|&nbsp; Barangay: <?= htmlspecialchars($barangay) ?><?php endif; ?>
+        &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="card border-0 shadow-sm mb-3 mt-3">
+<div class="card border-0 shadow-sm mb-3 mt-3 no-print">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-2">
