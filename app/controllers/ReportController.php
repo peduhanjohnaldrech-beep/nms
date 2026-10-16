@@ -206,30 +206,34 @@ class ReportController extends Controller
         $this->requireAuth();
         $this->requirePermission('reports');
 
-        $year     = (int)($_GET['year']   ?? date('Y'));
+        $curYear  = (int)date('Y');
+        $yearA    = (int)($_GET['year_a'] ?? $curYear - 1);
+        $yearB    = (int)($_GET['year_b'] ?? $curYear);
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $purok    = $_GET['purok'] ?? '';
         $db       = Database::getInstance();
 
-        $params = [$year];
         $bWhere = '';
-        if ($barangay) { $bWhere .= ' AND b.barangay = ?'; $params[] = $barangay; }
-        if ($purok)    { $bWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
+        $bParams = [];
+        if ($barangay) { $bWhere .= ' AND b.barangay = ?'; $bParams[] = $barangay; }
+        if ($purok)    { $bWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $bParams[] = $purok; }
 
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
+
+        // Query both years, January period only (OPT is Q1 annual)
         $stmt = $db->prepare(
-            "SELECT b.barangay, a.period, a.nutritional_status, COUNT(*) as cnt
+            "SELECT b.barangay, a.assessment_year, a.nutritional_status, COUNT(*) as cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $bnsFilter AND a.assessment_year = ?$bWhere
-               AND a.period IN ('January','July')
-             GROUP BY b.barangay, a.period, a.nutritional_status
-             ORDER BY b.barangay, a.period"
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $bnsFilter
+               AND a.period = 'January' AND a.assessment_year IN (?,?)" . $bWhere . "
+             GROUP BY b.barangay, a.assessment_year, a.nutritional_status
+             ORDER BY b.barangay, a.assessment_year"
         );
-        $stmt->execute($params);
+        $stmt->execute(array_merge([$yearA, $yearB], $bParams));
 
         $raw = [];
         foreach ($stmt->fetchAll() as $r) {
-            $raw[$r['barangay']][$r['period']][$r['nutritional_status']] = (int)$r['cnt'];
+            $raw[$r['barangay']][(int)$r['assessment_year']][$r['nutritional_status']] = (int)$r['cnt'];
         }
 
         $allBarangays = array_keys($raw);
@@ -237,26 +241,26 @@ class ReportController extends Controller
 
         $rows = [];
         foreach ($allBarangays as $bar) {
-            $jan = $raw[$bar]['January'] ?? [];
-            $jul = $raw[$bar]['July']    ?? [];
-            $janTotal  = array_sum($jan);
-            $julTotal  = array_sum($jul);
-            $janMalnut = ($jan['SUW'] ?? 0) + ($jan['UW'] ?? 0);
-            $julMalnut = ($jul['SUW'] ?? 0) + ($jul['UW'] ?? 0);
-            $janRate   = $janTotal > 0 ? round($janMalnut / $janTotal * 100, 1) : null;
-            $julRate   = $julTotal > 0 ? round($julMalnut / $julTotal * 100, 1) : null;
+            $a = $raw[$bar][$yearA] ?? [];
+            $b = $raw[$bar][$yearB] ?? [];
+            $aTotal  = array_sum($a);
+            $bTotal  = array_sum($b);
+            $aMalnut = ($a['SUW'] ?? 0) + ($a['UW'] ?? 0);
+            $bMalnut = ($b['SUW'] ?? 0) + ($b['UW'] ?? 0);
+            $aRate   = $aTotal > 0 ? round($aMalnut / $aTotal * 100, 1) : null;
+            $bRate   = $bTotal > 0 ? round($bMalnut / $bTotal * 100, 1) : null;
             $rows[] = [
-                'barangay'  => $bar,
-                'jan'       => $jan, 'janTotal' => $janTotal, 'janMalnut' => $janMalnut, 'janRate' => $janRate,
-                'jul'       => $jul, 'julTotal' => $julTotal, 'julMalnut' => $julMalnut, 'julRate' => $julRate,
-                'change'    => ($janRate !== null && $julRate !== null) ? round($julRate - $janRate, 1) : null,
+                'barangay' => $bar,
+                'a'        => $a, 'aTotal' => $aTotal, 'aMalnut' => $aMalnut, 'aRate' => $aRate,
+                'b'        => $b, 'bTotal' => $bTotal, 'bMalnut' => $bMalnut, 'bRate' => $bRate,
+                'change'   => ($aRate !== null && $bRate !== null) ? round($bRate - $aRate, 1) : null,
             ];
         }
 
         $beneModel = new Beneficiary();
         $barangays = $beneModel->getAllBarangays();
         $puroks    = $beneModel->getPuroksByBarangay($barangay);
-        $this->view('reports/comparison', compact('rows', 'year', 'barangay', 'purok', 'barangays', 'puroks'));
+        $this->view('reports/comparison', compact('rows', 'yearA', 'yearB', 'barangay', 'purok', 'barangays', 'puroks'));
     }
 
     public function summary(): void
@@ -410,7 +414,7 @@ class ReportController extends Controller
         }
 
         $beneModel = new Beneficiary();
-        // Cache the computed rows (exclude barangays/puroks — those are cheap lookups)
+        // Cache the computed rows (exclude barangays/puroks ï¿½ those are cheap lookups)
         \ReportCache::set($cacheKey, ['summaryRows' => $summaryRows,
             'puroks' => $beneModel->getPuroksByBarangay($barangay)]);
         $this->view('reports/summary', [

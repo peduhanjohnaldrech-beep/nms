@@ -1,4 +1,4 @@
-<?php $pageTitle = 'Period Comparison'; ?>
+<?php $pageTitle = 'Year-over-Year Comparison'; ?>
 
 <div class="d-flex align-items-center mt-3 mb-2">
     <a href="<?= APP_URL ?>/reports" class="btn btn-sm btn-outline-secondary me-3" aria-label="Back to Reports"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
@@ -6,8 +6,8 @@
         <i class="bi bi-arrow-left-right fs-4 text-primary" aria-hidden="true"></i>
     </div>
     <div>
-        <h4 class="mb-0">Period Comparison</h4>
-        <p class="text-muted small mb-0">January (1st sem) vs July (2nd sem) OPT malnutrition rates</p>
+        <h4 class="mb-0">Year-over-Year Comparison</h4>
+        <p class="text-muted small mb-0">Compare OPT (Q1) malnutrition rates between two years</p>
     </div>
 </div>
 
@@ -15,9 +15,14 @@
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-2">
-                <label for="cmp_year" class="form-label small mb-1">Year</label>
-                <input type="number" id="cmp_year" name="year" class="form-control form-control-sm"
-                       value="<?= $year ?>" min="2000" max="<?= date('Y') + 1 ?>">
+                <label for="cmp_year_a" class="form-label small mb-1">Year A (earlier)</label>
+                <input type="number" id="cmp_year_a" name="year_a" class="form-control form-control-sm"
+                       value="<?= $yearA ?>" min="2000" max="<?= date('Y') + 1 ?>">
+            </div>
+            <div class="col-md-2">
+                <label for="cmp_year_b" class="form-label small mb-1">Year B (later)</label>
+                <input type="number" id="cmp_year_b" name="year_b" class="form-control form-control-sm"
+                       value="<?= $yearB ?>" min="2000" max="<?= date('Y') + 1 ?>">
             </div>
             <div class="col-md-3">
                 <label for="cmp_barangay" class="form-label small mb-1">Barangay</label>
@@ -48,7 +53,7 @@
             </div>
             <div class="col text-end d-flex gap-1 justify-content-end align-items-end">
                 <span class="text-muted small me-1">Export:</span>
-                <a href="?year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>&export=excel"
+                <a href="?year_a=<?= $yearA ?>&year_b=<?= $yearB ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>&export=excel"
                    class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
             </div>
         </form>
@@ -60,7 +65,7 @@
 if (!empty($_GET['export']) && $_GET['export'] === 'excel' && !empty($rows) && class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')):
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet()->setTitle('Comparison');
-    $headers = ['Barangay','Jan Assessed','Jan SUW','Jan UW','Jan Rate %','Jul Assessed','Jul SUW','Jul UW','Jul Rate %','Change %'];
+    $headers = ['Barangay', $yearA.' Assessed', $yearA.' SUW', $yearA.' UW', $yearA.' Rate %', $yearB.' Assessed', $yearB.' SUW', $yearB.' UW', $yearB.' Rate %', 'Change %'];
     foreach ($headers as $i => $h) {
         $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i+1) . '1';
         $sheet->setCellValue($cell, $h);
@@ -69,8 +74,8 @@ if (!empty($_GET['export']) && $_GET['export'] === 'excel' && !empty($rows) && c
     }
     foreach ($rows as $ri => $r) {
         $rowData = [
-            $r['barangay'], $r['janTotal'], $r['jan']['SUW'] ?? 0, $r['jan']['UW'] ?? 0, $r['janRate'],
-            $r['julTotal'], $r['jul']['SUW'] ?? 0, $r['jul']['UW'] ?? 0, $r['julRate'], $r['change'],
+            $r['barangay'], $r['aTotal'], $r['a']['SUW'] ?? 0, $r['a']['UW'] ?? 0, $r['aRate'],
+            $r['bTotal'], $r['b']['SUW'] ?? 0, $r['b']['UW'] ?? 0, $r['bRate'], $r['change'],
         ];
         foreach ($rowData as $ci => $val) {
             $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($ci+1) . ($ri+2), $val);
@@ -78,17 +83,16 @@ if (!empty($_GET['export']) && $_GET['export'] === 'excel' && !empty($rows) && c
     }
     foreach (range(1, count($headers)) as $c) $sheet->getColumnDimensionByColumn($c)->setAutoSize(true);
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header("Content-Disposition: attachment; filename=\"Period_Comparison_{$year}.xlsx\"");
+    header("Content-Disposition: attachment; filename=\"YoY_Comparison_{$yearA}_vs_{$yearB}.xlsx\"");
     (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save('php://output');
     exit;
 endif;
 ?>
 
-<!-- How to read this report -->
 <div class="alert alert-light border mb-3 py-2 px-3 small">
     <i class="bi bi-info-circle me-1 text-primary" aria-hidden="true"></i>
-    Comparing OPT rounds for <strong><?= $year ?></strong>.
-    A <span class="text-success fw-semibold"><i class="bi bi-arrow-down-short" aria-hidden="true"></i>negative change</span> means malnutrition rate <strong>decreased</strong> (improved) from January to July.
+    Comparing OPT Q1 results: <strong><?= $yearA ?></strong> vs <strong><?= $yearB ?></strong>.
+    A <span class="text-success fw-semibold"><i class="bi bi-arrow-down-short" aria-hidden="true"></i>negative change</span> means malnutrition rate <strong>decreased</strong> (improved).
     A <span class="text-danger fw-semibold"><i class="bi bi-arrow-up-short" aria-hidden="true"></i>positive change</span> means it <strong>increased</strong> (worsened).
 </div>
 
@@ -96,42 +100,41 @@ endif;
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center text-muted py-5">
         <i class="bi bi-clipboard2-x fs-3 d-block mb-2" aria-hidden="true"></i>
-        No assessment data for <?= $year ?>. Both January and July periods must have data for comparison.
+        No OPT data found for <?= $yearA ?> or <?= $yearB ?>. Make sure both years have January period assessments.
     </div>
 </div>
 <?php else:
 
-// Pre-compute totals for summary banner
-$tJanTotal = array_sum(array_column($rows, 'janTotal'));
-$tJulTotal = array_sum(array_column($rows, 'julTotal'));
-$tJanSuw   = array_sum(array_map(fn($r) => $r['jan']['SUW'] ?? 0, $rows));
-$tJanUw    = array_sum(array_map(fn($r) => $r['jan']['UW']  ?? 0, $rows));
-$tJulSuw   = array_sum(array_map(fn($r) => $r['jul']['SUW'] ?? 0, $rows));
-$tJulUw    = array_sum(array_map(fn($r) => $r['jul']['UW']  ?? 0, $rows));
-$tJanRate  = $tJanTotal > 0 ? round(($tJanSuw + $tJanUw) / $tJanTotal * 100, 1) : null;
-$tJulRate  = $tJulTotal > 0 ? round(($tJulSuw + $tJulUw) / $tJulTotal * 100, 1) : null;
-$tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJanRate, 1) : null;
+$tATotal = array_sum(array_column($rows, 'aTotal'));
+$tBTotal = array_sum(array_column($rows, 'bTotal'));
+$tASuw   = array_sum(array_map(fn($r) => $r['a']['SUW'] ?? 0, $rows));
+$tAUw    = array_sum(array_map(fn($r) => $r['a']['UW']  ?? 0, $rows));
+$tBSuw   = array_sum(array_map(fn($r) => $r['b']['SUW'] ?? 0, $rows));
+$tBUw    = array_sum(array_map(fn($r) => $r['b']['UW']  ?? 0, $rows));
+$tARate  = $tATotal > 0 ? round(($tASuw + $tAUw) / $tATotal * 100, 1) : null;
+$tBRate  = $tBTotal > 0 ? round(($tBSuw + $tBUw) / $tBTotal * 100, 1) : null;
+$tChange = ($tARate !== null && $tBRate !== null) ? round($tBRate - $tARate, 1) : null;
 ?>
 
-<!-- Overall Summary Banner -->
+<!-- Summary Banner -->
 <div class="row g-2 mb-3">
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-2 border-start border-3 border-primary">
-            <div class="text-muted" style="font-size:.72rem">January Assessed</div>
-            <div class="fs-4 fw-bold text-primary"><?= $tJanTotal ?></div>
+            <div class="text-muted" style="font-size:.72rem"><?= $yearA ?> Assessed</div>
+            <div class="fs-4 fw-bold text-primary"><?= $tATotal ?></div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-2 border-start border-3 border-success">
-            <div class="text-muted" style="font-size:.72rem">July Assessed</div>
-            <div class="fs-4 fw-bold text-success"><?= $tJulTotal ?></div>
+            <div class="text-muted" style="font-size:.72rem"><?= $yearB ?> Assessed</div>
+            <div class="fs-4 fw-bold text-success"><?= $tBTotal ?></div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center py-2">
-            <div class="text-muted" style="font-size:.72rem">Jan Malnut. Rate</div>
-            <div class="fs-4 fw-bold <?= $tJanRate !== null ? 'text-' . ($tJanRate >= 30 ? 'danger' : ($tJanRate >= 10 ? 'warning' : 'success')) : 'text-muted' ?>">
-                <?= $tJanRate !== null ? $tJanRate . '%' : '—' ?>
+            <div class="text-muted" style="font-size:.72rem"><?= $yearA ?> Malnut. Rate</div>
+            <div class="fs-4 fw-bold <?= $tARate !== null ? 'text-' . ($tARate >= 30 ? 'danger' : ($tARate >= 10 ? 'warning' : 'success')) : 'text-muted' ?>">
+                <?= $tARate !== null ? $tARate . '%' : '—' ?>
             </div>
         </div>
     </div>
@@ -151,9 +154,9 @@ $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJa
 <!-- Chart -->
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-header fw-semibold">
-        <i class="bi bi-bar-chart me-2 text-primary" aria-hidden="true"></i>Malnutrition Rate: January vs July <?= $year ?>
+        <i class="bi bi-bar-chart me-2 text-primary" aria-hidden="true"></i>Malnutrition Rate: <?= $yearA ?> vs <?= $yearB ?>
     </div>
-    <div class="card-body"><canvas id="comparisonChart" height="60" role="img" aria-label="Grouped bar chart comparing January and July malnutrition rates by barangay for <?= $year ?>"></canvas></div>
+    <div class="card-body"><canvas id="comparisonChart" height="60" role="img" aria-label="Grouped bar chart comparing <?= $yearA ?> and <?= $yearB ?> malnutrition rates by barangay"></canvas></div>
 </div>
 
 <!-- Table -->
@@ -168,8 +171,8 @@ $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJa
                 <thead class="table-light">
                     <tr>
                         <th scope="col" rowspan="2" class="align-middle">Barangay</th>
-                        <th scope="col" colspan="4" class="text-center bg-primary bg-opacity-10 border-start">January (1st Sem)</th>
-                        <th scope="col" colspan="4" class="text-center bg-success bg-opacity-10 border-start">July (2nd Sem)</th>
+                        <th scope="col" colspan="4" class="text-center bg-primary bg-opacity-10 border-start"><?= $yearA ?></th>
+                        <th scope="col" colspan="4" class="text-center bg-success bg-opacity-10 border-start"><?= $yearB ?></th>
                         <th scope="col" rowspan="2" class="align-middle text-center border-start">Change</th>
                     </tr>
                     <tr>
@@ -187,29 +190,26 @@ $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJa
                     <?php foreach ($rows as $r): ?>
                     <tr>
                         <td class="fw-semibold"><?= htmlspecialchars($r['barangay']) ?></td>
-                        <!-- January -->
-                        <td class="text-center border-start"><?= $r['janTotal'] ?: '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center <?= ($r['jan']['SUW'] ?? 0) > 0 ? 'text-danger fw-bold' : 'text-muted' ?>"><?= $r['jan']['SUW'] ?? 0 ?></td>
-                        <td class="text-center <?= ($r['jan']['UW']  ?? 0) > 0 ? 'text-warning fw-semibold' : 'text-muted' ?>"><?= $r['jan']['UW'] ?? 0 ?></td>
+                        <td class="text-center border-start"><?= $r['aTotal'] ?: '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center <?= ($r['a']['SUW'] ?? 0) > 0 ? 'text-danger fw-bold' : 'text-muted' ?>"><?= $r['a']['SUW'] ?? 0 ?></td>
+                        <td class="text-center <?= ($r['a']['UW']  ?? 0) > 0 ? 'text-warning fw-semibold' : 'text-muted' ?>"><?= $r['a']['UW'] ?? 0 ?></td>
                         <td class="text-center">
-                            <?php if ($r['janRate'] !== null): ?>
-                            <span class="badge bg-<?= $r['janRate'] >= 30 ? 'danger' : ($r['janRate'] >= 10 ? 'warning text-dark' : 'success') ?>">
-                                <?= $r['janRate'] ?>%
+                            <?php if ($r['aRate'] !== null): ?>
+                            <span class="badge bg-<?= $r['aRate'] >= 30 ? 'danger' : ($r['aRate'] >= 10 ? 'warning text-dark' : 'success') ?>">
+                                <?= $r['aRate'] ?>%
                             </span>
                             <?php else: ?><span class="text-muted small">N/A</span><?php endif; ?>
                         </td>
-                        <!-- July -->
-                        <td class="text-center border-start"><?= $r['julTotal'] ?: '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center <?= ($r['jul']['SUW'] ?? 0) > 0 ? 'text-danger fw-bold' : 'text-muted' ?>"><?= $r['jul']['SUW'] ?? 0 ?></td>
-                        <td class="text-center <?= ($r['jul']['UW']  ?? 0) > 0 ? 'text-warning fw-semibold' : 'text-muted' ?>"><?= $r['jul']['UW'] ?? 0 ?></td>
+                        <td class="text-center border-start"><?= $r['bTotal'] ?: '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center <?= ($r['b']['SUW'] ?? 0) > 0 ? 'text-danger fw-bold' : 'text-muted' ?>"><?= $r['b']['SUW'] ?? 0 ?></td>
+                        <td class="text-center <?= ($r['b']['UW']  ?? 0) > 0 ? 'text-warning fw-semibold' : 'text-muted' ?>"><?= $r['b']['UW'] ?? 0 ?></td>
                         <td class="text-center">
-                            <?php if ($r['julRate'] !== null): ?>
-                            <span class="badge bg-<?= $r['julRate'] >= 30 ? 'danger' : ($r['julRate'] >= 10 ? 'warning text-dark' : 'success') ?>">
-                                <?= $r['julRate'] ?>%
+                            <?php if ($r['bRate'] !== null): ?>
+                            <span class="badge bg-<?= $r['bRate'] >= 30 ? 'danger' : ($r['bRate'] >= 10 ? 'warning text-dark' : 'success') ?>">
+                                <?= $r['bRate'] ?>%
                             </span>
                             <?php else: ?><span class="text-muted small">N/A</span><?php endif; ?>
                         </td>
-                        <!-- Change -->
                         <td class="text-center border-start fw-bold">
                             <?php if ($r['change'] !== null): ?>
                             <span class="<?= $r['change'] < 0 ? 'text-success' : ($r['change'] > 0 ? 'text-danger' : 'text-muted') ?>">
@@ -226,14 +226,14 @@ $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJa
                 <tfoot class="table-secondary fw-semibold">
                     <tr>
                         <td>TOTAL</td>
-                        <td class="text-center border-start"><?= $tJanTotal ?></td>
-                        <td class="text-center text-danger"><?= $tJanSuw ?></td>
-                        <td class="text-center text-warning"><?= $tJanUw ?></td>
-                        <td class="text-center"><?= $tJanRate !== null ? '<span class="badge bg-' . ($tJanRate >= 30 ? 'danger' : ($tJanRate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tJanRate . '%</span>' : '—' ?></td>
-                        <td class="text-center border-start"><?= $tJulTotal ?></td>
-                        <td class="text-center text-danger"><?= $tJulSuw ?></td>
-                        <td class="text-center text-warning"><?= $tJulUw ?></td>
-                        <td class="text-center"><?= $tJulRate !== null ? '<span class="badge bg-' . ($tJulRate >= 30 ? 'danger' : ($tJulRate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tJulRate . '%</span>' : '—' ?></td>
+                        <td class="text-center border-start"><?= $tATotal ?></td>
+                        <td class="text-center text-danger"><?= $tASuw ?></td>
+                        <td class="text-center text-warning"><?= $tAUw ?></td>
+                        <td class="text-center"><?= $tARate !== null ? '<span class="badge bg-' . ($tARate >= 30 ? 'danger' : ($tARate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tARate . '%</span>' : '—' ?></td>
+                        <td class="text-center border-start"><?= $tBTotal ?></td>
+                        <td class="text-center text-danger"><?= $tBSuw ?></td>
+                        <td class="text-center text-warning"><?= $tBUw ?></td>
+                        <td class="text-center"><?= $tBRate !== null ? '<span class="badge bg-' . ($tBRate >= 30 ? 'danger' : ($tBRate >= 10 ? 'warning text-dark' : 'success')) . '">' . $tBRate . '%</span>' : '—' ?></td>
                         <td class="text-center border-start fw-bold <?= $tChange !== null ? ($tChange < 0 ? 'text-success' : ($tChange > 0 ? 'text-danger' : 'text-muted')) : '' ?>">
                             <?= $tChange !== null ? ($tChange > 0 ? '+' : '') . $tChange . '%' : '—' ?>
                         </td>
@@ -253,16 +253,16 @@ $tChange   = ($tJanRate !== null && $tJulRate !== null) ? round($tJulRate - $tJa
 (function() {
     const rows = <?= json_encode($rows) ?>;
     const labels = rows.map(r => r.barangay);
-    const janRates = rows.map(r => r.janRate ?? 0);
-    const julRates = rows.map(r => r.julRate ?? 0);
+    const aRates = rows.map(r => r.aRate ?? 0);
+    const bRates = rows.map(r => r.bRate ?? 0);
 
     new Chart(document.getElementById('comparisonChart'), {
         type: 'bar',
         data: {
             labels,
             datasets: [
-                { label: 'January', data: janRates, backgroundColor: '#3b82f688', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3 },
-                { label: 'July',    data: julRates, backgroundColor: '#22c55e88', borderColor: '#22c55e', borderWidth: 1, borderRadius: 3 },
+                { label: '<?= $yearA ?>', data: aRates, backgroundColor: '#3b82f688', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3 },
+                { label: '<?= $yearB ?>', data: bRates, backgroundColor: '#22c55e88', borderColor: '#22c55e', borderWidth: 1, borderRadius: 3 },
             ],
         },
         options: {
