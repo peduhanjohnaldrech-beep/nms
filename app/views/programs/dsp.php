@@ -304,11 +304,11 @@
                             <?php else: ?>—<?php endif; ?>
                         </td>
                         <td>
-                            <?php if (!empty($a['wflh_status'])): ?>
-                            <span class="badge status-<?= strtolower($a['wflh_status']) ?>"><?= $a['wflh_status'] ?></span>
-                            <?php endif; ?>
                             <?php if (!empty($a['nutritional_status'])): ?>
-                            <span class="badge status-<?= strtolower($a['nutritional_status']) ?>"><?= $a['nutritional_status'] ?></span>
+                            <span class="text-muted small me-1">WFA:</span><span class="badge status-<?= strtolower($a['nutritional_status']) ?>"><?= $a['nutritional_status'] ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($a['wflh_status'])): ?>
+                            <span class="text-muted small ms-1 me-1">WFL/H:</span><span class="badge status-<?= strtolower($a['wflh_status']) ?>"><?= $a['wflh_status'] ?></span>
                             <?php endif; ?>
                             <?php if (empty($a['wflh_status']) && empty($a['nutritional_status'])): ?>—<?php endif; ?>
                         </td>
@@ -341,7 +341,7 @@
                                 <i class="bi bi-clock-history me-1"></i><?= count($monRecords) ?>
                             </button>
                             <?php else: ?>
-                            <span class="text-muted small">—</span>
+                            <span class="text-muted small">0</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-nowrap">
