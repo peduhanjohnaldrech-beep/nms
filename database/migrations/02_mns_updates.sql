@@ -34,12 +34,20 @@ CREATE TABLE IF NOT EXISTS mns_distribution_completions (
     UNIQUE KEY uq_dist_completion (user_id, year, supplement)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 3. dose_number column on vitamin_a_records
-ALTER TABLE vitamin_a_records
-    ADD COLUMN IF NOT EXISTS dose_number TINYINT DEFAULT NULL;
+-- 3. dose_number column on vitamin_a_records (skip if already exists)
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vitamin_a_records' AND COLUMN_NAME = 'dose_number');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE vitamin_a_records ADD COLUMN dose_number TINYINT DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 4. batch_number column on mnp_records
-ALTER TABLE mnp_records
-    ADD COLUMN IF NOT EXISTS batch_number TINYINT NOT NULL DEFAULT 1;
+-- 4. batch_number column on mnp_records (skip if already exists)
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mnp_records' AND COLUMN_NAME = 'batch_number');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE mnp_records ADD COLUMN batch_number TINYINT NOT NULL DEFAULT 1',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET FOREIGN_KEY_CHECKS = 1;
