@@ -345,6 +345,8 @@
                             <?php endif; ?>
                         </td>
                         <td class="text-nowrap">
+                            <?php $monthsEnrolled = (int)floor((strtotime('now') - strtotime($a['enrollment_date'])) / (30.44 * 86400)); ?>
+                            <?php if ($monthsEnrolled >= 3): ?>
                             <button type="button" class="btn btn-sm btn-success me-1"
                                     data-bs-toggle="modal" data-bs-target="#completeModal"
                                     data-id="<?= $a['id'] ?>"
@@ -353,6 +355,11 @@
                                     title="Graduate">
                                 <i class="bi bi-check2-circle me-1"></i>Graduate
                             </button>
+                            <?php else: ?>
+                            <span class="badge bg-secondary me-1" title="Enrolled <?= $monthsEnrolled ?> month(s) — minimum 3 months required to graduate">
+                                <i class="bi bi-clock me-1"></i><?= $monthsEnrolled ?>mo
+                            </span>
+                            <?php endif; ?>
                             <form action="<?= APP_URL ?>/programs/dsp/discharge" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <input type="hidden" name="enrollment_id" value="<?= $a['id'] ?>">
