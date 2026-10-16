@@ -196,7 +196,9 @@ class ProgramController extends Controller
 
         $stmt = $db->prepare(
             "SELECT pe.id, pe.enrollment_date, pe.pre_weight_kg, pe.post_weight_kg,
-                    pe.status, pe.end_date, pe.intervention_type, pe.cycle_number, pe.cycle_year,
+                    pe.status, pe.end_date, pe.intervention_type, pe.cycle_year,
+                    (SELECT COUNT(*) FROM program_enrollments pe2
+                     WHERE pe2.beneficiary_id = pe.beneficiary_id AND pe2.program = pe.program AND pe2.id <= pe.id) AS cycle_number,
                     b.last_name, b.first_name, b.middle_name, b.date_of_birth, b.sex,
                     b.barangay, b.purok_zone,
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, pe.enrollment_date) AS age_at_enrollment
