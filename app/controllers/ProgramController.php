@@ -633,7 +633,10 @@ class ProgramController extends Controller
     public function mnsVitaminA(): void
     {
         $this->requireAuth();
-        $this->requirePermission('programs');
+        if (\Core\Session::get('user_role') !== 'admin') {
+            \Core\Session::flash('error', 'Only administrators can record Vitamin A distributions.');
+            $this->redirect('/programs/mns?tab=vitaminA');
+        }
         if (!$this->isPost()) { $this->redirect('/programs/mns'); }
         $this->validateCsrf();
 

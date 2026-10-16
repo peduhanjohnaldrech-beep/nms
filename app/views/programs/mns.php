@@ -158,7 +158,7 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     </li>
 </ul>
 
-<?php $canRecord = hasPerm('programs'); ?>
+<?php $canRecord = \Core\Session::get('user_role') === 'admin'; ?>
 
 <!-- ── Vitamin A Tab ── -->
 <?php if ($tab === 'vitaminA'): ?>
