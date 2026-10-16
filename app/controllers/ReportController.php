@@ -297,11 +297,18 @@ class ReportController extends Controller
         $totalByBar = [];
         foreach ($stmt->fetchAll() as $r) $totalByBar[$r['barangay']] = (int)$r['total'];
 
-        // Distinct children assessed per barangay (not assessment count)
+        // Status counts using latest assessment per child (one row per child per year/period)
         $pWhere  = $bWhere . " AND a.assessment_year = ?";
         $pParams = array_merge($bParams, [$year]);
         if ($period) { $pWhere .= ' AND a.period = ?'; $pParams[] = $period; }
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
+
+        // Correlated subquery ensures only the latest assessment per child is counted,
+        // so suw + uw + normal == distinct weighed children (no double-counting across periods)
+        $latestSub = $period
+            ? "AND a.id = (SELECT id FROM assessments a2 WHERE a2.beneficiary_id = a.beneficiary_id AND a2.assessment_year = a.assessment_year AND a2.period = a.period ORDER BY a2.assessment_date DESC LIMIT 1)"
+            : "AND a.id = (SELECT id FROM assessments a2 WHERE a2.beneficiary_id = a.beneficiary_id AND a2.assessment_year = a.assessment_year ORDER BY a2.assessment_date DESC LIMIT 1)";
+
         $stmt = $db->prepare(
             "SELECT b.barangay, a.nutritional_status, COUNT(*) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
@@ -309,6 +316,7 @@ class ReportController extends Controller
                AND b.validation_status = 'validated'
                AND $bnsFilter
                AND a.validation_status = 'validated'$pWhere
+               $latestSub
              GROUP BY b.barangay, a.nutritional_status ORDER BY b.barangay"
         );
         $stmt->execute($pParams);
@@ -317,7 +325,7 @@ class ReportController extends Controller
             $statusByBar[$r['barangay']][$r['nutritional_status']] = (int)$r['cnt'];
         }
 
-        // Distinct weighed children per barangay
+        // Distinct weighed children per barangay (should now equal sum of statusByBar counts)
         $stmt = $db->prepare(
             "SELECT b.barangay, COUNT(DISTINCT a.beneficiary_id) AS cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
@@ -379,7 +387,7 @@ class ReportController extends Controller
                 'uw'            => $uw,
                 'normal'        => $normal,
                 'malnourished'  => $malnourished,
-                'malnut_rate'   => $assessed > 0 ? round($malnourished / $assessed * 100, 1) : 0,
+                'malnut_rate'   => $weighed > 0 ? round($malnourished / $weighed * 100, 1) : 0,
                 'dsp_active'    => $dspByBar[$bar] ?? 0,
                 'vita_covered'  => $vitaByBar[$bar] ?? 0,
             ];
