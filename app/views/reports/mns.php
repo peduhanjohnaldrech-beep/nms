@@ -1,9 +1,10 @@
 <?php
 $tabLabel = match($tab) {
-    'mnp'     => 'MNP (Micronutrient Powder)',
-    'lns'     => 'LNS-SQ (Lipid-based Nutrient Supplement)',
-    'monthly' => 'Monthly Distribution Log',
-    default   => 'Vitamin A Distribution',
+    'mnp'        => 'MNP (Micronutrient Powder)',
+    'lns'        => 'LNS-SQ (Lipid-based Nutrient Supplement)',
+    'monthly'    => 'Monthly Distribution Log',
+    'indicators' => 'MNS Indicators',
+    default      => 'Vitamin A Distribution',
 };
 $pageTitle = 'MNS Report — ' . $tabLabel;
 $monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -125,6 +126,12 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
         <a class="nav-link <?= $tab === 'monthly' ? 'active' : '' ?>"
            href="?tab=monthly&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>">
             <i class="bi bi-calendar3 me-1"></i>Monthly Log
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link <?= $tab === 'indicators' ? 'active' : '' ?>"
+           href="?tab=indicators&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>">
+            <i class="bi bi-bar-chart-steps me-1"></i>Indicators
         </a>
     </li>
 </ul>
@@ -306,4 +313,91 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
     </div>
 </div>
 
+<?php endif; ?>
+
+<?php if ($tab === 'indicators'): ?>
+<div class="alert alert-light border mb-3 py-2 px-3 small">
+    <i class="bi bi-info-circle me-1 text-primary"></i>
+    Coverage for <strong><?= $year ?></strong><?= $barangay ? ' — ' . htmlspecialchars($barangay) : ' — All Barangays' ?>.
+    Denominator = validated beneficiaries in that age group as of today.
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header fw-semibold d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-bar-chart-steps me-2 text-primary"></i>MNS Indicators — <?= $year ?>
+        <?php if ($barangay): ?>
+        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-2"><?= htmlspecialchars($barangay) ?></span>
+        <?php endif; ?></span>
+        <a href="?tab=indicators&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&export=excel"
+           class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Export Excel</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Indicator</th>
+                        <th class="text-center" style="width:120px">Given / Completed</th>
+                        <th class="text-center" style="width:120px">Eligible Pop.</th>
+                        <th class="text-center" style="width:100px">Coverage</th>
+                        <th style="width:160px">Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($mnsIndicators as $ind):
+                        $pct = $ind['eligible'] > 0 ? min(100, round($ind['given'] / $ind['eligible'] * 100, 1)) : 0;
+                        $color = $pct >= 90 ? 'success' : ($pct >= 70 ? 'warning' : 'danger');
+                    ?>
+                    <tr>
+                        <td class="fw-semibold"><?= htmlspecialchars($ind['label']) ?></td>
+                        <td class="text-center fs-5 fw-bold text-primary"><?= $ind['given'] ?></td>
+                        <td class="text-center text-muted"><?= $ind['eligible'] ?></td>
+                        <td class="text-center">
+                            <span class="badge bg-<?= $color ?> px-2 py-1"><?= $pct ?>%</span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height:10px" title="<?= $pct ?>% coverage">
+                                <div class="progress-bar bg-<?= $color ?>" style="width:<?= $pct ?>%"
+                                     role="progressbar" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-transparent border-top text-muted small">
+        <span class="badge bg-success me-1">≥90%</span> Good &nbsp;·&nbsp;
+        <span class="badge bg-warning text-dark me-1">70–89%</span> Needs improvement &nbsp;·&nbsp;
+        <span class="badge bg-danger me-1">&lt;70%</span> Critical
+    </div>
+</div>
+
+<?php
+if (!empty($_GET['export']) && $_GET['export'] === 'excel' && class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')):
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet()->setTitle('MNS Indicators');
+    $headers = ['Indicator', 'Given / Completed', 'Eligible Population', 'Coverage %'];
+    foreach ($headers as $i => $h) {
+        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i+1) . '1';
+        $sheet->setCellValue($cell, $h);
+        $sheet->getStyle($cell)->getFont()->setBold(true);
+        $sheet->getStyle($cell)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('D6E4F0');
+    }
+    foreach ($mnsIndicators as $ri => $ind) {
+        $pct = $ind['eligible'] > 0 ? round($ind['given'] / $ind['eligible'] * 100, 1) : 0;
+        $row = $ri + 2;
+        $sheet->setCellValue('A'.$row, $ind['label']);
+        $sheet->setCellValue('B'.$row, $ind['given']);
+        $sheet->setCellValue('C'.$row, $ind['eligible']);
+        $sheet->setCellValue('D'.$row, $pct);
+    }
+    foreach (range(1,4) as $c) $sheet->getColumnDimensionByColumn($c)->setAutoSize(true);
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="MNS_Indicators_'.$year.'.xlsx"');
+    (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save('php://output');
+    exit;
+endif;
+?>
 <?php endif; ?>

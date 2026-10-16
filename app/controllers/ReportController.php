@@ -145,6 +145,82 @@ class ReportController extends Controller
             $lnsMonthRecords = $stmt->fetchAll();
         }
 
+        // MNS Indicators tab
+        $mnsIndicators = [];
+        if ($tab === 'indicators') {
+            $db     = Database::getInstance();
+            $bWhere = ''; $bParams = [];
+            if ($barangay) { $bWhere .= ' AND b.barangay = ?'; $bParams[] = $barangay; }
+
+            $refDate = date('Y-m-d');
+
+            // Helper: count eligible beneficiaries by age range
+            $eligible = function (int $lo, int $hi) use ($db, $barangay, $bWhere, $bParams, $refDate): int {
+                $stmt = $db->prepare(
+                    "SELECT COUNT(*) FROM beneficiaries b
+                     WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+                     AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN ? AND ?$bWhere"
+                );
+                $stmt->execute(array_merge([$refDate, $lo, $hi], $bParams));
+                return (int)$stmt->fetchColumn();
+            };
+
+            // Helper: count distinct beneficiaries in a record table
+            $countGiven = function (string $table, string $extra, array $params) use ($db, $bWhere, $bParams, $year): int {
+                $stmt = $db->prepare(
+                    "SELECT COUNT(DISTINCT t.beneficiary_id) FROM $table t
+                     JOIN beneficiaries b ON b.id = t.beneficiary_id
+                     WHERE t.year = ?$extra$bWhere"
+                );
+                $stmt->execute(array_merge([$year], $params, $bParams));
+                return (int)$stmt->fetchColumn();
+            };
+
+            $mnsIndicators = [
+                [
+                    'label'     => 'Vitamin A 6–11 mos (100,000 IU, 1 dose)',
+                    'given'     => $countGiven('vitamin_a_records', ' AND t.dosage_iu = 100000', []),
+                    'eligible'  => $eligible(6, 11),
+                ],
+                [
+                    'label'     => 'Vitamin A 12–59 mos (200,000 IU, 2 doses)',
+                    'given'     => (function () use ($db, $year, $bWhere, $bParams): int {
+                        $stmt = $db->prepare(
+                            "SELECT COUNT(*) FROM (
+                                SELECT t.beneficiary_id FROM vitamin_a_records t
+                                JOIN beneficiaries b ON b.id = t.beneficiary_id
+                                WHERE t.year = ? AND t.dosage_iu = 200000$bWhere
+                                GROUP BY t.beneficiary_id HAVING COUNT(*) >= 2
+                            ) x"
+                        );
+                        $stmt->execute(array_merge([$year], $bParams));
+                        return (int)$stmt->fetchColumn();
+                    })(),
+                    'eligible'  => $eligible(12, 59),
+                ],
+                [
+                    'label'     => 'MNP 6–11 mos completed',
+                    'given'     => $countGiven('mnp_records', " AND t.age_group = '6-11 months' AND t.completed_routine = 1", []),
+                    'eligible'  => $eligible(6, 11),
+                ],
+                [
+                    'label'     => 'MNP 12–23 mos completed',
+                    'given'     => $countGiven('mnp_records', " AND t.age_group = '12-23 months' AND t.completed_routine = 1", []),
+                    'eligible'  => $eligible(12, 23),
+                ],
+                [
+                    'label'     => 'LNS-SQ 6–11 mos completed',
+                    'given'     => $countGiven('lns_sq_records', " AND t.age_group = '6-11 months' AND t.completed_routine = 1", []),
+                    'eligible'  => $eligible(6, 11),
+                ],
+                [
+                    'label'     => 'LNS-SQ 12–23 mos completed',
+                    'given'     => $countGiven('lns_sq_records', " AND t.age_group = '12-23 months' AND t.completed_routine = 1", []),
+                    'eligible'  => $eligible(12, 23),
+                ],
+            ];
+        }
+
         $beneModel = new Beneficiary();
         $this->view('reports/mns', [
             'rows'            => $rows,
@@ -161,6 +237,7 @@ class ReportController extends Controller
             'selectedMonth'   => $selectedMonth,
             'mnpMonthRecords' => $mnpMonthRecords,
             'lnsMonthRecords' => $lnsMonthRecords,
+            'mnsIndicators'   => $mnsIndicators,
             'barangays'       => $beneModel->getAllBarangays(),
             'puroks'          => $beneModel->getPuroksByBarangay($barangay),
         ]);
