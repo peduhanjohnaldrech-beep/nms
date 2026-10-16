@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= APP_NAME ?> — Login</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/bootstrap-icons.css">
     <style>
         body {
             background: url('<?= APP_URL ?>/img/background.jpg') center/cover no-repeat fixed;
@@ -85,7 +85,7 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="<?= APP_URL ?>/js/bootstrap.bundle.min.js"></script>
 <script>
 document.getElementById('togglePassword').addEventListener('click', function() {
     const pwd = document.getElementById('password');
