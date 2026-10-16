@@ -7,7 +7,9 @@ class Session
     {
         if (session_status() === PHP_SESSION_NONE) {
             ini_set('session.gc_maxlifetime', 3600);
-            session_set_cookie_params(['lifetime' => 3600, 'httponly' => true, 'samesite' => 'Lax']);
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                    || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
+            session_set_cookie_params(['lifetime' => 3600, 'httponly' => true, 'samesite' => 'Lax', 'secure' => $isHttps]);
             session_start();
         }
 

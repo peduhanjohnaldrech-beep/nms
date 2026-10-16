@@ -23,6 +23,49 @@ class AuthController extends Controller
         $this->view('auth/login', [], false);
     }
 
+    private function rateLimitKey(string $username): string
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        return 'login_fail:' . md5($ip . ':' . strtolower($username));
+    }
+
+    private function isLockedOut(string $username): bool
+    {
+        $key = $this->rateLimitKey($username);
+        if (function_exists('apcu_fetch')) {
+            $attempts = apcu_fetch($key) ?: 0;
+            return $attempts >= 5;
+        }
+        $file = sys_get_temp_dir() . '/' . $key;
+        if (!file_exists($file)) return false;
+        $data = json_decode(file_get_contents($file), true);
+        if (!$data || time() > $data['expires']) { @unlink($file); return false; }
+        return $data['count'] >= 5;
+    }
+
+    private function recordFailedAttempt(string $username): int
+    {
+        $key = $this->rateLimitKey($username);
+        if (function_exists('apcu_fetch')) {
+            $attempts = (int)(apcu_fetch($key) ?: 0) + 1;
+            apcu_store($key, $attempts, 900); // 15 minutes
+            return $attempts;
+        }
+        $file = sys_get_temp_dir() . '/' . $key;
+        $data = file_exists($file) ? json_decode(file_get_contents($file), true) : null;
+        if (!$data || time() > ($data['expires'] ?? 0)) $data = ['count' => 0, 'expires' => time() + 900];
+        $data['count']++;
+        file_put_contents($file, json_encode($data), LOCK_EX);
+        return $data['count'];
+    }
+
+    private function clearFailedAttempts(string $username): void
+    {
+        $key = $this->rateLimitKey($username);
+        if (function_exists('apcu_delete')) { apcu_delete($key); return; }
+        @unlink(sys_get_temp_dir() . '/' . $key);
+    }
+
     public function login(): void
     {
         if (Session::has('user_id')) {
@@ -46,14 +89,28 @@ class AuthController extends Controller
             return;
         }
 
-        $user = $this->userModel->authenticate($username, $password);
-
-        if (!$user) {
-            \ActivityLog::log('login_failed', "Failed login attempt for username: $username");
-            Session::flash('error', 'Invalid username or password.');
+        // Brute force protection — lock out after 5 failed attempts for 15 minutes
+        if ($this->isLockedOut($username)) {
+            Session::flash('error', 'Too many failed login attempts. Please try again in 15 minutes.');
             $this->view('auth/login', ['username' => $this->clean($username)], false);
             return;
         }
+
+        $user = $this->userModel->authenticate($username, $password);
+
+        if (!$user) {
+            $attempts = $this->recordFailedAttempt($username);
+            $remaining = max(0, 5 - $attempts);
+            \ActivityLog::log('login_failed', "Failed login attempt for username: $username (attempt $attempts)");
+            $msg = $remaining > 0
+                ? "Invalid username or password. $remaining attempt(s) remaining."
+                : 'Too many failed login attempts. Please try again in 15 minutes.';
+            Session::flash('error', $msg);
+            $this->view('auth/login', ['username' => $this->clean($username)], false);
+            return;
+        }
+
+        $this->clearFailedAttempts($username);
 
         Session::regenerate();
         Session::set('user_id',          $user['id']);

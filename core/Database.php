@@ -20,7 +20,10 @@ class Database
                     PDO::ATTR_EMULATE_PREPARES   => false,
                 ]);
             } catch (PDOException $e) {
-                die('Database connection failed: ' . $e->getMessage());
+                error_log('[NMS] Database connection failed: ' . $e->getMessage());
+                if (!headers_sent()) http_response_code(500);
+                include BASE_PATH . '/app/views/errors/500.php';
+                exit;
             }
         }
         return self::$instance;

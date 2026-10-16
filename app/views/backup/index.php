@@ -94,6 +94,25 @@
     Restore with: <code>mysql -u root nms &lt; nms_backup_YYYY-MM-DD_HHiiss.sql</code>
 </p>
 
+<!-- Auto Backup Cron Setup -->
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header d-flex align-items-center gap-2 py-2">
+        <i class="bi bi-clock-history text-warning"></i>
+        <span class="fw-semibold">Automatic Daily Backup (Cron)</span>
+    </div>
+    <div class="card-body">
+        <p class="small text-muted mb-2">To enable automatic daily backups at 2:00 AM on the production server, register the following cron job. Run <code>crontab -e</code> on the server and add:</p>
+        <div class="bg-dark text-success font-monospace rounded p-3 small mb-2 user-select-all">
+            0 2 * * * /usr/bin/php /var/www/nms/scripts/backup_cron.php &gt;&gt; /var/log/nms_backup.log 2&gt;&amp;1
+        </div>
+        <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            This keeps up to 7 daily backups and logs results to <code>/var/log/nms_backup.log</code>.
+            The cron will not create a duplicate if a backup was already made within the last 24 hours.
+        </p>
+    </div>
+</div>
+
 <!-- Backup Log -->
 <div class="card border-0 shadow-sm mt-3">
     <div class="card-header d-flex align-items-center gap-2 py-2">

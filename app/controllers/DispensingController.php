@@ -21,6 +21,7 @@ class DispensingController extends Controller
         $barangay      = in_array(Session::get('user_role'), ['bhw', 'bns'])
                          ? Session::get('user_barangay')
                          : ($_GET['barangay'] ?? '');
+        $purok         = $_GET['purok']                ?? '';
         $beneficiaryId = (int)($_GET['beneficiary_id'] ?? 0);
         $selectedMonth = (int)($_GET['month']          ?? date('n'));
 
@@ -46,6 +47,10 @@ class DispensingController extends Controller
             $mWhere .= ' AND b.barangay = ?'; $mParams[] = $barangay;
             $lWhere .= ' AND b.barangay = ?'; $lParams[] = $barangay;
         }
+        if ($purok) {
+            $mWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $mParams[] = $purok;
+            $lWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $lParams[] = $purok;
+        }
         $stmt = $db->prepare(
             "SELECT m.*, b.last_name, b.first_name, b.barangay, b.date_of_birth
              FROM mnp_records m JOIN beneficiaries b ON b.id = m.beneficiary_id
@@ -62,13 +67,35 @@ class DispensingController extends Controller
         $stmt->execute($lParams);
         $lnsMonthRecords = $stmt->fetchAll();
 
+        // Vitamin A records for the month (from dispensing_records)
+        $vWhere  = "YEAR(d.date_dispensed) = ? AND MONTH(d.date_dispensed) = ? AND d.program = 'MNS' AND d.supplement_type LIKE '%Vitamin A%'";
+        $vParams = [$year, $selectedMonth];
+        if ($barangay) { $vWhere .= ' AND b.barangay = ?';                   $vParams[] = $barangay; }
+        if ($purok)    { $vWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)';   $vParams[] = $purok; }
+        $stmt = $db->prepare(
+            "SELECT d.id, d.beneficiary_id, d.date_dispensed AS date_given, d.supplement_type,
+                    d.quantity, d.unit, d.notes,
+                    b.last_name, b.first_name, b.barangay, b.date_of_birth
+             FROM dispensing_records d JOIN beneficiaries b ON b.id = d.beneficiary_id
+             WHERE $vWhere ORDER BY d.date_dispensed, b.last_name"
+        );
+        $stmt->execute($vParams);
+        $vitaMonthRecords = $stmt->fetchAll();
+
         $beneficiaryModel = new Beneficiary();
         $barangays        = $beneficiaryModel->getAllBarangays();
-        $allBeneficiaries = Database::getInstance()->query(
+        $puroks           = $beneficiaryModel->getPuroksByBarangay($barangay);
+        // Limit typeahead list to current barangay filter to avoid loading all records into memory
+        $beneWhere  = "deleted_at IS NULL AND validation_status = 'validated'";
+        $beneParams = [];
+        if ($barangay) { $beneWhere .= ' AND barangay = ?'; $beneParams[] = $barangay; }
+        $beneStmt = Database::getInstance()->prepare(
             "SELECT id, last_name, first_name, barangay
-             FROM beneficiaries WHERE deleted_at IS NULL AND validation_status = 'validated'
-             ORDER BY last_name, first_name"
-        )->fetchAll();
+             FROM beneficiaries WHERE $beneWhere
+             ORDER BY last_name, first_name LIMIT 500"
+        );
+        $beneStmt->execute($beneParams);
+        $allBeneficiaries = $beneStmt->fetchAll();
         $activePrograms   = (new Program())->getActive();
 
         $this->view('dispensing/index', [
@@ -77,8 +104,10 @@ class DispensingController extends Controller
             'year'             => $year,
             'program'          => $program,
             'barangay'         => $barangay,
+            'purok'            => $purok,
             'beneficiaryId'    => $beneficiaryId,
             'barangays'        => $barangays,
+            'puroks'           => $puroks,
             'allBeneficiaries' => $allBeneficiaries,
             'activePrograms'   => $activePrograms,
             'isBhw'            => in_array(Session::get('user_role'), ['bhw', 'bns']),
@@ -86,6 +115,7 @@ class DispensingController extends Controller
             'selectedMonth'    => $selectedMonth,
             'mnpMonthRecords'  => $mnpMonthRecords,
             'lnsMonthRecords'  => $lnsMonthRecords,
+            'vitaMonthRecords' => $vitaMonthRecords,
         ]);
     }
 

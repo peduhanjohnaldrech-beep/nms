@@ -68,7 +68,8 @@ class DispensingRecord extends Model
              JOIN  beneficiaries b ON b.id = dr.beneficiary_id
              LEFT JOIN users u ON u.id = dr.dispensed_by
              WHERE " . implode(' AND ', $where) . "
-             ORDER BY dr.date_dispensed DESC, b.barangay, b.last_name",
+             ORDER BY dr.date_dispensed DESC, b.barangay, b.last_name
+             LIMIT 1000",
             $params
         );
     }

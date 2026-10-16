@@ -15,9 +15,9 @@ class DateHelper
         return ($diff->y * 12) + $diff->m;
     }
 
-    public static function formatDate(string $date, string $format = 'F j, Y'): string
+    public static function formatDate(?string $date, string $format = 'F j, Y'): string
     {
-        if (empty($date) || $date === '0000-00-00') return '—';
+        if ($date === null || $date === '' || $date === '0000-00-00') return '—';
         try {
             return (new DateTime($date))->format($format);
         } catch (\Exception $e) {

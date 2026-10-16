@@ -101,7 +101,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
         <button class="nav-link fw-semibold" id="tab-mns" data-bs-toggle="tab" data-bs-target="#pane-mns"
                 type="button" role="tab" aria-controls="pane-mns" aria-selected="false">
             <i class="bi bi-capsule me-1" aria-hidden="true"></i>MNS Monthly Log
-            <span class="badge bg-primary ms-1"><?= count($mnpMonthRecords) + count($lnsMonthRecords) ?></span>
+            <span class="badge bg-primary ms-1"><?= count($mnpMonthRecords) + count($lnsMonthRecords) + count($vitaMonthRecords) ?></span>
         </button>
     </li>
 </ul>
@@ -110,6 +110,14 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 
     <!-- ── Tab 1: Dispensing Records ── -->
     <div class="tab-pane fade show active" id="pane-records" role="tabpanel" aria-labelledby="tab-records">
+
+        <div class="px-3 pt-3 pb-0">
+            <div class="alert alert-light border py-2 px-3 small mb-3">
+                <i class="bi bi-info-circle me-1 text-primary" aria-hidden="true"></i>
+                <strong>Dispensing Records</strong> is the general ledger — every supplement or medicine given to any beneficiary, across all programs (OPT, DSP, MNS, Vitamin A, etc.).
+                To view MNP, LNS-SQ, and Vitamin A by month, use the <strong>MNS Monthly Log</strong> tab.
+            </div>
+        </div>
 
         <!-- Filters -->
         <div class="border-bottom px-3 py-3">
@@ -271,25 +279,66 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
 
     <!-- ── Tab 2: MNS Monthly Log ── -->
     <div class="tab-pane fade" id="pane-mns" role="tabpanel" aria-labelledby="tab-mns">
-        <div class="p-3 border-bottom d-flex align-items-center gap-3 flex-wrap">
-            <div>
-                <span class="fw-semibold"><i class="bi bi-capsule me-1 text-primary" aria-hidden="true"></i>MNS Monthly Log</span>
-                <span class="text-muted small ms-2">— MNP &amp; LNS-SQ given per beneficiary</span>
+        <div class="p-3 border-bottom">
+            <div class="fw-semibold mb-2">
+                <i class="bi bi-capsule me-1 text-primary" aria-hidden="true"></i>MNS Monthly Log
+                <span class="text-muted fw-normal small ms-1">— MNP &amp; LNS-SQ given per beneficiary</span>
             </div>
-            <form method="get" class="d-flex align-items-center gap-2 ms-auto mb-0">
+            <form method="get" action="<?= APP_URL ?>/dispensing#mns" class="row g-2 align-items-end">
                 <input type="hidden" name="year" value="<?= $year ?>">
-                <input type="hidden" name="barangay" value="<?= htmlspecialchars($barangay) ?>">
-                <label class="form-label small mb-0 fw-semibold me-1" for="mns_month">Month</label>
-                <select id="mns_month" name="month" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
-                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                    <option value="<?= $m ?>" <?= $m === $selectedMonth ? 'selected' : '' ?>><?= $monthNames[$m] ?> <?= $year ?></option>
-                    <?php endfor; ?>
-                </select>
-                <a href="<?= APP_URL ?>/reports/export?type=mns_monthly&format=excel&year=<?= $year ?>&month=<?= $selectedMonth ?>&barangay=<?= urlencode($barangay) ?>"
-                   class="btn btn-sm btn-outline-success">
-                    <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Export
-                </a>
+                <div class="col-auto">
+                    <label class="form-label small mb-1 fw-semibold" for="mns_month">Month</label>
+                    <select id="mns_month" name="month" class="form-select form-select-sm" style="width:auto">
+                        <?php for ($m = 1; $m <= 12; $m++): ?>
+                        <option value="<?= $m ?>" <?= $m === $selectedMonth ? 'selected' : '' ?>><?= $monthNames[$m] ?> <?= $year ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <?php if (!$isBhw): ?>
+                <div class="col-auto">
+                    <label class="form-label small mb-1 fw-semibold" for="mns_barangay">Barangay</label>
+                    <select id="mns_barangay" name="barangay" class="form-select form-select-sm" style="min-width:160px" onchange="this.form.submit()">
+                        <option value="">All Barangays</option>
+                        <?php foreach ($barangays as $b): ?>
+                        <option value="<?= htmlspecialchars($b['barangay']) ?>" <?= $barangay === $b['barangay'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($b['barangay']) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label small mb-1 fw-semibold" for="mns_purok">Purok</label>
+                    <select id="mns_purok" name="purok" class="form-select form-select-sm" style="min-width:130px">
+                        <option value="">All Puroks</option>
+                        <?php foreach ($puroks ?? [] as $p): ?>
+                        <option value="<?= htmlspecialchars($p) ?>" <?= $purok === $p ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($p) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+                <div class="col-auto d-flex gap-1">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Filter</button>
+                    <a href="<?= APP_URL ?>/dispensing#mns" class="btn btn-sm btn-outline-secondary" aria-label="Clear MNS filters"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+                </div>
+                <div class="col-auto ms-auto">
+                    <a href="<?= APP_URL ?>/reports/export?type=mns_monthly&format=excel&year=<?= $year ?>&month=<?= $selectedMonth ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok) ?>"
+                       class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Export
+                    </a>
+                </div>
             </form>
+        </div>
+
+        <div class="px-3 pt-3 pb-0">
+            <div class="alert alert-light border py-2 px-3 small mb-0">
+                <i class="bi bi-info-circle me-1 text-primary" aria-hidden="true"></i>
+                <strong>MNS Monthly Log</strong> shows micronutrient supplements given this month:
+                <strong>MNP</strong> (ages 6–59 mo, monthly),
+                <strong>LNS-SQ</strong> (ages 6–23 mo, monthly), and
+                <strong>Vitamin A</strong> (all ages, Feb &amp; Aug rounds).
+            </div>
         </div>
 
         <div class="p-3">
@@ -394,6 +443,52 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                         </div>
                     </div>
                 </div>
+                <!-- Vitamin A -->
+                <div class="col-12">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="fw-semibold"><i class="bi bi-capsule-pill me-1 text-warning" aria-hidden="true"></i>Vitamin A</span>
+                        <span class="badge bg-warning text-dark rounded-pill"><?= count($vitaMonthRecords) ?></span>
+                        <span class="text-muted small">From Dispensing Records — Feb &amp; Aug rounds</span>
+                    </div>
+                    <div class="border rounded overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Barangay</th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Supplement</th>
+                                        <th scope="col" class="text-center">Qty</th>
+                                        <th scope="col">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (empty($vitaMonthRecords)): ?>
+                                    <tr><td colspan="6" class="text-center text-muted py-3">
+                                        <i class="bi bi-inbox d-block fs-4 mb-1 opacity-25" aria-hidden="true"></i>
+                                        No Vitamin A records for <?= $monthNames[$selectedMonth] ?> <?= $year ?>.
+                                    </td></tr>
+                                    <?php endif; ?>
+                                    <?php foreach ($vitaMonthRecords as $rec): ?>
+                                    <tr>
+                                        <td>
+                                            <a href="<?= APP_URL ?>/beneficiaries/<?= $rec['beneficiary_id'] ?>" class="text-decoration-none fw-semibold">
+                                                <?= htmlspecialchars($rec['last_name'] . ', ' . $rec['first_name']) ?>
+                                            </a>
+                                        </td>
+                                        <td class="text-muted small"><?= htmlspecialchars($rec['barangay']) ?></td>
+                                        <td class="text-nowrap small"><?= \DateHelper::formatDate($rec['date_given'], 'M j') ?></td>
+                                        <td><span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25"><?= htmlspecialchars($rec['supplement_type']) ?></span></td>
+                                        <td class="text-center"><?= number_format($rec['quantity'], 1) ?></td>
+                                        <td class="text-muted small"><?= htmlspecialchars($rec['notes'] ?? '') ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div><!-- /pane-mns -->
@@ -455,10 +550,17 @@ if (summaryEl && summaryChev) {
     summaryEl.addEventListener('hide.bs.collapse',  () => summaryChev.style.transform = '');
 }
 
-// Restore active tab from URL hash
+// Restore active tab from URL hash (also handles post-filter redirect with #mns)
 const hash = window.location.hash;
 if (hash === '#mns') {
     const tabEl = document.getElementById('tab-mns');
     if (tabEl) bootstrap.Tab.getOrCreateInstance(tabEl).show();
 }
+// Keep hash in URL when switching tabs so filter state is preserved
+document.querySelectorAll('#dispTabs button[data-bs-toggle="tab"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', e => {
+        const target = e.target.getAttribute('data-bs-target');
+        history.replaceState(null, '', target === '#pane-mns' ? '#mns' : location.pathname + location.search);
+    });
+});
 </script>

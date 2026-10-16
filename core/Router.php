@@ -32,6 +32,14 @@ class Router
 
     public function dispatch(): void
     {
+        set_exception_handler(function (\Throwable $e) {
+            error_log('[NMS] Uncaught exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            if (!headers_sent()) http_response_code(500);
+            $appUrl = defined('APP_URL') ? APP_URL : '';
+            include dirname(__DIR__) . '/app/views/errors/500.php';
+            exit;
+        });
+
         // Security headers
         header("X-Content-Type-Options: nosniff");
         header("X-Frame-Options: SAMEORIGIN");
