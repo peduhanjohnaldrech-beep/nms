@@ -57,6 +57,15 @@
                 <?php endforeach; ?>
             </select>
         </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">— All Statuses —</option>
+                <option value="Active"    <?= ($filterStatus ?? '') === 'Active'    ? 'selected' : '' ?>>Active</option>
+                <option value="Completed" <?= ($filterStatus ?? '') === 'Completed' ? 'selected' : '' ?>>Graduated</option>
+                <option value="Dropped"   <?= ($filterStatus ?? '') === 'Dropped'   ? 'selected' : '' ?>>Dropped</option>
+            </select>
+        </div>
         <div class="col-auto">
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="bi bi-funnel me-1"></i>Filter

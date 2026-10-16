@@ -185,6 +185,7 @@ class ProgramController extends Controller
         $role     = \Core\Session::get('user_role');
         $barangay = trim($_GET['barangay'] ?? '');
         $year     = (int)($_GET['year'] ?? date('Y'));
+        $status   = trim($_GET['status'] ?? '');
 
         // BNS/BHW scoped to their barangay
         if (in_array($role, ['bhw', 'bns'])) {
@@ -194,6 +195,9 @@ class ProgramController extends Controller
         $where  = "pe.program = 'DSP' AND pe.cycle_year = ?";
         $params = [$year];
         if ($barangay !== '') { $where .= ' AND b.barangay = ?'; $params[] = $barangay; }
+        if (in_array($status, ['Active', 'Completed', 'Dropped'])) {
+            $where .= ' AND pe.status = ?'; $params[] = $status;
+        }
 
         $stmt = $db->prepare(
             "SELECT pe.id, pe.enrollment_date, pe.pre_weight_kg, pe.post_weight_kg,
@@ -205,7 +209,7 @@ class ProgramController extends Controller
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, pe.enrollment_date) AS age_at_enrollment
              FROM program_enrollments pe
              JOIN beneficiaries b ON b.id = pe.beneficiary_id
-             WHERE b.deleted_at IS NULL AND TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) <= 59 AND $where
+             WHERE b.deleted_at IS NULL AND $where
              ORDER BY b.barangay, b.last_name, b.first_name"
         );
         $stmt->execute($params);
@@ -250,6 +254,7 @@ class ProgramController extends Controller
             'years'          => $years,
             'filterBarangay' => $barangay,
             'filterYear'     => $year,
+            'filterStatus'   => $status,
         ]);
     }
 
