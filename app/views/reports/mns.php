@@ -43,8 +43,8 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
                 <label class="form-label small">Round</label>
                 <select name="round" class="form-select form-select-sm">
                     <option value="">All Rounds</option>
-                    <option value="February" <?= $round === 'February' ? 'selected' : '' ?>>February</option>
-                    <option value="August"   <?= $round === 'August'   ? 'selected' : '' ?>>August</option>
+                    <option value="April"   <?= $round === 'April'   ? 'selected' : '' ?>>April</option>
+                    <option value="October" <?= $round === 'October' ? 'selected' : '' ?>>October</option>
                 </select>
             </div>
             <?php endif; ?>

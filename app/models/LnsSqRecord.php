@@ -20,29 +20,29 @@ class LnsSqRecord extends Model
 
     public function hasDuplicate(int $beneficiaryId, int $year, string $ageGroup): bool
     {
+        // LNS-SQ is monthly; block re-distribution within 30 days
         return (bool) $this->fetch(
-            "SELECT id FROM lns_sq_records WHERE beneficiary_id = ? AND year = ? AND age_group = ?",
-            [$beneficiaryId, $year, $ageGroup]
+            "SELECT id FROM lns_sq_records WHERE beneficiary_id = ? AND date_given >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+            [$beneficiaryId]
         );
     }
 
     public function recordDistribution(array $data): int
     {
         if ($this->hasDuplicate((int)$data['beneficiary_id'], (int)$data['year'], $data['age_group'])) {
-            throw new \RuntimeException('LNS-SQ record already exists for ' . $data['age_group'] . ' / ' . $data['year']);
+            throw new \RuntimeException('LNS-SQ was already given within the last 30 days. Minimum interval is 30 days.');
         }
         $row = [
-            'beneficiary_id'    => $data['beneficiary_id'],
-            'given_by'          => $data['given_by'] ?? null,
-            'date_given'        => $data['date_given'],
-            'year'              => $data['year'],
-            'age_group'         => $data['age_group'],
-            'completed_routine' => (int)($data['completed_routine'] ?? 0),
-            'notes'             => $data['notes'] ?? null,
+            'beneficiary_id'      => $data['beneficiary_id'],
+            'given_by'            => $data['given_by'] ?? null,
+            'date_given'          => $data['date_given'],
+            'year'                => $data['year'],
+            'age_group'           => $data['age_group'],
+            'completed_routine'   => (int)($data['completed_routine'] ?? 0),
+            'sachets_distributed' => isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== ''
+                ? (int)$data['sachets_distributed'] : 30,
+            'notes'               => $data['notes'] ?? null,
         ];
-        if (isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== '') {
-            $row['sachets_distributed'] = (int)$data['sachets_distributed'];
-        }
         return $this->insert($row);
     }
 
@@ -88,7 +88,7 @@ class LnsSqRecord extends Model
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
-               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
+               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 24
                AND NOT EXISTS (
                    SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
                )$extra

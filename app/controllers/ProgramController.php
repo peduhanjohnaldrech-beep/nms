@@ -480,7 +480,7 @@ class ProgramController extends Controller
     {
         $this->requireAuth();
 
-        $round    = $_GET['round']    ?? 'February';
+        $round    = $_GET['round']    ?? 'April';
         $year     = (int)($_GET['year'] ?? date('Y'));
         $tab      = $_GET['tab']      ?? 'vitaminA';
         $barangay = trim($_GET['barangay'] ?? '');
@@ -513,26 +513,26 @@ class ProgramController extends Controller
 
         $defaulterList = [];
         if ($tab === 'defaulter') {
-            $febDate = "{$year}-02-15";
-            $augDate = "{$year}-08-15";
+            $aprDate = "{$year}-04-15";
+            $octDate = "{$year}-10-15";
             $defaulterList = Database::getInstance()->query(
                 "SELECT b.id, b.last_name, b.first_name, b.barangay, b.purok_zone,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59) AS elig_vita_feb,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59) AS elig_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_feb,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_aug,
                         (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_mnp,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_lns,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'February' AND v.year = $year) AS got_vita_feb,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'August' AND v.year = $year) AS got_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24) AS elig_lns,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April' AND v.year = $year) AS got_vita_feb,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_aug,
                         EXISTS(SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = $year) AS got_mnp,
                         EXISTS(SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = $year) AS got_lns
                  FROM beneficiaries b
                  WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                  AND $beneFilter$brgyWhere$purokWhere
                  AND (
-                     TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59
-                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59
-                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23
+                     TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
                  )
                  HAVING (elig_vita_feb AND NOT got_vita_feb)
                      OR (elig_vita_aug AND NOT got_vita_aug)
@@ -639,7 +639,7 @@ class ProgramController extends Controller
         try {
             $bid   = (int)($_POST['beneficiary_id'] ?? 0);
             $date  = $_POST['distribution_date'] ?? date('Y-m-d');
-            $round = $_POST['round'] ?? 'February';
+            $round = $_POST['round'] ?? 'April';
             $year  = (int)($_POST['year'] ?? date('Y'));
             // Age at the actual distribution date, not today
             $ageMonths = \DateHelper::ageInMonths($dob, $date);
@@ -671,7 +671,7 @@ class ProgramController extends Controller
             Session::flash('error', $e->getMessage());
         }
 
-        $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($_POST['round'] ?? 'February') . '&year=' . ($_POST['year'] ?? date('Y')));
+        $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($_POST['round'] ?? 'April') . '&year=' . ($_POST['year'] ?? date('Y')));
     }
 
     public function mnsVitaminADelete(int $id): void
@@ -695,7 +695,7 @@ class ProgramController extends Controller
         }
 
         $year  = $_POST['year']  ?? date('Y');
-        $round = $_POST['round'] ?? 'February';
+        $round = $_POST['round'] ?? 'April';
         $this->redirect("/programs/mns?tab=vitaminA&year={$year}&round=" . urlencode($round));
     }
 

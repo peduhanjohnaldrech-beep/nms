@@ -186,7 +186,7 @@ class ReportApiController extends ApiController
         foreach ($stmt->fetchAll() as $r) $vitaRaw[$r['barangay']][$r['round']] = (int)$r['cnt'];
         $vitaByBarangay = [];
         foreach ($vitaRaw as $bar => $rounds) {
-            $vitaByBarangay[] = ['barangay'=>$bar, 'february'=>$rounds['February']??0, 'august'=>$rounds['August']??0, 'total'=>array_sum($rounds)];
+            $vitaByBarangay[] = ['barangay'=>$bar, 'april'=>$rounds['April']??0, 'october'=>$rounds['October']??0, 'total'=>array_sum($rounds)];
         }
 
         // MNP

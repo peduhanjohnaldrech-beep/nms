@@ -159,7 +159,7 @@ class ProgramEnrollment extends Model
 
     public function getEligibleForMNS(string $round, int $year, string $barangay = '', string $purok = ''): array
     {
-        $refDate = $round === 'February' ? "{$year}-02-15" : "{$year}-08-15";
+        $refDate = $round === 'April' ? "{$year}-04-15" : "{$year}-10-15";
         $extra = ''; $params = [$refDate, $refDate, $round, $year];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }

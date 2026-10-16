@@ -132,12 +132,12 @@ class SeederController extends Controller
                     $enrollmentModel->autoEnrollDSP($assessmentId);
                 }
 
-                // Vitamin A — seed both rounds if current month >= August, else just February
+                // Vitamin A — seed both rounds if current month >= October, else just April
                 $currentMonth = (int)date('n');
                 $currentYear  = (int)date('Y');
-                $vitaRounds   = $currentMonth >= 8
-                    ? [['date' => date('Y-02-15'), 'round' => 'February'], ['date' => date('Y-08-15'), 'round' => 'August']]
-                    : [['date' => date('Y-02-15'), 'round' => 'February']];
+                $vitaRounds   = $currentMonth >= 10
+                    ? [['date' => date('Y-04-15'), 'round' => 'April'], ['date' => date('Y-10-15'), 'round' => 'October']]
+                    : [['date' => date('Y-04-15'), 'round' => 'April']];
                 foreach ($vitaRounds as $vitaRound) {
                     if (!rand(0, 1)) continue;
                     $vitaDate  = $vitaRound['date'];
@@ -160,42 +160,45 @@ class SeederController extends Controller
                     }
                 }
 
-                // MNP — use current date so it shows in the current month
+                // MNP — 6–23 months, max 2 batches, 90 sachets each
                 if (rand(0, 1)) {
                     $mnpDate  = date('Y-m-d');
                     $ageAtMnp = \DateHelper::ageInMonths($dob, $mnpDate);
-                    if ($ageAtMnp >= 6 && $ageAtMnp <= 59) {
-                        $ageGroup = $ageAtMnp <= 11 ? '6-11 months' : ($ageAtMnp <= 23 ? '12-23 months' : '24-59 months');
+                    if ($ageAtMnp >= 6 && $ageAtMnp <= 23) {
+                        $ageGroup = $ageAtMnp <= 11 ? '6-11 months' : '12-23 months';
                         $db->prepare(
                             "INSERT INTO mnp_records
-                             (beneficiary_id, date_given, year, age_group, completed_routine, given_by)
-                             VALUES (?,?,?,?,?,?)"
+                             (beneficiary_id, date_given, year, age_group, batch_number, sachets_distributed, completed_routine, given_by)
+                             VALUES (?,?,?,?,?,?,?,?)"
                         )->execute([
                             $beneficiaryId,
                             $mnpDate,
                             $currentYear,
                             $ageGroup,
+                            1,
+                            90,
                             rand(0, 1),
                             $userId,
                         ]);
                     }
                 }
 
-                // LNS-SQ — use current date so it shows in the current month
+                // LNS-SQ — 6–24 months, monthly (30 sachets)
                 if (rand(0, 1)) {
                     $lnsDate  = date('Y-m-d');
                     $ageAtLns = \DateHelper::ageInMonths($dob, $lnsDate);
-                    if ($ageAtLns >= 6 && $ageAtLns <= 23) {
-                        $ageGroup = $ageAtLns <= 11 ? '6-11 months' : '12-23 months';
+                    if ($ageAtLns >= 6 && $ageAtLns <= 24) {
+                        $ageGroup = $ageAtLns <= 11 ? '6-11 months' : ($ageAtLns <= 17 ? '12-17 months' : '18-24 months');
                         $db->prepare(
                             "INSERT INTO lns_sq_records
-                             (beneficiary_id, date_given, year, age_group, completed_routine, given_by)
-                             VALUES (?,?,?,?,?,?)"
+                             (beneficiary_id, date_given, year, age_group, sachets_distributed, completed_routine, given_by)
+                             VALUES (?,?,?,?,?,?,?)"
                         )->execute([
                             $beneficiaryId,
                             $lnsDate,
                             $currentYear,
                             $ageGroup,
+                            30,
                             rand(0, 1),
                             $userId,
                         ]);

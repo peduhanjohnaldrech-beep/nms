@@ -18,31 +18,49 @@ class MnpRecord extends Model
         );
     }
 
+    public function getBatches(int $beneficiaryId): array
+    {
+        return $this->fetchAll(
+            "SELECT id, date_given, batch_number FROM mnp_records WHERE beneficiary_id = ? ORDER BY batch_number ASC, date_given ASC",
+            [$beneficiaryId]
+        );
+    }
+
     public function hasDuplicate(int $beneficiaryId, int $year, string $ageGroup): bool
     {
-        return (bool) $this->fetch(
-            "SELECT id FROM mnp_records WHERE beneficiary_id = ? AND year = ? AND age_group = ?",
-            [$beneficiaryId, $year, $ageGroup]
-        );
+        return count($this->getBatches($beneficiaryId)) >= 2;
     }
 
     public function recordDistribution(array $data): int
     {
-        if ($this->hasDuplicate((int)$data['beneficiary_id'], (int)$data['year'], $data['age_group'])) {
-            throw new \RuntimeException('MNP record already exists for ' . $data['age_group'] . ' / ' . $data['year']);
+        $beneficiaryId = (int)$data['beneficiary_id'];
+        $dateGiven     = $data['date_given'];
+
+        $batches = $this->getBatches($beneficiaryId);
+        if (count($batches) >= 2) {
+            throw new \RuntimeException('Maximum 2 MNP batches already given for this beneficiary.');
         }
+        if (count($batches) === 1) {
+            $days = (int)(new \DateTime($batches[0]['date_given']))->diff(new \DateTime($dateGiven))->days;
+            if ($days < 180) {
+                throw new \RuntimeException(
+                    'MNP Batch 2 requires at least 180 days after Batch 1 (last: ' . $batches[0]['date_given'] . ').'
+                );
+            }
+        }
+
         $row = [
-            'beneficiary_id'    => $data['beneficiary_id'],
-            'given_by'          => $data['given_by'] ?? null,
-            'date_given'        => $data['date_given'],
-            'year'              => $data['year'],
-            'age_group'         => $data['age_group'],
-            'completed_routine' => (int)($data['completed_routine'] ?? 0),
-            'notes'             => $data['notes'] ?? null,
+            'beneficiary_id'      => $beneficiaryId,
+            'given_by'            => $data['given_by'] ?? null,
+            'date_given'          => $dateGiven,
+            'year'                => $data['year'],
+            'age_group'           => $data['age_group'],
+            'batch_number'        => count($batches) + 1,
+            'completed_routine'   => (int)($data['completed_routine'] ?? 0),
+            'sachets_distributed' => isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== ''
+                ? (int)$data['sachets_distributed'] : 90,
+            'notes'               => $data['notes'] ?? null,
         ];
-        if (isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== '') {
-            $row['sachets_distributed'] = (int)$data['sachets_distributed'];
-        }
         return $this->insert($row);
     }
 
@@ -88,7 +106,7 @@ class MnpRecord extends Model
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
-               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
+               AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
                AND NOT EXISTS (
                    SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = ?
                )$extra

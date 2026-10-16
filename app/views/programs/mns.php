@@ -16,8 +16,8 @@
             <div class="col-md-2">
                 <label class="form-label small">Round</label>
                 <select name="round" class="form-select form-select-sm">
-                    <option value="February" <?= $round === 'February' ? 'selected' : '' ?>>February</option>
-                    <option value="August"   <?= $round === 'August'   ? 'selected' : '' ?>>August</option>
+                    <option value="April"   <?= $round === 'April'   ? 'selected' : '' ?>>April</option>
+                    <option value="October" <?= $round === 'October' ? 'selected' : '' ?>>October</option>
                 </select>
             </div>
             <?php else: ?>
@@ -540,8 +540,8 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                         <th rowspan="2" class="align-middle">Reason / Note</th>
                     </tr>
                     <tr>
-                        <th class="text-center">Feb</th>
-                        <th class="text-center">Aug</th>
+                        <th class="text-center">Apr</th>
+                        <th class="text-center">Oct</th>
                     </tr>
                 </thead>
                 <tbody>

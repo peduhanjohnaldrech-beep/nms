@@ -97,7 +97,7 @@
                         <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 small">Feb &amp; Aug Rounds</span>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">Coverage report for Vitamin A supplementation — February and August distribution rounds per barangay.</p>
+                <p class="text-muted small mb-3">Coverage report for Vitamin A supplementation — April and October distribution rounds per barangay.</p>
                 <a href="<?= APP_URL ?>/reports/mns?tab=vita" class="btn btn-warning btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Vitamin A Report</a>
             </div>
         </div>

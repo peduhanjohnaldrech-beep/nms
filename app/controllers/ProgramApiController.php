@@ -55,7 +55,7 @@ class ProgramApiController extends ApiController
         $db   = Database::getInstance();
 
         $year  = (int)($_GET['year']  ?? date('Y'));
-        $round = $_GET['round'] ?? 'February';
+        $round = $_GET['round'] ?? 'April';
         $brgy  = $this->scopedBarangay($_GET['barangay'] ?? null);
         $tab   = $_GET['tab'] ?? 'vitaminA';
 
@@ -111,27 +111,27 @@ class ProgramApiController extends ApiController
             // defaulter
             $bnsFilter = \App\Models\Beneficiary::BNS_SUBMITTED_FILTER;
             $brgyWhere = $brgy ? " AND b.barangay = " . $db->quote($brgy) : '';
-            $febDate   = "{$year}-02-15";
-            $augDate   = "{$year}-08-15";
+            $aprDate   = "{$year}-04-15";
+            $octDate   = "{$year}-10-15";
             $asOfDate  = $year < (int)date('Y') ? "{$year}-12-31" : date('Y-m-d');
             $rows = $db->query(
                 "SELECT b.id, b.last_name, b.first_name, b.barangay, b.purok_zone,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59) AS elig_vita_feb,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59) AS elig_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_feb,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_aug,
                         (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_mnp,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_lns,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'February' AND v.year = $year) AS got_vita_feb,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'August' AND v.year = $year) AS got_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24) AS elig_lns,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April' AND v.year = $year) AS got_vita_feb,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_aug,
                         EXISTS(SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = $year) AS got_mnp,
                         EXISTS(SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = $year) AS got_lns
                  FROM beneficiaries b
                  WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                  AND $bnsFilter$brgyWhere
                  AND (
-                     TIMESTAMPDIFF(MONTH, b.date_of_birth, '$febDate') BETWEEN 6 AND 59
-                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$augDate') BETWEEN 6 AND 59
-                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23
+                     TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59
+                     OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
                  )
                  HAVING (elig_vita_feb AND NOT got_vita_feb)
                      OR (elig_vita_aug AND NOT got_vita_aug)
@@ -344,7 +344,7 @@ class ProgramApiController extends ApiController
         if (empty($data['beneficiary_id']))   $this->error('beneficiary_id required', 422);
         if (empty($data['distribution_date'])) $this->error('distribution_date required', 422);
         $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,created_by) VALUES (?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'February',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$this->userId()]);
+           ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$this->userId()]);
         $this->success([], 'Vitamin A record saved');
     }
 

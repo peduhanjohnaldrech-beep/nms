@@ -23,6 +23,20 @@ class VitaminARecord extends Model
         return null;
     }
 
+    public function getLastDistribution(int $beneficiaryId): ?array
+    {
+        return $this->fetch(
+            "SELECT distribution_date, dose_number FROM vitamin_a_records WHERE beneficiary_id = ? ORDER BY distribution_date DESC, id DESC LIMIT 1",
+            [$beneficiaryId]
+        ) ?: null;
+    }
+
+    public function getDoseCount(int $beneficiaryId): int
+    {
+        $row = $this->fetch("SELECT COUNT(*) AS cnt FROM vitamin_a_records WHERE beneficiary_id = ?", [$beneficiaryId]);
+        return (int)($row['cnt'] ?? 0);
+    }
+
     public function recordDistribution(array $data): int
     {
         if (empty($data['dosage_iu'])) {
@@ -31,13 +45,35 @@ class VitaminARecord extends Model
             $data['dosage_iu']     = $dosageInfo['dosage_iu'];
             $data['capsule_color'] = $dosageInfo['capsule_color'];
         }
+
+        $beneficiaryId = (int)$data['beneficiary_id'];
+        $distribDate   = $data['distribution_date'] ?? date('Y-m-d');
+
+        // 6-month (180-day) interval check
+        $last = $this->getLastDistribution($beneficiaryId);
+        if ($last) {
+            $days = (int)(new \DateTime($last['distribution_date']))->diff(new \DateTime($distribDate))->days;
+            if ($days < 180) {
+                throw new \RuntimeException(
+                    'Vitamin A was given within the last 6 months (last: ' . $last['distribution_date'] . '). Must wait 180 days.'
+                );
+            }
+        }
+
+        // Max 9 lifetime doses (6–59 months, biannual rounds)
+        $doseCount = $this->getDoseCount($beneficiaryId);
+        if ($doseCount >= 9) {
+            throw new \RuntimeException('Maximum 9 Vitamin A doses already recorded for this beneficiary.');
+        }
+
         return $this->insert([
-            'beneficiary_id'    => $data['beneficiary_id'],
-            'distribution_date' => $data['distribution_date'] ?? date('Y-m-d'),
+            'beneficiary_id'    => $beneficiaryId,
+            'distribution_date' => $distribDate,
             'round'             => $data['round'],
             'year'              => $data['year'] ?? date('Y'),
             'dosage_iu'         => $data['dosage_iu'],
             'capsule_color'     => $data['capsule_color'],
+            'dose_number'       => $doseCount + 1,
             'administered_by'   => $data['administered_by'] ?? null,
             'created_by'        => $data['created_by'] ?? null,
         ]);
