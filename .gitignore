@@ -8,8 +8,12 @@ database/*.sqlite
 # Composer vendor directory
 vendor/
 
-# Storage uploads
-storage/
+# Storage uploads (but allow templates)
+storage/*
+!storage/templates/
+storage/templates/*
+!storage/templates/*.xlsx
+!storage/templates/*.xltx
 
 # Diagnostic/debug scripts (one-time use)
 diag_*.php
