@@ -30,8 +30,35 @@ class ApiController
         $this->requireApiAuth();
     }
 
+    protected function rateLimit(int $maxRequests = 60, int $windowSeconds = 60): void
+    {
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $key = 'api_rl:' . md5($ip);
+        if (function_exists('apcu_fetch')) {
+            $count = (int)(apcu_fetch($key) ?: 0) + 1;
+            if ($count === 1) apcu_store($key, 1, $windowSeconds);
+            else              apcu_store($key, $count, apcu_fetch($key . '_ttl') ?: $windowSeconds);
+            apcu_store($key . '_ttl', $windowSeconds, $windowSeconds);
+            if ($count > $maxRequests) {
+                header('Retry-After: ' . $windowSeconds);
+                $this->error('Too many requests. Please slow down.', 429);
+            }
+        } else {
+            $file = sys_get_temp_dir() . '/nms_rl_' . md5($ip);
+            $data = file_exists($file) ? json_decode(file_get_contents($file), true) : null;
+            if (!$data || time() > $data['reset']) $data = ['count' => 0, 'reset' => time() + $windowSeconds];
+            $data['count']++;
+            file_put_contents($file, json_encode($data), LOCK_EX);
+            if ($data['count'] > $maxRequests) {
+                header('Retry-After: ' . $windowSeconds);
+                $this->error('Too many requests. Please slow down.', 429);
+            }
+        }
+    }
+
     protected function requireApiAuth(): void
     {
+        $this->rateLimit(120, 60); // 120 API requests per minute per IP
         $token = $this->getBearerToken();
         if (!$token) {
             $this->error('Authorization token required', 401);

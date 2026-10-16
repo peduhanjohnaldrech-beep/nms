@@ -188,6 +188,9 @@ $router->post('/users/{id}/destroy',  'UserController@destroy');
 // REST API — Mobile App
 // ============================================================
 
+// Health check (no auth required)
+$router->get('/api/health', 'HealthController@check');
+
 // Auth
 $router->post('/api/auth/login',  'AuthApiController@login');
 $router->post('/api/auth/logout', 'AuthApiController@logout');
