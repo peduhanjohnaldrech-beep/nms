@@ -140,7 +140,9 @@ class ProgramEnrollment extends Model
                     a.weight_for_age_zscore, a.wflh_zscore, a.weight_kg, a.assessment_date
              FROM beneficiaries b
              JOIN assessments a ON a.id = (
-                 SELECT id FROM assessments WHERE beneficiary_id = b.id ORDER BY assessment_date DESC, id DESC LIMIT 1
+                 SELECT id FROM assessments
+                 WHERE beneficiary_id = b.id AND period = 'January' AND validation_status = 'validated'
+                 ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE (a.wflh_status IN ('SW','MW') OR a.nutritional_status IN ('SUW','UW'))
              AND b.deleted_at IS NULL
