@@ -6,15 +6,17 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
-            ini_set('session.gc_maxlifetime', 3600);
+            ini_set('session.gc_maxlifetime', 28800);
+            ini_set('session.gc_probability', 1);
+            ini_set('session.gc_divisor', 100);
             $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
                     || (($_SERVER['SERVER_PORT'] ?? 80) == 443);
-            session_set_cookie_params(['lifetime' => 3600, 'httponly' => true, 'samesite' => 'Lax', 'secure' => $isHttps]);
+            session_set_cookie_params(['lifetime' => 28800, 'httponly' => true, 'samesite' => 'Lax', 'secure' => $isHttps]);
             session_start();
         }
 
-        // Auto-logout after 1 hour of inactivity
-        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 3600) {
+        // Auto-logout after 8 hours of inactivity
+        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > 28800) {
             session_unset();
             session_destroy();
             session_start();
