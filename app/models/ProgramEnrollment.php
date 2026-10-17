@@ -141,7 +141,7 @@ class ProgramEnrollment extends Model
              FROM beneficiaries b
              JOIN assessments a ON a.id = (
                  SELECT id FROM assessments
-                 WHERE beneficiary_id = b.id AND period = 'January' AND validation_status = 'validated'
+                 WHERE beneficiary_id = b.id AND validation_status = 'validated'
                  ORDER BY assessment_date DESC, id DESC LIMIT 1
              )
              WHERE (a.wflh_status IN ('SW','MW') OR a.nutritional_status IN ('SUW','UW'))

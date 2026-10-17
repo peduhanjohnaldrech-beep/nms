@@ -405,12 +405,13 @@ class BeneficiaryApiController extends ApiController
 
     /**
      * GET /api/beneficiaries/ready-to-submit
-     * BNS fetches their validated, not-yet-submitted beneficiaries.
+     * Fetch validated, not-yet-submitted beneficiaries scoped to caller's barangay.
+     * Allowed: bns, midwife
      */
     public function readyToSubmit(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['bns']);
+        $this->requireRole(['bns', 'midwife']);
 
         $db   = Database::getInstance();
         $stmt = $db->prepare(
@@ -428,12 +429,13 @@ class BeneficiaryApiController extends ApiController
 
     /**
      * POST /api/beneficiaries/batch-submit
-     * BNS submits multiple validated beneficiaries to admin at once.
+     * Submit multiple validated beneficiaries to admin.
+     * Allowed: bns, midwife (both scoped to their barangay)
      */
     public function batchSubmitToAdmin(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['bns']);
+        $this->requireRole(['bns', 'midwife']);
 
         $ids = array_filter(array_map('intval', $this->body()['ids'] ?? []), fn($id) => $id > 0);
         if (empty($ids)) $this->error('No IDs provided', 422);
