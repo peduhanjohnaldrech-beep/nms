@@ -10,7 +10,7 @@ class Beneficiary extends Model
 
     // Reusable SQL snippet: exclude BNS mobile records not yet validated by midwife
     // Use with alias 'b' for beneficiaries table
-    const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.validation_status = 'pending' AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
+    const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
 
     public function submitToAdmin(int $id, int $userId): void
     {
