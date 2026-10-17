@@ -362,6 +362,8 @@ thead.table-light th {
 .status-ob     { background-color: var(--status-ob);     color: #fff; }
 .status-sw     { background-color: var(--status-suw);    color: #fff; }
 .status-mw     { background-color: var(--status-uw);     color: #fff; }
+.status-sst    { background-color: #7c2d12;               color: #fff; }
+.status-st     { background-color: #92400e;               color: #fff; }
 .status-stunted{ background-color: #92400e;               color: #fff; }
 .status-tall   { background-color: #0891b2;               color: #fff; }
 

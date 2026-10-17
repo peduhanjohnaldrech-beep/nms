@@ -31,6 +31,7 @@ class ZScoreHelper
     {
         if ($zscore < -3.0) return 'SSt';
         if ($zscore < -2.0) return 'St';
+        if ($zscore > 3.0)  return 'Tall';
         return 'Normal';
     }
 
