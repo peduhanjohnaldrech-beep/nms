@@ -173,9 +173,10 @@ $coverageClass = $coverage >= 80 ? 'success' : ($coverage >= 50 ? 'warning' : 'd
                 </div>
                 <div class="col-md-4">
                     <strong>HFA — Height-for-Age</strong><br>
-                    Stunted: Z &lt; -2<br>
-                    Normal: Z -2 to +3<br>
-                    Tall: Z &gt; +3<br><br>
+                    <span class="badge status-sst">SSt</span> Severely Stunted: Z &lt; -3<br>
+                    <span class="badge status-st">St</span> Stunted: Z -3 to -2<br>
+                    <span class="badge status-normal">Normal</span> Z -2 to +3<br>
+                    <span class="badge status-tall">Tall</span> Z &gt; +3<br><br>
                     <span class="text-muted">Z-scores based on WHO 2006 Child Growth Standards</span>
                 </div>
             </div>

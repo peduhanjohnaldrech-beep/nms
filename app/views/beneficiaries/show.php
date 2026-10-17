@@ -316,6 +316,11 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
                     <strong>WFL/H</strong>:
                     <span class="badge status-sw">SW</span> &lt;-3 &nbsp;
                     <span class="badge status-mw">MW</span> -3 to -2<br>
+                    <strong>HFA</strong>:
+                    <span class="badge status-sst">SSt</span> &lt;-3 &nbsp;
+                    <span class="badge status-st">St</span> -3 to -2 &nbsp;
+                    <span class="badge status-normal">Normal</span> -2 to +3 &nbsp;
+                    <span class="badge status-tall">Tall</span> &gt;+3<br>
                     <span class="text-muted">Based on WHO 2006 Child Growth Standards</span>
                 </div>
             </div>
