@@ -6,6 +6,10 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+            // Use a custom session path so the system cron (sessionclean) doesn't wipe sessions mid-use
+            $savePath = BASE_PATH . '/storage/sessions';
+            if (!is_dir($savePath)) mkdir($savePath, 0700, true);
+            session_save_path($savePath);
             ini_set('session.gc_maxlifetime', 28800);
             ini_set('session.gc_probability', 1);
             ini_set('session.gc_divisor', 100);
