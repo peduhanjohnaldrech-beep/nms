@@ -10,7 +10,10 @@ class Beneficiary extends Model
 
     // Reusable SQL snippet: exclude BNS mobile records not yet validated by midwife
     // Use with alias 'b' for beneficiaries table
+    // Use with alias 'b' for beneficiaries table
     const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
+    // Use when beneficiaries table has no alias
+    const BNS_SUBMITTED_FILTER_NO_ALIAS = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
 
     public function submitToAdmin(int $id, int $userId): void
     {
@@ -26,7 +29,7 @@ class Beneficiary extends Model
             'b.deleted_at IS NULL',
             "b.validation_status = 'validated'",
             // BNS-added mobile records only appear after BNS explicitly submits them
-            "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))",
+            self::BNS_SUBMITTED_FILTER,
         ];
         $params     = [];
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Core\Model;
+use App\Models\Beneficiary;
 
 class MnpRecord extends Model
 {
@@ -105,7 +106,7 @@ class MnpRecord extends Model
                     TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
-               AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
+               AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
                AND NOT EXISTS (
                    SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = ?

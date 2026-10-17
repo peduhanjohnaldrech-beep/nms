@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Core\Model;
+use App\Models\Beneficiary;
 
 class ProgramEnrollment extends Model
 {
@@ -148,7 +149,7 @@ class ProgramEnrollment extends Model
              AND b.deleted_at IS NULL
              AND b.validation_status = 'validated'
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
-             AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
+             AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
              AND b.id NOT IN (
                  SELECT beneficiary_id FROM program_enrollments WHERE program = 'DSP' AND status = 'Active'
              )$extra
@@ -169,7 +170,7 @@ class ProgramEnrollment extends Model
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
              AND b.validation_status = 'validated'
-             AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
+             AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 59
              AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
              AND b.id NOT IN (

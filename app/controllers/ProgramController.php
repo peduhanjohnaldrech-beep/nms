@@ -58,7 +58,7 @@ class ProgramController extends Controller
             "SELECT a.*, b.last_name, b.first_name, b.middle_name, b.barangay, b.sex, b.date_of_birth
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
-               AND NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))
+               AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59
                AND $where
                AND a.id = (

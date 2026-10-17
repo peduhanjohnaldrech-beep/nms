@@ -26,7 +26,7 @@ class BarangayController extends Controller
         // total  = validated + BNS-submitted (matches what beneficiary list shows without age filter)
         // active = validated + BNS-submitted + 0-59 months (matches beneficiary list default view)
         // pending = awaiting validation (informational)
-        $bnsNoAlias = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
+        $bnsNoAlias = Beneficiary::BNS_SUBMITTED_FILTER_NO_ALIAS;
         $stmt = $db->query(
             "SELECT barangay,
                     SUM(CASE WHEN validation_status = 'validated' AND $bnsNoAlias THEN 1 ELSE 0 END) AS total,

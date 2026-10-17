@@ -380,7 +380,7 @@ class ReportController extends Controller
         if ($barangay) { $tWhere .= ' AND barangay = ?';              $tParams[] = $barangay; }
         if ($purok)    { $tWhere .= ' AND LOWER(purok_zone) = LOWER(?)'; $tParams[] = $purok; }
 
-        $bnsFilterNoAlias = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
+        $bnsFilterNoAlias = Beneficiary::BNS_SUBMITTED_FILTER_NO_ALIAS;
         $stmt = $db->prepare(
             "SELECT barangay, COUNT(*) AS total
              FROM beneficiaries
