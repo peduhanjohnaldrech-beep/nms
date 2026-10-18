@@ -15,6 +15,9 @@
         <h1 class="display-1 fw-bold text-danger mb-1">500</h1>
         <h4 class="fw-semibold mb-2">Something Went Wrong</h4>
         <p class="text-muted mb-4">An unexpected error occurred. Please try again or contact your system administrator.</p>
+        <?php if (isset($e)): ?>
+        <pre class="text-start bg-dark text-warning p-3 rounded small mb-4" style="max-width:800px;margin:0 auto;overflow:auto;"><?= htmlspecialchars($e->getMessage() . "\nin " . $e->getFile() . ':' . $e->getLine()) ?></pre>
+        <?php endif; ?>
         <a href="<?= defined('APP_URL') ? APP_URL : '/' ?>/dashboard" class="btn btn-primary px-4">
             <i class="bi bi-house me-1"></i>Go to Dashboard
         </a>
