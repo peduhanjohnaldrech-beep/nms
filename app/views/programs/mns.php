@@ -81,50 +81,6 @@
     </div>
 </div>
 
-<!-- Summary Stats -->
-<?php
-$mnsEligible = $mnsTotal = $mnsCovPct = 0;
-if ($tab === 'vitaminA') {
-    $mnsEligible = count($eligible ?? []);
-    $mnsTotal    = count($vitaRecords ?? []);
-} elseif ($tab === 'mnp') {
-    $mnsEligible = count($mnpNotYet ?? []);
-    $mnsTotal    = count($mnpRecords ?? []);
-} elseif ($tab === 'defaulter') {
-    $mnsEligible = count($defaulterList ?? []);
-    $mnsTotal    = 0;
-} else {
-    $mnsEligible = count($lnsNotYet ?? []);
-    $mnsTotal    = count($lnsRecords ?? []);
-}
-$mnsGrand   = $mnsEligible + $mnsTotal;
-$mnsCovPct  = $mnsGrand > 0 ? min(100, round($mnsTotal / $mnsGrand * 100)) : 0;
-$mnsCovClass = $mnsCovPct >= 80 ? 'success' : ($mnsCovPct >= 50 ? 'warning' : 'danger');
-?>
-<div class="row g-3 mb-3">
-    <div class="col-4">
-        <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-2 fw-bold text-<?= $tab === 'defaulter' ? 'danger' : 'secondary' ?>"><?= $mnsEligible ?></div>
-            <div class="small text-muted"><?= $tab === 'defaulter' ? 'Need Follow-up' : 'Not Yet Covered' ?></div>
-        </div>
-    </div>
-    <div class="col-4">
-        <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-2 fw-bold text-success"><?= $mnsTotal ?></div>
-            <div class="small text-muted"><?= $tab === 'defaulter' ? '—' : 'Covered' ?></div>
-        </div>
-    </div>
-    <div class="col-4">
-        <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-2 fw-bold text-<?= $mnsCovClass ?>"><?= $mnsCovPct ?>%</div>
-            <div class="small text-muted">Coverage</div>
-            <div class="progress mx-3 mt-1" style="height:5px;">
-                <div class="progress-bar bg-<?= $mnsCovClass ?>" style="width:<?= $mnsCovPct ?>%"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Tabs -->
 <?php
 $tabBase = 'round=' . urlencode($round) . '&year=' . $year
@@ -150,6 +106,12 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
             <i class="bi bi-prescription2 me-1"></i>LNS-SQ
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link <?= $tab === 'tcl' ? 'active' : '' ?>"
+           href="?<?= $tabBase ?>&tab=tcl">
+            <i class="bi bi-table me-1"></i>TCL Master List
+        </a>
+    </li>
     <li class="nav-item ms-auto">
         <a class="nav-link <?= $tab === 'defaulter' ? 'active text-danger' : 'text-danger' ?>"
            href="?<?= $tabBase ?>&tab=defaulter">
@@ -158,10 +120,43 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     </li>
 </ul>
 
-<?php $canRecord = \Core\Session::get('user_role') === 'admin'; ?>
+<?php // $canRecord is passed from controller (hasPermission('programs')) ?>
 
 <!-- ── Vitamin A Tab ── -->
 <?php if ($tab === 'vitaminA'): ?>
+<!-- Vitamin A tracker — both rounds -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <div class="row g-0 text-center align-items-center">
+            <div class="col-2 fw-semibold small text-muted text-start">Round</div>
+            <div class="col-2 fw-semibold small text-muted">Covered</div>
+            <div class="col-2 fw-semibold small text-muted">Remaining</div>
+            <div class="col-2 fw-semibold small text-muted">Total</div>
+            <div class="col-4 fw-semibold small text-muted">Coverage</div>
+        </div>
+        <?php foreach ([$tracker[0], $tracker[1]] as $_t):
+            $_total = $_t['covered'] + $_t['remaining'];
+            $_pct   = $_total > 0 ? min(100, round($_t['covered'] / $_total * 100)) : 0;
+            $_cls   = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
+            $_rnd   = str_replace('Vitamin A — ', '', $_t['label']);
+        ?>
+        <div class="row g-0 text-center align-items-center py-1 border-top">
+            <div class="col-2 fw-semibold small text-start"><?= $_rnd ?></div>
+            <div class="col-2 fw-bold text-success"><?= $_t['covered'] ?></div>
+            <div class="col-2 text-secondary"><?= $_t['remaining'] ?></div>
+            <div class="col-2"><?= $_total ?></div>
+            <div class="col-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:8px;">
+                        <div class="progress-bar bg-<?= $_cls ?>" style="width:<?= $_pct ?>%"></div>
+                    </div>
+                    <span class="small fw-semibold text-<?= $_cls ?>" style="min-width:36px"><?= $_pct ?>%</span>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
 <div class="row g-3">
     <!-- Not Yet Covered -->
     <div class="col-lg-6">
@@ -319,6 +314,36 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     Viewing records for <strong><?= $year ?></strong>. Age eligibility is calculated as of <strong><?= htmlspecialchars(date('F j, Y', strtotime($asOfDate))) ?></strong> (Dec 31 of that year).
 </div>
 <?php endif; ?>
+<!-- MNP tracker -->
+<?php
+$_t   = $tracker[2];
+$_tot = $_t['covered'] + $_t['remaining'];
+$_pct = $_tot > 0 ? min(100, round($_t['covered'] / $_tot * 100)) : 0;
+$_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
+?>
+<div class="row g-2 mb-3">
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-success"><?= $_t['covered'] ?></div>
+            <div class="small text-muted">Covered</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-secondary"><?= $_t['remaining'] ?></div>
+            <div class="small text-muted">Remaining</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-<?= $_cls ?>"><?= $_pct ?>%</div>
+            <div class="small text-muted">Coverage</div>
+            <div class="progress mx-3 mt-1" style="height:4px;">
+                <div class="progress-bar bg-<?= $_cls ?>" style="width:<?= $_pct ?>%"></div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row g-3">
     <!-- Not Yet Received -->
     <div class="col-lg-6">
@@ -419,6 +444,36 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
     Viewing records for <strong><?= $year ?></strong>. Age eligibility is calculated as of <strong><?= htmlspecialchars(date('F j, Y', strtotime($asOfDate))) ?></strong> (Dec 31 of that year).
 </div>
 <?php endif; ?>
+<!-- LNS-SQ tracker -->
+<?php
+$_t   = $tracker[3];
+$_tot = $_t['covered'] + $_t['remaining'];
+$_pct = $_tot > 0 ? min(100, round($_t['covered'] / $_tot * 100)) : 0;
+$_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
+?>
+<div class="row g-2 mb-3">
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-success"><?= $_t['covered'] ?></div>
+            <div class="small text-muted">Covered</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-secondary"><?= $_t['remaining'] ?></div>
+            <div class="small text-muted">Remaining</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-<?= $_cls ?>"><?= $_pct ?>%</div>
+            <div class="small text-muted">Coverage</div>
+            <div class="progress mx-3 mt-1" style="height:4px;">
+                <div class="progress-bar bg-<?= $_cls ?>" style="width:<?= $_pct ?>%"></div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row g-3">
     <!-- Not Yet Received -->
     <div class="col-lg-6">
@@ -553,10 +608,10 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                     <?php endif; ?>
                     <?php foreach ($defaulterList as $d):
                         $cols = [
-                            'vita_feb' => ['elig' => (bool)$d['elig_vita_feb'], 'got' => (bool)$d['got_vita_feb']],
-                            'vita_aug' => ['elig' => (bool)$d['elig_vita_aug'], 'got' => (bool)$d['got_vita_aug']],
-                            'mnp'      => ['elig' => (bool)$d['elig_mnp'],      'got' => (bool)$d['got_mnp']],
-                            'lns'      => ['elig' => (bool)$d['elig_lns'],      'got' => (bool)$d['got_lns']],
+                            'vita_april' => ['elig' => (bool)$d['elig_vita_april'], 'got' => (bool)$d['got_vita_april']],
+                            'vita_oct'   => ['elig' => (bool)$d['elig_vita_oct'],   'got' => (bool)$d['got_vita_oct']],
+                            'mnp'        => ['elig' => (bool)$d['elig_mnp'],        'got' => (bool)$d['got_mnp']],
+                            'lns'        => ['elig' => (bool)$d['elig_lns'],        'got' => (bool)$d['got_lns']],
                         ];
                         $reasons = $defaulterReasons[$d['id']] ?? [];
                         // First missing supplement
@@ -608,6 +663,115 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- ── TCL Master List Tab ── -->
+<?php elseif ($tab === 'tcl'): ?>
+<div class="card border-0 shadow-sm">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>
+            <i class="bi bi-table me-1 text-primary"></i>
+            TCL — Target Client List &nbsp;<span class="badge bg-secondary"><?= count($tclList) ?></span>
+        </span>
+        <small class="text-muted fw-normal">One row per child · blank cell = missed supplement</small>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" style="font-size:.83rem;">
+            <thead class="table-light">
+                <tr>
+                    <th rowspan="2" class="align-middle">Name</th>
+                    <th rowspan="2" class="align-middle text-center">Age<br>(mo)</th>
+                    <th rowspan="2" class="align-middle">Barangay / Purok</th>
+                    <th rowspan="2" class="align-middle text-center">OPT Status</th>
+                    <th colspan="2" class="text-center bg-warning bg-opacity-10">Vitamin A</th>
+                    <th rowspan="2" class="align-middle text-center bg-info bg-opacity-10">MNP<br><small class="fw-normal text-muted">6–23 mo</small></th>
+                    <th rowspan="2" class="align-middle text-center bg-success bg-opacity-10">LNS-SQ<br><small class="fw-normal text-muted">Wasted/Stunted</small></th>
+                </tr>
+                <tr>
+                    <th class="text-center bg-warning bg-opacity-10">April</th>
+                    <th class="text-center bg-warning bg-opacity-10">October</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php if (empty($tclList)): ?>
+            <tr><td colspan="8" class="text-center text-muted py-5">No beneficiaries found.</td></tr>
+            <?php endif; ?>
+            <?php foreach ($tclList as $r):
+                $lnsElig = in_array($r['opt_status'] ?? '', ['SUW','UW'])
+                        || in_array($r['wflh_status'] ?? '', ['SW','MW'])
+                        || in_array($r['hfa_status']  ?? '', ['SSt','St']);
+                $mnpElig = ($r['age_months'] >= 6 && $r['age_months'] <= 23);
+                $vitaElig = ($r['age_months'] >= 6 && $r['age_months'] <= 59);
+                // highlight row if any eligible supplement is blank
+                $rowMissing = ($vitaElig && !$r['vita_april_date'])
+                           || ($vitaElig && !$r['vita_oct_date'])
+                           || ($mnpElig  && !$r['mnp_date'])
+                           || ($lnsElig  && !$r['lns_date']);
+                $statusColors = ['SUW'=>'danger','UW'=>'warning text-dark','Normal'=>'success','OW'=>'info text-dark','OB'=>'primary'];
+                $statusColor  = $statusColors[$r['opt_status'] ?? ''] ?? 'secondary';
+            ?>
+            <tr class="<?= $rowMissing ? 'table-warning' : '' ?>">
+                <td>
+                    <a href="<?= APP_URL ?>/beneficiaries/<?= $r['id'] ?>" class="text-decoration-none fw-semibold">
+                        <?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>
+                    </a>
+                </td>
+                <td class="text-center"><?= $r['age_months'] ?></td>
+                <td><?= htmlspecialchars($r['barangay']) ?><?= $r['purok_zone'] ? ' · ' . htmlspecialchars($r['purok_zone']) : '' ?></td>
+                <td class="text-center">
+                    <?php if ($r['opt_status']): ?>
+                    <span class="badge bg-<?= $statusColor ?>"><?= htmlspecialchars($r['opt_status']) ?></span>
+                    <?php else: ?>
+                    <span class="text-muted small">No OPT</span>
+                    <?php endif; ?>
+                </td>
+                <!-- Vitamin A April -->
+                <td class="text-center <?= $vitaElig && !$r['vita_april_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                    <?php if (!$vitaElig): ?>
+                    <span class="text-muted">—</span>
+                    <?php elseif ($r['vita_april_date']): ?>
+                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['vita_april_date']) ?></span>
+                    <?php else: ?>
+                    <span class="text-danger small">Missed</span>
+                    <?php endif; ?>
+                </td>
+                <!-- Vitamin A October -->
+                <td class="text-center <?= $vitaElig && !$r['vita_oct_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                    <?php if (!$vitaElig): ?>
+                    <span class="text-muted">—</span>
+                    <?php elseif ($r['vita_oct_date']): ?>
+                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['vita_oct_date']) ?></span>
+                    <?php else: ?>
+                    <span class="text-danger small">Missed</span>
+                    <?php endif; ?>
+                </td>
+                <!-- MNP -->
+                <td class="text-center <?= $mnpElig && !$r['mnp_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                    <?php if (!$mnpElig): ?>
+                    <span class="text-muted">—</span>
+                    <?php elseif ($r['mnp_date']): ?>
+                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['mnp_date']) ?></span>
+                    <?php if ($r['mnp_sachets']): ?><br><span class="text-muted" style="font-size:.75rem;"><?= $r['mnp_sachets'] ?> sachets</span><?php endif; ?>
+                    <?php else: ?>
+                    <span class="text-danger small">Missed</span>
+                    <?php endif; ?>
+                </td>
+                <!-- LNS-SQ -->
+                <td class="text-center <?= $lnsElig && !$r['lns_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                    <?php if (!$lnsElig): ?>
+                    <span class="text-muted">—</span>
+                    <?php elseif ($r['lns_date']): ?>
+                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['lns_date']) ?></span>
+                    <?php if ($r['lns_sachets']): ?><br><span class="text-muted" style="font-size:.75rem;"><?= $r['lns_sachets'] ?> packets</span><?php endif; ?>
+                    <?php else: ?>
+                    <span class="text-danger small">Missed</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 <?php endif; ?>

@@ -117,12 +117,15 @@ class ProgramApiController extends ApiController
             $rows = $db->query(
                 "SELECT b.id, b.last_name, b.first_name, b.barangay, b.purok_zone,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_feb,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_april,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_oct,
                         (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_mnp,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24) AS elig_lns,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April' AND v.year = $year) AS got_vita_feb,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
+                         AND EXISTS(SELECT 1 FROM assessments a WHERE a.beneficiary_id = b.id
+                             AND a.validation_status = 'validated' AND a.assessment_year = $year
+                             AND (a.nutritional_status IN ('SUW','UW') OR a.wflh_status IN ('SW','MW') OR a.hfa_status IN ('SSt','St')))) AS elig_lns,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April'   AND v.year = $year) AS got_vita_april,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_oct,
                         EXISTS(SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = $year) AS got_mnp,
                         EXISTS(SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = $year) AS got_lns
                  FROM beneficiaries b
@@ -133,8 +136,8 @@ class ProgramApiController extends ApiController
                      OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59
                      OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
                  )
-                 HAVING (elig_vita_feb AND NOT got_vita_feb)
-                     OR (elig_vita_aug AND NOT got_vita_aug)
+                 HAVING (elig_vita_april AND NOT got_vita_april)
+                     OR (elig_vita_oct AND NOT got_vita_oct)
                      OR (elig_mnp AND NOT got_mnp)
                      OR (elig_lns AND NOT got_lns)
                  ORDER BY b.barangay, b.last_name"

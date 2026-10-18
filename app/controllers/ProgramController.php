@@ -11,7 +11,6 @@ use App\Models\MnpRecord;
 use App\Models\LnsSqRecord;
 use App\Models\Assessment;
 use App\Models\Program;
-use App\Models\DispensingRecord;
 use App\Models\Beneficiary;
 
 class ProgramController extends Controller
@@ -526,12 +525,15 @@ class ProgramController extends Controller
             $defaulterList = Database::getInstance()->query(
                 "SELECT b.id, b.last_name, b.first_name, b.barangay, b.purok_zone,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_feb,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$aprDate') BETWEEN 6 AND 59) AS elig_vita_april,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59) AS elig_vita_oct,
                         (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 23) AS elig_mnp,
-                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24) AS elig_lns,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April' AND v.year = $year) AS got_vita_feb,
-                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_aug,
+                        (TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
+                         AND EXISTS(SELECT 1 FROM assessments a WHERE a.beneficiary_id = b.id
+                             AND a.validation_status = 'validated' AND a.assessment_year = $year
+                             AND (a.nutritional_status IN ('SUW','UW') OR a.wflh_status IN ('SW','MW') OR a.hfa_status IN ('SSt','St')))) AS elig_lns,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'April'   AND v.year = $year) AS got_vita_april,
+                        EXISTS(SELECT 1 FROM vitamin_a_records v WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year) AS got_vita_oct,
                         EXISTS(SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = $year) AS got_mnp,
                         EXISTS(SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = $year) AS got_lns
                  FROM beneficiaries b
@@ -542,8 +544,8 @@ class ProgramController extends Controller
                      OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$octDate') BETWEEN 6 AND 59
                      OR TIMESTAMPDIFF(MONTH, b.date_of_birth, '$asOfDate') BETWEEN 6 AND 24
                  )
-                 HAVING (elig_vita_feb AND NOT got_vita_feb)
-                     OR (elig_vita_aug AND NOT got_vita_aug)
+                 HAVING (elig_vita_april AND NOT got_vita_april)
+                     OR (elig_vita_oct AND NOT got_vita_oct)
                      OR (elig_mnp AND NOT got_mnp)
                      OR (elig_lns AND NOT got_lns)
                  ORDER BY b.barangay, b.last_name"
@@ -609,6 +611,54 @@ class ProgramController extends Controller
         $completions->execute([$year]);
         $distributionCompletions = $completions->fetchAll();
 
+        // TCL master list — only loaded on tcl tab (expensive subquery per child)
+        $tclList = [];
+        if ($tab === 'tcl') {
+            $tclList = Database::getInstance()->query(
+                "SELECT b.id, b.last_name, b.first_name, b.date_of_birth,
+                        TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
+                        b.barangay, b.purok_zone,
+                        (SELECT a.nutritional_status FROM assessments a
+                         WHERE a.beneficiary_id = b.id AND a.validation_status = 'validated'
+                         AND a.assessment_year = $year ORDER BY a.assessment_date DESC LIMIT 1) AS opt_status,
+                        (SELECT a.wflh_status FROM assessments a
+                         WHERE a.beneficiary_id = b.id AND a.validation_status = 'validated'
+                         AND a.assessment_year = $year ORDER BY a.assessment_date DESC LIMIT 1) AS wflh_status,
+                        (SELECT a.hfa_status FROM assessments a
+                         WHERE a.beneficiary_id = b.id AND a.validation_status = 'validated'
+                         AND a.assessment_year = $year ORDER BY a.assessment_date DESC LIMIT 1) AS hfa_status,
+                        (SELECT v.distribution_date FROM vitamin_a_records v
+                         WHERE v.beneficiary_id = b.id AND v.round = 'April' AND v.year = $year LIMIT 1) AS vita_april_date,
+                        (SELECT v.distribution_date FROM vitamin_a_records v
+                         WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year LIMIT 1) AS vita_oct_date,
+                        (SELECT m.date_given FROM mnp_records m
+                         WHERE m.beneficiary_id = b.id AND m.year = $year ORDER BY m.date_given ASC LIMIT 1) AS mnp_date,
+                        (SELECT m.sachets_distributed FROM mnp_records m
+                         WHERE m.beneficiary_id = b.id AND m.year = $year ORDER BY m.date_given ASC LIMIT 1) AS mnp_sachets,
+                        (SELECT l.date_given FROM lns_sq_records l
+                         WHERE l.beneficiary_id = b.id AND l.year = $year ORDER BY l.date_given ASC LIMIT 1) AS lns_date,
+                        (SELECT l.sachets_distributed FROM lns_sq_records l
+                         WHERE l.beneficiary_id = b.id AND l.year = $year ORDER BY l.date_given ASC LIMIT 1) AS lns_sachets
+                 FROM beneficiaries b
+                 WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
+                 AND $beneFilter$brgyWhere$purokWhere
+                 AND TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 0 AND 59
+                 ORDER BY b.barangay, b.last_name, b.first_name"
+            )->fetchAll();
+        }
+
+        // Unified supplement tracker (all 4 supplements regardless of active tab)
+        $vitaAprilCov = $round === 'April'   ? count($vitaRecords) : count($vitaModel->getAllByRound('April',   $year, $barangay, $purok));
+        $vitaOctCov   = $round === 'October' ? count($vitaRecords) : count($vitaModel->getAllByRound('October', $year, $barangay, $purok));
+        $vitaAprilRem = $round === 'April'   ? count($eligible)    : count($this->enrollmentModel->getEligibleForMNS('April',   $year, $barangay, $purok));
+        $vitaOctRem   = $round === 'October' ? count($eligible)    : count($this->enrollmentModel->getEligibleForMNS('October', $year, $barangay, $purok));
+        $tracker = [
+            ['label' => 'Vitamin A — April',   'covered' => $vitaAprilCov, 'remaining' => $vitaAprilRem],
+            ['label' => 'Vitamin A — October', 'covered' => $vitaOctCov,   'remaining' => $vitaOctRem],
+            ['label' => 'MNP (6–23 mo)',        'covered' => count($mnpRecords), 'remaining' => count($mnpNotYet)],
+            ['label' => 'LNS-SQ (6–24 mo)',    'covered' => count($lnsRecords), 'remaining' => count($lnsNotYet)],
+        ];
+
         $this->view('programs/mns', [
             'eligible'               => $eligible,
             'vitaRecords'            => $vitaRecords,
@@ -632,16 +682,16 @@ class ProgramController extends Controller
             'defaulterReasons'       => $defaulterReasons,
             'bnsCoverage'            => $bnsCoverage,
             'distributionCompletions'=> $distributionCompletions,
+            'tracker'                => $tracker,
+            'canRecord'              => $this->hasPermission('programs'),
+            'tclList'                => $tclList,
         ]);
     }
 
     public function mnsVitaminA(): void
     {
         $this->requireAuth();
-        if (\Core\Session::get('user_role') !== 'admin') {
-            \Core\Session::flash('error', 'Only administrators can record Vitamin A distributions.');
-            $this->redirect('/programs/mns?tab=vitaminA');
-        }
+        $this->requirePermission('programs');
         if (!$this->isPost()) { $this->redirect('/programs/mns'); }
         $this->validateCsrf();
 
@@ -664,17 +714,6 @@ class ProgramController extends Controller
                 'age_months'        => $ageMonths,
                 'administered_by'   => trim($_POST['administered_by'] ?? ''),
                 'created_by'        => Session::get('user_id'),
-            ]);
-
-            (new DispensingRecord())->recordDispensing([
-                'beneficiary_id'  => $bid,
-                'program'         => 'MNS',
-                'supplement_type' => $dose,
-                'quantity'        => 1,
-                'unit'            => 'capsule',
-                'date_dispensed'  => $date,
-                'dispensed_by'    => Session::get('user_id'),
-                'notes'           => "Vitamin A – {$round} {$year} round",
             ]);
 
             Session::flash('success', 'Vitamin A distribution recorded.');
@@ -733,17 +772,6 @@ class ProgramController extends Controller
                 'notes'               => trim($_POST['notes'] ?? ''),
             ]);
 
-            (new DispensingRecord())->recordDispensing([
-                'beneficiary_id'  => $bid,
-                'program'         => 'MNS',
-                'supplement_type' => 'MNP (Micronutrient Powder)',
-                'quantity'        => 1,
-                'unit'            => 'sachet',
-                'date_dispensed'  => $date,
-                'dispensed_by'    => Session::get('user_id'),
-                'notes'           => trim($_POST['notes'] ?? ''),
-            ]);
-
             Session::flash('success', 'MNP record saved.');
         } catch (\Exception $e) {
             Session::flash('error', $e->getMessage());
@@ -773,17 +801,6 @@ class ProgramController extends Controller
                 'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
                 'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
                 'notes'               => trim($_POST['notes'] ?? ''),
-            ]);
-
-            (new DispensingRecord())->recordDispensing([
-                'beneficiary_id'  => $bid,
-                'program'         => 'MNS',
-                'supplement_type' => 'LNS-SQ (Lipid-based Nutrient Supplement)',
-                'quantity'        => 1,
-                'unit'            => 'sachet',
-                'date_dispensed'  => $date,
-                'dispensed_by'    => Session::get('user_id'),
-                'notes'           => trim($_POST['notes'] ?? ''),
             ]);
 
             Session::flash('success', 'LNS-SQ record saved.');
