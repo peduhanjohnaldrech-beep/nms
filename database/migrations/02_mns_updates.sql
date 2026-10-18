@@ -50,4 +50,20 @@ SET @sql = IF(@col = 0,
     'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- 5. sachets_distributed column on mnp_records (skip if already exists)
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mnp_records' AND COLUMN_NAME = 'sachets_distributed');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE mnp_records ADD COLUMN sachets_distributed TINYINT DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 6. sachets_distributed column on lns_sq_records (skip if already exists)
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lns_sq_records' AND COLUMN_NAME = 'sachets_distributed');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE lns_sq_records ADD COLUMN sachets_distributed TINYINT DEFAULT NULL',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET FOREIGN_KEY_CHECKS = 1;
