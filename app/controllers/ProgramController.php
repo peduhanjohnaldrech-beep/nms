@@ -614,6 +614,7 @@ class ProgramController extends Controller
         // TCL master list — only loaded on tcl tab (expensive subquery per child)
         $tclList = [];
         if ($tab === 'tcl') {
+            try {
             $tclList = Database::getInstance()->query(
                 "SELECT b.id, b.last_name, b.first_name, b.date_of_birth,
                         TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) AS age_months,
@@ -645,6 +646,10 @@ class ProgramController extends Controller
                  AND TIMESTAMPDIFF(MONTH, b.date_of_birth, CURDATE()) BETWEEN 0 AND 59
                  ORDER BY b.barangay, b.last_name, b.first_name"
             )->fetchAll();
+            } catch (\Throwable $e) {
+                file_put_contents('C:/xampp/htdocs/nms/storage/tcl_error.txt', date('Y-m-d H:i:s') . "\n" . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n");
+                throw $e;
+            }
         }
 
         // Unified supplement tracker (all 4 supplements regardless of active tab)
