@@ -33,9 +33,7 @@ class Router
     public function dispatch(): void
     {
         set_exception_handler(function (\Throwable $e) {
-            $msg = '[NMS] Uncaught exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString();
-            error_log($msg);
-            @file_put_contents('C:/xampp/htdocs/nms/storage/last_error.txt', date('Y-m-d H:i:s') . "\n" . $msg . "\n", FILE_APPEND);
+            error_log('[NMS] Uncaught exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             if (!headers_sent()) http_response_code(500);
             $appUrl = defined('APP_URL') ? APP_URL : '';
             include dirname(__DIR__) . '/app/views/errors/500.php';

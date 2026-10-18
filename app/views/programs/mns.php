@@ -668,104 +668,189 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
 
 <!-- ── TCL Master List Tab ── -->
 <?php elseif ($tab === 'tcl'): ?>
+<?php
+// Determine which rounds have passed based on today's date
+$today       = date('Y-m-d');
+$aprPassed   = $today >= "{$year}-04-15";
+$octPassed   = $today >= "{$year}-10-15";
+
+// Summary counts
+$tclTotal    = count($tclList);
+$tclMissing  = 0;
+foreach ($tclList as $_r) {
+    $_lnsE  = in_array($_r['opt_status'] ?? '', ['SUW','UW']) || in_array($_r['wflh_status'] ?? '', ['SW','MW']) || in_array($_r['hfa_status'] ?? '', ['SSt','St']);
+    $_mnpE  = ($_r['age_months'] >= 6 && $_r['age_months'] <= 23);
+    $_vitaE = ($_r['age_months'] >= 6 && $_r['age_months'] <= 59);
+    if (($_vitaE && $aprPassed && !$_r['vita_april_date'])
+     || ($_vitaE && $octPassed && !$_r['vita_oct_date'])
+     || ($_mnpE  && !$_r['mnp_date'])
+     || ($_lnsE  && !$_r['lns_date'])) {
+        $tclMissing++;
+    }
+}
+$tclComplete = $tclTotal - $tclMissing;
+$tclPct      = $tclTotal > 0 ? round($tclComplete / $tclTotal * 100) : 0;
+?>
+<!-- Summary bar -->
+<div class="row g-2 mb-3">
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold"><?= $tclTotal ?></div>
+            <div class="small text-muted">Total Children</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-success"><?= $tclComplete ?></div>
+            <div class="small text-muted">Fully Covered</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="card border-0 shadow-sm text-center py-2">
+            <div class="fs-3 fw-bold text-danger"><?= $tclMissing ?></div>
+            <div class="small text-muted">Need Follow-up</div>
+        </div>
+    </div>
+</div>
+
+<!-- TCL table card -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-        <span>
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold">
             <i class="bi bi-table me-1 text-primary"></i>
-            TCL — Target Client List &nbsp;<span class="badge bg-secondary"><?= count($tclList) ?></span>
+            Target Client List — <?= $year ?>
+            <span class="badge bg-secondary ms-1"><?= $tclTotal ?></span>
         </span>
-        <small class="text-muted fw-normal">One row per child · blank cell = missed supplement</small>
+        <div class="d-flex align-items-center gap-2">
+            <input type="text" id="tclSearch" class="form-control form-control-sm" placeholder="Search name…" style="width:180px;" oninput="tclFilter(this.value)">
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <!-- Legend -->
+    <div class="px-3 py-2 border-bottom bg-light d-flex flex-wrap gap-3 small text-muted">
+        <span><i class="bi bi-check-circle-fill text-success me-1"></i>Given (date shown)</span>
+        <span><i class="bi bi-x-circle-fill text-danger me-1"></i>Missed (round passed)</span>
+        <span><i class="bi bi-clock text-warning me-1"></i>Upcoming</span>
+        <span class="text-muted">— Not eligible</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm table-bordered table-hover mb-0 align-middle" style="font-size:.83rem;">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle" id="tclTable" style="font-size:.82rem;">
             <thead class="table-light">
                 <tr>
+                    <th rowspan="2" class="align-middle">#</th>
                     <th rowspan="2" class="align-middle">Name</th>
-                    <th rowspan="2" class="align-middle text-center">Age<br>(mo)</th>
-                    <th rowspan="2" class="align-middle">Barangay / Purok</th>
-                    <th rowspan="2" class="align-middle text-center">OPT Status</th>
-                    <th colspan="2" class="text-center bg-warning bg-opacity-10">Vitamin A</th>
-                    <th rowspan="2" class="align-middle text-center bg-info bg-opacity-10">MNP<br><small class="fw-normal text-muted">6–23 mo</small></th>
-                    <th rowspan="2" class="align-middle text-center bg-success bg-opacity-10">LNS-SQ<br><small class="fw-normal text-muted">Wasted/Stunted</small></th>
+                    <th rowspan="2" class="align-middle text-center">Age</th>
+                    <th rowspan="2" class="align-middle">Barangay</th>
+                    <th rowspan="2" class="align-middle">Purok</th>
+                    <th rowspan="2" class="align-middle text-center">OPT</th>
+                    <th colspan="2" class="text-center" style="background:#fffde7;">Vitamin A</th>
+                    <th rowspan="2" class="align-middle text-center" style="background:#e3f2fd;">MNP<br><small class="fw-normal text-muted">6–23 mo</small></th>
+                    <th rowspan="2" class="align-middle text-center" style="background:#e8f5e9;">LNS-SQ<br><small class="fw-normal text-muted">Wasted/Stunted</small></th>
                 </tr>
                 <tr>
-                    <th class="text-center bg-warning bg-opacity-10">April</th>
-                    <th class="text-center bg-warning bg-opacity-10">October</th>
+                    <th class="text-center" style="background:#fffde7;">April</th>
+                    <th class="text-center" style="background:#fffde7;">October</th>
                 </tr>
             </thead>
             <tbody>
             <?php if (empty($tclList)): ?>
-            <tr><td colspan="8" class="text-center text-muted py-5">No beneficiaries found.</td></tr>
+            <tr><td colspan="10" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-2 d-block mb-2 text-muted"></i>
+                No children aged 0–59 months found<?= $filterBarangay ? ' in ' . htmlspecialchars($filterBarangay) : '' ?>.
+            </td></tr>
             <?php endif; ?>
-            <?php foreach ($tclList as $r):
-                $lnsElig = in_array($r['opt_status'] ?? '', ['SUW','UW'])
-                        || in_array($r['wflh_status'] ?? '', ['SW','MW'])
-                        || in_array($r['hfa_status']  ?? '', ['SSt','St']);
-                $mnpElig = ($r['age_months'] >= 6 && $r['age_months'] <= 23);
+            <?php $rowNum = 0; foreach ($tclList as $r):
+                $rowNum++;
+                $lnsElig  = in_array($r['opt_status'] ?? '', ['SUW','UW'])
+                         || in_array($r['wflh_status'] ?? '', ['SW','MW'])
+                         || in_array($r['hfa_status']  ?? '', ['SSt','St']);
+                $mnpElig  = ($r['age_months'] >= 6 && $r['age_months'] <= 23);
                 $vitaElig = ($r['age_months'] >= 6 && $r['age_months'] <= 59);
-                // highlight row if any eligible supplement is blank
-                $rowMissing = ($vitaElig && !$r['vita_april_date'])
-                           || ($vitaElig && !$r['vita_oct_date'])
-                           || ($mnpElig  && !$r['mnp_date'])
-                           || ($lnsElig  && !$r['lns_date']);
+
+                // A row is flagged only for past-due gaps
+                $rowAlert = ($vitaElig && $aprPassed && !$r['vita_april_date'])
+                         || ($vitaElig && $octPassed && !$r['vita_oct_date'])
+                         || ($mnpElig  && !$r['mnp_date'])
+                         || ($lnsElig  && !$r['lns_date']);
+
                 $statusColors = ['SUW'=>'danger','UW'=>'warning text-dark','Normal'=>'success','OW'=>'info text-dark','OB'=>'primary'];
                 $statusColor  = $statusColors[$r['opt_status'] ?? ''] ?? 'secondary';
             ?>
-            <tr class="<?= $rowMissing ? 'table-warning' : '' ?>">
+            <tr class="<?= $rowAlert ? 'table-danger bg-opacity-10' : '' ?>">
+                <td class="text-muted text-center" style="font-size:.75rem;"><?= $rowNum ?></td>
                 <td>
                     <a href="<?= APP_URL ?>/beneficiaries/<?= $r['id'] ?>" class="text-decoration-none fw-semibold">
                         <?= htmlspecialchars($r['last_name'] . ', ' . $r['first_name']) ?>
                     </a>
                 </td>
-                <td class="text-center"><?= $r['age_months'] ?></td>
-                <td><?= htmlspecialchars($r['barangay']) ?><?= $r['purok_zone'] ? ' · ' . htmlspecialchars($r['purok_zone']) : '' ?></td>
+                <td class="text-center text-nowrap"><?= $r['age_months'] ?> mo</td>
+                <td><?= htmlspecialchars($r['barangay']) ?></td>
+                <td class="text-muted"><?= htmlspecialchars($r['purok_zone'] ?? '—') ?></td>
                 <td class="text-center">
                     <?php if ($r['opt_status']): ?>
                     <span class="badge bg-<?= $statusColor ?>"><?= htmlspecialchars($r['opt_status']) ?></span>
                     <?php else: ?>
-                    <span class="text-muted small">No OPT</span>
+                    <span class="text-muted">—</span>
                     <?php endif; ?>
                 </td>
                 <!-- Vitamin A April -->
-                <td class="text-center <?= $vitaElig && !$r['vita_april_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                <?php
+                $aprMissed = $vitaElig && $aprPassed && !$r['vita_april_date'];
+                $aprUpcoming = $vitaElig && !$aprPassed && !$r['vita_april_date'];
+                ?>
+                <td class="text-center <?= $aprMissed ? 'bg-danger bg-opacity-10' : '' ?>" style="background:<?= $r['vita_april_date'] ? '#f1fdf4' : '' ?>">
                     <?php if (!$vitaElig): ?>
-                    <span class="text-muted">—</span>
+                        <span class="text-muted">—</span>
                     <?php elseif ($r['vita_april_date']): ?>
-                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['vita_april_date']) ?></span>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['vita_april_date']) ?></div>
+                    <?php elseif ($aprMissed): ?>
+                        <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php else: ?>
-                    <span class="text-danger small">Missed</span>
+                        <i class="bi bi-clock text-warning"></i>
                     <?php endif; ?>
                 </td>
                 <!-- Vitamin A October -->
-                <td class="text-center <?= $vitaElig && !$r['vita_oct_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                <?php
+                $octMissed = $vitaElig && $octPassed && !$r['vita_oct_date'];
+                $octUpcoming = $vitaElig && !$octPassed && !$r['vita_oct_date'];
+                ?>
+                <td class="text-center <?= $octMissed ? 'bg-danger bg-opacity-10' : '' ?>" style="background:<?= $r['vita_oct_date'] ? '#f1fdf4' : '' ?>">
                     <?php if (!$vitaElig): ?>
-                    <span class="text-muted">—</span>
+                        <span class="text-muted">—</span>
                     <?php elseif ($r['vita_oct_date']): ?>
-                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['vita_oct_date']) ?></span>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['vita_oct_date']) ?></div>
+                    <?php elseif ($octMissed): ?>
+                        <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php else: ?>
-                    <span class="text-danger small">Missed</span>
+                        <i class="bi bi-clock text-warning"></i>
                     <?php endif; ?>
                 </td>
                 <!-- MNP -->
-                <td class="text-center <?= $mnpElig && !$r['mnp_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                <td class="text-center <?= $mnpElig && !$r['mnp_date'] ? 'bg-danger bg-opacity-10' : '' ?>" style="background:<?= $r['mnp_date'] ? '#f1fdf4' : '' ?>">
                     <?php if (!$mnpElig): ?>
-                    <span class="text-muted">—</span>
+                        <span class="text-muted">—</span>
                     <?php elseif ($r['mnp_date']): ?>
-                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['mnp_date']) ?></span>
-                    <?php if ($r['mnp_sachets']): ?><br><span class="text-muted" style="font-size:.75rem;"><?= $r['mnp_sachets'] ?> sachets</span><?php endif; ?>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['mnp_date']) ?></div>
+                        <?php if ($r['mnp_sachets']): ?><div class="text-muted" style="font-size:.7rem;"><?= $r['mnp_sachets'] ?> sachets</div><?php endif; ?>
                     <?php else: ?>
-                    <span class="text-danger small">Missed</span>
+                        <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php endif; ?>
                 </td>
                 <!-- LNS-SQ -->
-                <td class="text-center <?= $lnsElig && !$r['lns_date'] ? 'bg-danger bg-opacity-10' : '' ?>">
+                <td class="text-center <?= $lnsElig && !$r['lns_date'] ? 'bg-danger bg-opacity-10' : '' ?>" style="background:<?= $r['lns_date'] ? '#f1fdf4' : '' ?>">
                     <?php if (!$lnsElig): ?>
-                    <span class="text-muted">—</span>
+                        <span class="text-muted">—</span>
                     <?php elseif ($r['lns_date']): ?>
-                    <span class="text-success fw-semibold small"><?= htmlspecialchars($r['lns_date']) ?></span>
-                    <?php if ($r['lns_sachets']): ?><br><span class="text-muted" style="font-size:.75rem;"><?= $r['lns_sachets'] ?> packets</span><?php endif; ?>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['lns_date']) ?></div>
+                        <?php if ($r['lns_sachets']): ?><div class="text-muted" style="font-size:.7rem;"><?= $r['lns_sachets'] ?> pkts</div><?php endif; ?>
                     <?php else: ?>
-                    <span class="text-danger small">Missed</span>
+                        <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php endif; ?>
                 </td>
             </tr>
@@ -774,6 +859,15 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
         </table>
     </div>
 </div>
+<script>
+function tclFilter(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('#tclTable tbody tr').forEach(function(row) {
+        var name = row.cells[1] ? row.cells[1].textContent.toLowerCase() : '';
+        row.style.display = name.includes(q) ? '' : 'none';
+    });
+}
+</script>
 <?php endif; ?>
 
 <!-- ── Distribution Completions Banner ── -->
