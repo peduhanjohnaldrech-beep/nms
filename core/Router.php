@@ -32,8 +32,17 @@ class Router
 
     public function dispatch(): void
     {
+        register_shutdown_function(function () {
+            $err = error_get_last();
+            if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+                $msg = '[NMS-FATAL] ' . $err['message'] . ' in ' . $err['file'] . ':' . $err['line'];
+                @file_put_contents('C:/xampp/htdocs/nms/storage/last_error.txt', date('Y-m-d H:i:s') . "\n" . $msg . "\n", FILE_APPEND);
+            }
+        });
         set_exception_handler(function (\Throwable $e) {
-            error_log('[NMS] Uncaught exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            $msg = '[NMS] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString();
+            error_log($msg);
+            @file_put_contents('C:/xampp/htdocs/nms/storage/last_error.txt', date('Y-m-d H:i:s') . "\n" . $msg . "\n", FILE_APPEND);
             if (!headers_sent()) http_response_code(500);
             $appUrl = defined('APP_URL') ? APP_URL : '';
             include dirname(__DIR__) . '/app/views/errors/500.php';
