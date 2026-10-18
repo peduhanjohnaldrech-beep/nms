@@ -647,7 +647,7 @@ class ProgramController extends Controller
                  ORDER BY b.barangay, b.last_name, b.first_name"
             )->fetchAll();
             } catch (\Throwable $e) {
-                file_put_contents('C:/xampp/htdocs/nms/storage/tcl_error.txt', date('Y-m-d H:i:s') . "\n" . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n");
+                file_put_contents(BASE_PATH . '/storage/tcl_error.txt', date('Y-m-d H:i:s') . "\n" . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n");
                 throw $e;
             }
         }

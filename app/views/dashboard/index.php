@@ -23,11 +23,6 @@
         <h4 class="mb-0 fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h4>
         <p class="text-muted small mb-0 mt-1">Overview for <?= date('Y') ?></p>
     </div>
-    <?php if (strtolower(\Core\Session::get('user_role','')) === 'admin'): ?>
-    <a href="<?= APP_URL ?>/backup/download" class="btn btn-sm btn-outline-secondary" title="Download a backup of the database">
-        <i class="bi bi-database-down me-1"></i>Backup Database
-    </a>
-    <?php endif; ?>
 </div>
 
 <!-- Stat Cards -->
