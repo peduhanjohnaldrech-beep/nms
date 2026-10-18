@@ -567,7 +567,7 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
 </div>
 
 <!-- ── Defaulter List Tab ── -->
-<?php else: ?>
+<?php elseif ($tab === 'defaulter'): ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <span class="fw-semibold">Children missing at least one supplement — <?= $year ?></span>
