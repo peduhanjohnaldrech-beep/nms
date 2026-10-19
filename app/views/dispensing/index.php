@@ -212,7 +212,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                             <tr>
                                 <td class="fw-semibold ps-3"><?= htmlspecialchars($s['supplement_type']) ?></td>
                                 <td><span class="badge bg-secondary rounded-pill"><?= $s['cnt'] ?></span></td>
-                                <td><?= number_format($s['total_qty'], 1) ?></td>
+                                <td><?= ($s['total_qty'] == (int)$s['total_qty'] ? (int)$s['total_qty'] : number_format($s['total_qty'], 1)) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -265,7 +265,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                             </span>
                         </td>
                         <td class="fw-semibold"><?= htmlspecialchars($r['supplement_type']) ?></td>
-                        <td><?= number_format($r['quantity'], 1) ?></td>
+                        <td><?= $r['quantity'] == (int)$r['quantity'] ? (int)$r['quantity'] : number_format($r['quantity'], 1) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['unit']) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['dispensed_by_name'] ?? '—') ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['notes'] ?? '') ?></td>
@@ -480,7 +480,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                                         <td class="text-muted small"><?= htmlspecialchars($rec['barangay']) ?></td>
                                         <td class="text-nowrap small"><?= \DateHelper::formatDate($rec['date_given'], 'M j') ?></td>
                                         <td><span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25"><?= htmlspecialchars($rec['supplement_type']) ?></span></td>
-                                        <td class="text-center"><?= number_format($rec['quantity'], 1) ?></td>
+                                        <td class="text-center"><?= $rec['quantity'] == (int)$rec['quantity'] ? (int)$rec['quantity'] : number_format($rec['quantity'], 1) ?></td>
                                         <td class="text-muted small"><?= htmlspecialchars($rec['notes'] ?? '') ?></td>
                                     </tr>
                                     <?php endforeach; ?>

@@ -276,5 +276,12 @@ supplementSelect.addEventListener('change', function () {
     } else {
         doseHint.classList.add('d-none');
     }
+    // Auto-suggest correct round in notes when Vitamin A is selected
+    const notesField = document.querySelector('textarea[name="notes"]');
+    if (notesField && this.value.toLowerCase().includes('vitamin a') && !notesField.value.trim()) {
+        const m = new Date().getMonth() + 1;
+        const round = (m >= 1 && m <= 6) ? 'April' : 'October';
+        notesField.value = `Vitamin A – ${round} ${new Date().getFullYear()} round`;
+    }
 });
 </script>
