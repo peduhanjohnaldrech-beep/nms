@@ -513,7 +513,12 @@ class ProgramController extends Controller
         $lnsRecords      = $lnsModel->getAllByYear($year, $barangay, $purok);
         $asOfDate        = $year < (int)date('Y') ? "{$year}-12-31" : date('Y-m-d');
         $mnpNotYet       = $mnpModel->getNotYetReceived($year, $asOfDate, $barangay, $purok);
-        $lnsNotYet       = $lnsModel->getNotYetReceived($year, $asOfDate, $barangay, $purok);
+        try {
+            $lnsNotYet = $lnsModel->getNotYetReceived($year, $asOfDate, $barangay, $purok);
+        } catch (\Throwable $e) {
+            // lns_recoveries table may not exist yet on this environment; run migration 04
+            $lnsNotYet = [];
+        }
 
         $beneFilter = \App\Models\Beneficiary::BNS_SUBMITTED_FILTER;
         $brgyWhere  = $barangay !== '' ? " AND b.barangay = " . Database::getInstance()->quote($barangay) : '';
