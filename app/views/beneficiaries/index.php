@@ -2,6 +2,12 @@
 $pageTitle = 'Beneficiaries';
 $__role = \Core\Session::get('user_role');
 $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
+if (!function_exists('_tc')) {
+    function _tc(?string $s): string {
+        if ($s === null || $s === '') return '';
+        return mb_convert_case(mb_strtolower($s), MB_CASE_TITLE, 'UTF-8');
+    }
+}
 ?>
 
 <div class="d-flex justify-content-between align-items-center my-3">
@@ -111,8 +117,8 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                         <td class="text-muted small"><?= $rowNum++ ?></td>
                         <td>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="fw-semibold text-decoration-none">
-                                <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?>
-                                <?= $b['middle_name'] ? htmlspecialchars(' ' . $b['middle_name']) : '' ?>
+                                <?= htmlspecialchars(_tc($b['last_name']) . ', ' . _tc($b['first_name'])) ?>
+                                <?= $b['middle_name'] ? htmlspecialchars(' ' . _tc($b['middle_name'])) : '' ?>
                             </a>
                             <?php if (($b['validation_status'] ?? 'validated') === 'pending'): ?>
                             <span class="badge status-pending ms-1" title="Awaiting midwife validation"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
@@ -154,22 +160,12 @@ $__isAdminView = in_array(strtolower($__role), ['admin', 'nutritionist']);
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <?php endif; ?>
-                            <?php if (strtolower(\Core\Session::get('user_role')) === 'bns'
-                                    && ($b['validation_status'] ?? '') === 'validated'
-                                    && empty($b['submitted_at'])): ?>
-                            <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/submit" method="post" class="d-inline">
-                                <?= \Core\Session::csrfField() ?>
-                                <button type="submit" class="btn btn-sm btn-success" title="Submit to Admin">
-                                    <i class="bi bi-send"></i>
-                                </button>
-                            </form>
-                            <?php endif; ?>
                             <?php if (in_array(\Core\Session::get('user_role'), ['admin','nutritionist'])): ?>
                             <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/delete" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <button type="button" class="btn btn-sm btn-outline-danger confirm-trigger"
                                         data-confirm-title="Delete Beneficiary"
-                                        data-confirm-message="Move <strong><?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?></strong> to trash?"
+                                        data-confirm-message="Move <strong><?= htmlspecialchars(_tc($b['last_name']) . ', ' . _tc($b['first_name'])) ?></strong> to trash?"
                                         data-confirm-btn="Delete"
                                         data-confirm-class="btn-danger">
                                     <i class="bi bi-trash"></i>
