@@ -28,10 +28,19 @@ class LnsSqRecord extends Model
         );
     }
 
+    public function getTotalRecords(int $beneficiaryId): int
+    {
+        $row = $this->fetch("SELECT COUNT(*) AS cnt FROM lns_sq_records WHERE beneficiary_id = ?", [$beneficiaryId]);
+        return (int)($row['cnt'] ?? 0);
+    }
+
     public function recordDistribution(array $data): int
     {
         if ($this->hasDuplicate((int)$data['beneficiary_id'], (int)$data['year'], $data['age_group'])) {
             throw new \RuntimeException('LNS-SQ was already given within the last 30 days. Minimum interval is 30 days.');
+        }
+        if ($this->getTotalRecords((int)$data['beneficiary_id']) >= 18) {
+            throw new \RuntimeException('Maximum 18 monthly LNS-SQ supplies already given for this beneficiary.');
         }
         $row = [
             'beneficiary_id'      => $data['beneficiary_id'],
@@ -42,6 +51,7 @@ class LnsSqRecord extends Model
             'completed_routine'   => (int)($data['completed_routine'] ?? 0),
             'sachets_distributed' => isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== ''
                 ? (int)$data['sachets_distributed'] : 30,
+            'weight_kg'           => isset($data['weight_kg']) && $data['weight_kg'] !== '' ? (float)$data['weight_kg'] : null,
             'notes'               => $data['notes'] ?? null,
         ];
         return $this->insert($row);
@@ -81,7 +91,7 @@ class LnsSqRecord extends Model
     {
         $ref = $asOfDate ?: date('Y-m-d');
         // params: age_months ref, age range ref, OPT year check, lns year check
-        $extra = ''; $params = [$ref, $ref, $year, $year];
+        $extra = ''; $params = [$ref, $ref, $year, $year, $year];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
@@ -101,6 +111,9 @@ class LnsSqRecord extends Model
                )
                AND NOT EXISTS (
                    SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
+               )
+               AND NOT EXISTS (
+                   SELECT 1 FROM lns_recoveries lr WHERE lr.beneficiary_id = b.id AND lr.year = ?
                )$extra
              ORDER BY b.barangay, b.last_name",
             $params

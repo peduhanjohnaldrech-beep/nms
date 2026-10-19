@@ -9,6 +9,7 @@ use App\Models\ProgramEnrollment;
 use App\Models\VitaminARecord;
 use App\Models\MnpRecord;
 use App\Models\LnsSqRecord;
+use App\Models\LnsRecovery;
 use App\Models\Assessment;
 use App\Models\Program;
 use App\Models\Beneficiary;
@@ -714,6 +715,7 @@ class ProgramController extends Controller
                 'year'              => $year,
                 'age_months'        => $ageMonths,
                 'administered_by'   => trim($_POST['administered_by'] ?? ''),
+                'delivery_mode'     => $_POST['delivery_mode'] ?? 'Health Post',
                 'created_by'        => Session::get('user_id'),
             ]);
 
@@ -769,6 +771,7 @@ class ProgramController extends Controller
                 'year'                => $year,
                 'age_group'           => $_POST['age_group'] ?? '',
                 'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
+                'counseling_given'    => isset($_POST['counseling_given']) ? 1 : 0,
                 'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
                 'notes'               => trim($_POST['notes'] ?? ''),
             ]);
@@ -801,6 +804,7 @@ class ProgramController extends Controller
                 'age_group'           => $_POST['age_group'] ?? '',
                 'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
                 'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
+                'weight_kg'           => ($_POST['weight_kg'] ?? '') !== '' ? $_POST['weight_kg'] : null,
                 'notes'               => trim($_POST['notes'] ?? ''),
             ]);
 
@@ -842,6 +846,27 @@ class ProgramController extends Controller
 
         Session::flash('success', 'LNS-SQ routine marked as completed.');
         $this->redirect('/programs/mns?tab=lnssq&year=' . $year);
+    }
+
+    public function mnsLnsRecover(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('programs');
+        if (!$this->isPost()) { $this->redirect('/programs/mns?tab=lnssq'); }
+        $this->validateCsrf();
+
+        try {
+            $bid  = (int)($_POST['beneficiary_id'] ?? 0);
+            $year = (int)($_POST['year'] ?? date('Y'));
+            $date = $_POST['recovery_date'] ?? date('Y-m-d');
+            $notes = trim($_POST['notes'] ?? '');
+            (new LnsRecovery())->markRecovered($bid, $year, $date, Session::get('user_id'), $notes);
+            Session::flash('success', 'Child marked as recovered from LNS program.');
+        } catch (\Exception $e) {
+            Session::flash('error', $e->getMessage());
+        }
+
+        $this->redirect('/programs/mns?tab=lnssq&year=' . ($_POST['year'] ?? date('Y')));
     }
 
     public function mnsDefaulterReason(): void

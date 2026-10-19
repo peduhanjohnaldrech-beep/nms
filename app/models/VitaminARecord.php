@@ -75,6 +75,7 @@ class VitaminARecord extends Model
             'capsule_color'     => $data['capsule_color'],
             'dose_number'       => $doseCount + 1,
             'administered_by'   => $data['administered_by'] ?? null,
+            'delivery_mode'     => $data['delivery_mode'] ?? 'Health Post',
             'created_by'        => $data['created_by'] ?? null,
         ]);
     }

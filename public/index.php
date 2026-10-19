@@ -107,6 +107,7 @@ $router->post('/programs/mns/mnp',              'ProgramController@mnsMnp');
 $router->post('/programs/mns/mnp/{id}/complete',  'ProgramController@mnsMnpComplete');
 $router->post('/programs/mns/lnssq',             'ProgramController@mnsLnsSq');
 $router->post('/programs/mns/lnssq/{id}/complete','ProgramController@mnsLnsSqComplete');
+$router->post('/programs/mns/lnssq/recover',     'ProgramController@mnsLnsRecover');
 $router->post('/programs/mns/defaulter/reason',  'ProgramController@mnsDefaulterReason');
 
 // Generic program routes (for custom programs added via admin)

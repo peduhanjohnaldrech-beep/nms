@@ -348,11 +348,18 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header fw-semibold">
-                <i class="bi bi-people me-1 text-warning"></i>
-                Not Yet Received — <?= $year ?>
-                <span class="badge bg-secondary ms-1"><?= count($mnpNotYet) ?></span>
-                <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-people me-1 text-warning"></i>
+                    Not Yet Received — <?= $year ?>
+                    <span class="badge bg-secondary ms-1"><?= count($mnpNotYet) ?></span>
+                    <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
+                </span>
+                <?php if ($canRecord): ?>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#mnpModal">
+                    <i class="bi bi-plus-circle me-1"></i>Record MNP
+                </button>
+                <?php endif; ?>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
@@ -478,11 +485,18 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
     <!-- Not Yet Received -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header fw-semibold">
-                <i class="bi bi-people me-1 text-warning"></i>
-                Not Yet Received — <?= $year ?>
-                <span class="badge bg-secondary ms-1"><?= count($lnsNotYet) ?></span>
-                <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-people me-1 text-warning"></i>
+                    Not Yet Received — <?= $year ?>
+                    <span class="badge bg-secondary ms-1"><?= count($lnsNotYet) ?></span>
+                    <small class="text-muted fw-normal ms-2">(ages as of <?= htmlspecialchars($asOfDate) ?>)</small>
+                </span>
+                <?php if ($canRecord): ?>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#lnsModal">
+                    <i class="bi bi-plus-circle me-1"></i>Record LNS-SQ
+                </button>
+                <?php endif; ?>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
@@ -527,11 +541,11 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
                 <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
                     <table class="table table-sm table-hover mb-0 align-middle">
                         <thead class="table-light">
-                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Done</th><th>Notes</th></tr>
+                            <tr><th>Name</th><th>Barangay</th><th>Age Group</th><th>Date</th><th>Sachets</th><th>Weight</th><th>Done</th><?php if ($canRecord): ?><th></th><?php endif; ?></tr>
                         </thead>
                         <tbody>
                             <?php if (empty($lnsRecords)): ?>
-                            <tr><td colspan="6" class="text-center text-muted py-4">No LNS-SQ records for <?= $year ?>.</td></tr>
+                            <tr><td colspan="<?= $canRecord ? 8 : 7 ?>" class="text-center text-muted py-4">No LNS-SQ records for <?= $year ?>.</td></tr>
                             <?php endif; ?>
                             <?php foreach ($lnsRecords as $l): ?>
                             <tr>
@@ -550,12 +564,30 @@ $_cls = $_pct >= 80 ? 'success' : ($_pct >= 50 ? 'warning' : 'danger');
                                     <span class="text-muted">—</span>
                                     <?php endif; ?>
                                 </td>
+                                <td class="text-center">
+                                    <?php if (isset($l['weight_kg']) && $l['weight_kg'] !== null): ?>
+                                    <span class="small"><?= number_format((float)$l['weight_kg'], 1) ?> kg</span>
+                                    <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="badge bg-<?= $l['completed_routine'] ? 'success' : 'warning text-dark' ?>">
                                         <?= $l['completed_routine'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
-                                <td class="small text-muted"><?= htmlspecialchars($l['notes'] ?? '') ?></td>
+                                <?php if ($canRecord): ?>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-outline-success py-0 px-1 lns-recover-btn"
+                                            style="font-size:.75rem;"
+                                            data-id="<?= $l['beneficiary_id'] ?>"
+                                            data-name="<?= htmlspecialchars($l['last_name'] . ', ' . $l['first_name']) ?>"
+                                            data-bs-toggle="modal" data-bs-target="#lnsRecoverModal"
+                                            title="Mark as recovered/graduated">
+                                        <i class="bi bi-heart-pulse"></i>
+                                    </button>
+                                </td>
+                                <?php endif; ?>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -975,6 +1007,14 @@ function tclFilter(q) {
                         <input type="text" name="administered_by" class="form-control"
                                value="<?= htmlspecialchars(\Core\Session::get('user_name', '')) ?>">
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Delivery Mode</label>
+                        <select name="delivery_mode" class="form-select">
+                            <option value="Health Post">Health Post</option>
+                            <option value="Home Visit">Home Visit</option>
+                            <option value="Outreach">Outreach</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1019,6 +1059,14 @@ function tclFilter(q) {
                         <input type="text" name="administered_by" class="form-control"
                                value="<?= htmlspecialchars(\Core\Session::get('user_name', '')) ?>">
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Delivery Mode</label>
+                        <select name="delivery_mode" class="form-select">
+                            <option value="Health Post">Health Post</option>
+                            <option value="Home Visit">Home Visit</option>
+                            <option value="Outreach">Outreach</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1029,6 +1077,169 @@ function tclFilter(q) {
     </div>
 </div>
 
+<!-- ── MNP Record Modal ── -->
+<div class="modal fade" id="mnpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="<?= APP_URL ?>/programs/mns/mnp" method="post">
+                <?= \Core\Session::csrfField() ?>
+                <input type="hidden" name="year" value="<?= $year ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-prescription2 me-2"></i>Record MNP Distribution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Beneficiary <span class="text-danger">*</span></label>
+                        <select name="beneficiary_id" class="form-select" required id="mnpBeneficiarySelect">
+                            <option value="">— Select Beneficiary —</option>
+                            <?php foreach ($allBeneficiaries as $b): ?>
+                            <option value="<?= $b['id'] ?>" data-dob="<?= $b['date_of_birth'] ?>">
+                                <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Date Given</label>
+                        <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Age Group</label>
+                        <select name="age_group" class="form-select" required>
+                            <option value="6-11 months">6–11 months</option>
+                            <option value="12-23 months">12–23 months</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sachets Distributed</label>
+                        <input type="number" name="sachets_distributed" class="form-control" value="90" min="1" max="90" placeholder="90 sachets per box">
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="counseling_given" id="mnpCounseling" class="form-check-input" value="1">
+                            <label for="mnpCounseling" class="form-check-label fw-semibold">Counseling / IYCF orientation given</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="completed_routine" id="mnpCompleted" class="form-check-input" value="1">
+                            <label for="mnpCompleted" class="form-check-label">Routine completed</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <input type="text" name="notes" class="form-control" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── LNS-SQ Record Modal ── -->
+<div class="modal fade" id="lnsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="<?= APP_URL ?>/programs/mns/lnssq" method="post">
+                <?= \Core\Session::csrfField() ?>
+                <input type="hidden" name="year" value="<?= $year ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-bag-plus me-2"></i>Record LNS-SQ Distribution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Beneficiary <span class="text-danger">*</span></label>
+                        <select name="beneficiary_id" class="form-select" required>
+                            <option value="">— Select Beneficiary —</option>
+                            <?php foreach ($allBeneficiaries as $b): ?>
+                            <option value="<?= $b['id'] ?>" data-dob="<?= $b['date_of_birth'] ?>">
+                                <?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name'] . ' (' . $b['barangay'] . ')') ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Date Given</label>
+                        <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Age Group</label>
+                        <select name="age_group" class="form-select" required>
+                            <option value="6-11 months">6–11 months</option>
+                            <option value="12-23 months">12–23 months</option>
+                            <option value="24 months">24 months</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sachets Distributed</label>
+                        <input type="number" name="sachets_distributed" class="form-control" value="30" min="1" max="30" placeholder="30 sachets per pack">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Current Weight (kg)</label>
+                        <input type="number" name="weight_kg" class="form-control" step="0.01" min="1" max="30" placeholder="e.g. 8.5">
+                        <div class="form-text">Optional — record at each monthly distribution</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="completed_routine" id="lnsCompleted" class="form-check-input" value="1">
+                            <label for="lnsCompleted" class="form-check-label">Routine completed</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <input type="text" name="notes" class="form-control" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── LNS-SQ Recovery Modal ── -->
+<div class="modal fade" id="lnsRecoverModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="<?= APP_URL ?>/programs/mns/lnssq/recover" method="post">
+                <?= \Core\Session::csrfField() ?>
+                <input type="hidden" name="year" value="<?= $year ?>">
+                <input type="hidden" name="beneficiary_id" id="lnsRecoverBid">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-heart-pulse me-2 text-success"></i>Mark Child as Recovered</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Marking a child as recovered/graduated removes them from the LNS-SQ not-yet-received list for this year. This is irreversible unless deleted manually.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Child</label>
+                        <div class="fw-semibold" id="lnsRecoverName"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Recovery / Graduation Date</label>
+                        <input type="date" name="recovery_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <input type="text" name="notes" class="form-control" placeholder="e.g. Reached normal weight, graduated program">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Confirm Recovery</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
 // Enable purok filter only when a barangay is selected
@@ -1047,6 +1258,13 @@ document.getElementById('vitaModal')?.addEventListener('show.bs.modal', function
 });
 document.getElementById('manualVitaBeneficiary')?.addEventListener('change', function() {
     document.getElementById('manualVitaDob').value = this.options[this.selectedIndex].dataset.dob || '';
+});
+
+document.querySelectorAll('.lns-recover-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.getElementById('lnsRecoverBid').value  = this.dataset.id;
+        document.getElementById('lnsRecoverName').textContent = this.dataset.name;
+    });
 });
 
 </script>

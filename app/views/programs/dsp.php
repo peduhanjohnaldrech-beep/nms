@@ -278,7 +278,7 @@
                             && !in_array($a['prev_wflh_status'] ?? '', ['SW','MW']);
                         $consec = $latestNormal ? ($prevNormal ? 2 : 1) : 0;
                         $overdue = !empty($a['assessment_date'])
-                            && (new DateTime())->diff(new DateTime($a['assessment_date']))->days > 30;
+                            && (new DateTime())->diff(new DateTime($a['assessment_date']))->days > 90;
                         $noMuac = empty($a['muac_cm']);
                     ?>
                     <tr <?= ($a['age_months'] ?? 0) > 59 ? 'class="table-warning"' : '' ?>>

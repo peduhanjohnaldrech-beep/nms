@@ -58,6 +58,7 @@ class MnpRecord extends Model
             'age_group'           => $data['age_group'],
             'batch_number'        => count($batches) + 1,
             'completed_routine'   => (int)($data['completed_routine'] ?? 0),
+            'counseling_given'    => (int)($data['counseling_given'] ?? 0),
             'sachets_distributed' => isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null && $data['sachets_distributed'] !== ''
                 ? (int)$data['sachets_distributed'] : 90,
             'notes'               => $data['notes'] ?? null,
