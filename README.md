@@ -168,10 +168,11 @@ http://127.0.0.1:3000
 - Auto-creates a new assessment on DSP completion with post-weight
 
 #### MNS — Micronutrient Supplementation
-- **Vitamin A** — Feb/Aug rounds; auto-calculates dosage; eligibility list (6–59 months not yet covered)
-- **MNP** — "Not Yet Received" list (6–23 months) + individual records panel per year
-- **LNS-SQ** — same as MNP; both show who hasn't received and who has
+- **Vitamin A** — April & October rounds; auto-calculates dosage (Blue 100,000 IU for 6–11 mo, Red 200,000 IU for 12–59 mo); eligibility list (6–59 months not yet covered); server-side age validation and 5-month cooldown enforcement
+- **MNP (Micronutrient Powder)** — "Not Yet Received" list for 6–23 months; Cycle 1 (6–11 mo) and Cycle 2 (12–23 mo) auto-assigned from DOB; age validated server-side
+- **LNS-SQ** — monthly 30-sachet distribution for at-risk children 6–23 months; age group auto-assigned from DOB; 25-day minimum gap between doses enforced server-side; Mark Recovered feature for graduated children
 - All MNS recordings auto-create a Dispensing Tracker entry
+- Real-time eligibility panel in recording modals shows dose type, cycle, and out-of-range warnings before submission
 
 #### Custom Programs
 - Admins can create additional programs via Program Manager
