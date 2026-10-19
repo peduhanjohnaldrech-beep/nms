@@ -998,9 +998,10 @@ function tclFilter(q) {
                 </div>
                 <div class="modal-body">
                     <p class="mb-3">Recording for: <strong id="vitaName"></strong></p>
+                    <div id="vitaEligPanel" class="alert py-2 px-3 small mb-3 d-none"></div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Distribution Date</label>
-                        <input type="date" name="distribution_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <input type="date" name="distribution_date" id="vitaDate" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Administered By</label>
@@ -1050,9 +1051,10 @@ function tclFilter(q) {
                         </select>
                         <input type="hidden" name="date_of_birth" id="manualVitaDob">
                     </div>
+                    <div id="manualVitaEligPanel" class="alert py-2 px-3 small mb-3 d-none"></div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Distribution Date</label>
-                        <input type="date" name="distribution_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <input type="date" name="distribution_date" id="manualVitaDate" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Administered By</label>
@@ -1100,16 +1102,15 @@ function tclFilter(q) {
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div id="mnpEligPanel" class="alert py-2 px-3 small mb-3 d-none"></div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Date Given</label>
-                        <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <input type="date" name="date_given" id="mnpDate" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Age Group</label>
-                        <select name="age_group" class="form-select" required>
-                            <option value="6-11 months">6–11 months</option>
-                            <option value="12-23 months">12–23 months</option>
-                        </select>
+                        <label class="form-label fw-semibold">Age Group <span class="text-muted fw-normal small">(auto-set)</span></label>
+                        <input type="text" id="mnpAgeGroupDisplay" class="form-control bg-light" readonly>
+                        <input type="hidden" name="age_group" id="mnpAgeGroupHidden">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Sachets Distributed</label>
@@ -1164,17 +1165,15 @@ function tclFilter(q) {
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div id="lnsEligPanel" class="alert py-2 px-3 small mb-3 d-none"></div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Date Given</label>
-                        <input type="date" name="date_given" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <input type="date" name="date_given" id="lnsDate" class="form-control" value="<?= date('Y-m-d') ?>" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Age Group</label>
-                        <select name="age_group" class="form-select" required>
-                            <option value="6-11 months">6–11 months</option>
-                            <option value="12-23 months">12–23 months</option>
-                            <option value="24 months">24 months</option>
-                        </select>
+                        <label class="form-label fw-semibold">Age Group <span class="text-muted fw-normal small">(auto-set)</span></label>
+                        <input type="text" id="lnsAgeGroupDisplay" class="form-control bg-light" readonly>
+                        <input type="hidden" name="age_group" id="lnsAgeGroupHidden">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Sachets Distributed</label>
@@ -1255,9 +1254,42 @@ document.getElementById('vitaModal')?.addEventListener('show.bs.modal', function
     document.getElementById('vitaBeneficiaryId').value = btn.dataset.id;
     document.getElementById('vitaName').textContent     = btn.dataset.name;
     document.getElementById('vitaDob').value            = btn.dataset.dob;
+    updateVitaPanel(btn.dataset.dob, document.getElementById('vitaDate').value);
 });
+document.getElementById('vitaDate')?.addEventListener('change', function() {
+    const dob = document.getElementById('vitaDob').value;
+    updateVitaPanel(dob, this.value);
+});
+
 document.getElementById('manualVitaBeneficiary')?.addEventListener('change', function() {
-    document.getElementById('manualVitaDob').value = this.options[this.selectedIndex].dataset.dob || '';
+    const dob = this.options[this.selectedIndex].dataset.dob || '';
+    document.getElementById('manualVitaDob').value = dob;
+    updateVitaPanel(dob, document.getElementById('manualVitaDate').value, 'manualVitaEligPanel');
+});
+document.getElementById('manualVitaDate')?.addEventListener('change', function() {
+    const dob = document.getElementById('manualVitaDob').value;
+    updateVitaPanel(dob, this.value, 'manualVitaEligPanel');
+});
+
+document.getElementById('mnpBeneficiarySelect')?.addEventListener('change', function() {
+    const dob = this.options[this.selectedIndex].dataset.dob || '';
+    updateMnpPanel(dob, document.getElementById('mnpDate').value);
+});
+document.getElementById('mnpDate')?.addEventListener('change', function() {
+    const sel = document.getElementById('mnpBeneficiarySelect');
+    const dob = sel ? (sel.options[sel.selectedIndex]?.dataset.dob || '') : '';
+    updateMnpPanel(dob, this.value);
+});
+
+document.getElementById('lnsModal')?.querySelector('select[name="beneficiary_id"]')
+    ?.addEventListener('change', function() {
+        const dob = this.options[this.selectedIndex].dataset.dob || '';
+        updateLnsPanel(dob, document.getElementById('lnsDate').value);
+    });
+document.getElementById('lnsDate')?.addEventListener('change', function() {
+    const sel = document.getElementById('lnsModal')?.querySelector('select[name="beneficiary_id"]');
+    const dob = sel ? (sel.options[sel.selectedIndex]?.dataset.dob || '') : '';
+    updateLnsPanel(dob, this.value);
 });
 
 document.querySelectorAll('.lns-recover-btn').forEach(function(btn) {
@@ -1266,5 +1298,76 @@ document.querySelectorAll('.lns-recover-btn').forEach(function(btn) {
         document.getElementById('lnsRecoverName').textContent = this.dataset.name;
     });
 });
+
+// ── Eligibility helper functions ─────────────────────────────────────────────
+function ageInMonths(dob, refDate) {
+    if (!dob || !refDate) return -1;
+    const d = new Date(dob), r = new Date(refDate);
+    if (isNaN(d) || isNaN(r)) return -1;
+    let m = (r.getFullYear() - d.getFullYear()) * 12 + (r.getMonth() - d.getMonth());
+    if (r.getDate() < d.getDate()) m--;
+    return m;
+}
+
+function showPanel(panelId, type, msg) {
+    const el = document.getElementById(panelId);
+    if (!el) return;
+    el.className = 'alert py-2 px-3 small mb-3 alert-' + type;
+    el.textContent = msg;
+}
+
+function hidePanel(panelId) {
+    const el = document.getElementById(panelId);
+    if (el) el.className = 'alert py-2 px-3 small mb-3 d-none';
+}
+
+function updateVitaPanel(dob, date, panelId) {
+    panelId = panelId || 'vitaEligPanel';
+    const mo = ageInMonths(dob, date);
+    if (mo < 0) { hidePanel(panelId); return; }
+    if (mo < 6)  { showPanel(panelId, 'danger',  '\u26a0 Not yet eligible — child is only ' + mo + ' month(s) old (minimum: 6 months).'); return; }
+    if (mo >= 60) { showPanel(panelId, 'danger', '\u26a0 Age exceeded — child is ' + mo + ' months old (Vitamin A ends at 60 months / 5 years).'); return; }
+    const dose = mo <= 11 ? '100,000 IU — Blue capsule' : '200,000 IU — Red capsule';
+    showPanel(panelId, 'success', '\u2713 Age ' + mo + ' month(s) — Dose: ' + dose);
+}
+
+function updateMnpPanel(dob, date) {
+    const mo = ageInMonths(dob, date);
+    const hidden  = document.getElementById('mnpAgeGroupHidden');
+    const display = document.getElementById('mnpAgeGroupDisplay');
+    if (mo < 0) { hidePanel('mnpEligPanel'); if (display) display.value = ''; return; }
+    if (mo < 6)  {
+        showPanel('mnpEligPanel', 'danger', '\u26a0 Not yet eligible — child is only ' + mo + ' month(s) old (MNP starts at 6 months).');
+        if (display) display.value = ''; if (hidden) hidden.value = ''; return;
+    }
+    if (mo >= 24) {
+        showPanel('mnpEligPanel', 'danger', '\u26a0 Age exceeded — child is ' + mo + ' months old (MNP ends at 24 months).');
+        if (display) display.value = ''; if (hidden) hidden.value = ''; return;
+    }
+    const grp = mo <= 11 ? '6-11 months' : '12-23 months';
+    const cycle = mo <= 11 ? 'Cycle 1 (6–11 mo)' : 'Cycle 2 (12–23 mo)';
+    if (display) display.value = grp;
+    if (hidden)  hidden.value  = grp;
+    showPanel('mnpEligPanel', 'success', '\u2713 Age ' + mo + ' month(s) — ' + cycle + ' \u2192 ' + grp);
+}
+
+function updateLnsPanel(dob, date) {
+    const mo = ageInMonths(dob, date);
+    const hidden  = document.getElementById('lnsAgeGroupHidden');
+    const display = document.getElementById('lnsAgeGroupDisplay');
+    if (mo < 0) { hidePanel('lnsEligPanel'); if (display) display.value = ''; return; }
+    if (mo < 6)  {
+        showPanel('lnsEligPanel', 'danger', '\u26a0 Not yet eligible — child is only ' + mo + ' month(s) old (LNS-SQ starts at 6 months).');
+        if (display) display.value = ''; if (hidden) hidden.value = ''; return;
+    }
+    if (mo >= 24) {
+        showPanel('lnsEligPanel', 'danger', '\u26a0 Age exceeded — child is ' + mo + ' months old (LNS-SQ ends at 24 months).');
+        if (display) display.value = ''; if (hidden) hidden.value = ''; return;
+    }
+    const grp = mo <= 11 ? '6-11 months' : '12-23 months';
+    if (display) display.value = grp;
+    if (hidden)  hidden.value  = grp;
+    showPanel('lnsEligPanel', 'success', '\u2713 Age ' + mo + ' month(s) — Group: ' + grp + ' (monthly 30-sachet pack)');
+}
 
 </script>

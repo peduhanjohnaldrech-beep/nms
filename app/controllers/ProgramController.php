@@ -709,9 +709,39 @@ class ProgramController extends Controller
             $date  = $_POST['distribution_date'] ?? date('Y-m-d');
             $round = $_POST['round'] ?? 'April';
             $year  = (int)($_POST['year'] ?? date('Y'));
-            // Age at the actual distribution date, not today
             $ageMonths = \DateHelper::ageInMonths($dob, $date);
-            $dose  = $ageMonths <= 11 ? '100,000 IU Vitamin A (Blue)' : '200,000 IU Vitamin A (Red)';
+
+            // Age eligibility
+            if ($ageMonths < 6) {
+                Session::flash('error', "Child is only {$ageMonths} month(s) old — Vitamin A eligibility starts at 6 months.");
+                $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($round) . '&year=' . $year);
+                return;
+            }
+            if ($ageMonths >= 60) {
+                Session::flash('error', "Child is {$ageMonths} months old — Vitamin A program ends at 60 months (5 years).");
+                $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($round) . '&year=' . $year);
+                return;
+            }
+
+            // 6-month cooldown
+            $lastVStmt = Database::getInstance()->prepare(
+                "SELECT distribution_date FROM vitamin_a_records WHERE beneficiary_id = ? ORDER BY distribution_date DESC LIMIT 1"
+            );
+            $lastVStmt->execute([$bid]);
+            $lastVDate = $lastVStmt->fetchColumn();
+            if ($lastVDate) {
+                $monthsSince = \DateHelper::ageInMonths($lastVDate, $date);
+                if ($monthsSince < 5) {
+                    Session::flash('error',
+                        'Vitamin A was last given on ' . \DateHelper::formatDate($lastVDate, 'M j, Y') .
+                        " ({$monthsSince} month(s) ago). Minimum 5-month gap required to prevent toxicity."
+                    );
+                    $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($round) . '&year=' . $year);
+                    return;
+                }
+            }
+
+            $dose = $ageMonths <= 11 ? '100,000 IU Vitamin A (Blue)' : '200,000 IU Vitamin A (Red)';
 
             (new VitaminARecord())->recordDistribution([
                 'beneficiary_id'    => $bid,
@@ -769,12 +799,27 @@ class ProgramController extends Controller
             $date = $_POST['date_given'] ?? date('Y-m-d');
             $year = (int)($_POST['year'] ?? date('Y'));
 
+            // Age validation
+            $dobMnpStmt = Database::getInstance()->prepare('SELECT date_of_birth FROM beneficiaries WHERE id = ?');
+            $dobMnpStmt->execute([$bid]);
+            $dobMnp = $dobMnpStmt->fetchColumn();
+            $ageMnp = $dobMnp ? \DateHelper::ageInMonths($dobMnp, $date) : -1;
+            if ($ageMnp >= 0 && $ageMnp < 6) {
+                Session::flash('error', "Child is only {$ageMnp} month(s) old — MNP starts at 6 months.");
+                $this->redirect('/programs/mns?tab=mnp&year=' . $year); return;
+            }
+            if ($ageMnp >= 24) {
+                Session::flash('error', "Child is {$ageMnp} months old — MNP ends at 24 months.");
+                $this->redirect('/programs/mns?tab=mnp&year=' . $year); return;
+            }
+            $autoMnpGroup = $ageMnp <= 11 ? '6-11 months' : '12-23 months';
+
             (new MnpRecord())->recordDistribution([
                 'beneficiary_id'      => $bid,
                 'given_by'            => Session::get('user_id'),
                 'date_given'          => $date,
                 'year'                => $year,
-                'age_group'           => $_POST['age_group'] ?? '',
+                'age_group'           => $autoMnpGroup,
                 'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
                 'counseling_given'    => isset($_POST['counseling_given']) ? 1 : 0,
                 'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
@@ -801,12 +846,43 @@ class ProgramController extends Controller
             $date = $_POST['date_given'] ?? date('Y-m-d');
             $year = (int)($_POST['year'] ?? date('Y'));
 
+            // Age validation
+            $dobLnsStmt = Database::getInstance()->prepare('SELECT date_of_birth FROM beneficiaries WHERE id = ?');
+            $dobLnsStmt->execute([$bid]);
+            $dobLns = $dobLnsStmt->fetchColumn();
+            $ageLns = $dobLns ? \DateHelper::ageInMonths($dobLns, $date) : -1;
+            if ($ageLns >= 0 && $ageLns < 6) {
+                Session::flash('error', "Child is only {$ageLns} month(s) old — LNS-SQ starts at 6 months.");
+                $this->redirect('/programs/mns?tab=lnssq&year=' . $year); return;
+            }
+            if ($ageLns >= 24) {
+                Session::flash('error', "Child is {$ageLns} months old — LNS-SQ ends at 24 months.");
+                $this->redirect('/programs/mns?tab=lnssq&year=' . $year); return;
+            }
+            // 30-day cooldown
+            $lastLnsStmt = Database::getInstance()->prepare(
+                'SELECT date_given FROM lns_sq_records WHERE beneficiary_id = ? ORDER BY date_given DESC LIMIT 1'
+            );
+            $lastLnsStmt->execute([$bid]);
+            $lastLns = $lastLnsStmt->fetchColumn();
+            if ($lastLns) {
+                $daysSince = (int)(new \DateTime($date))->diff(new \DateTime($lastLns))->days;
+                if ($daysSince < 25) {
+                    Session::flash('error',
+                        'LNS-SQ was already given on ' . \DateHelper::formatDate($lastLns, 'M j, Y') .
+                        " ({$daysSince} day(s) ago). Minimum 25-day gap required for monthly distribution."
+                    );
+                    $this->redirect('/programs/mns?tab=lnssq&year=' . $year); return;
+                }
+            }
+            $autoLnsGroup = $ageLns <= 11 ? '6-11 months' : '12-23 months';
+
             (new LnsSqRecord())->recordDistribution([
                 'beneficiary_id'      => $bid,
                 'given_by'            => Session::get('user_id'),
                 'date_given'          => $date,
                 'year'                => $year,
-                'age_group'           => $_POST['age_group'] ?? '',
+                'age_group'           => $autoLnsGroup,
                 'completed_routine'   => isset($_POST['completed_routine']) ? 1 : 0,
                 'sachets_distributed' => ($_POST['sachets_distributed'] ?? '') !== '' ? (int)$_POST['sachets_distributed'] : null,
                 'weight_kg'           => ($_POST['weight_kg'] ?? '') !== '' ? $_POST['weight_kg'] : null,
