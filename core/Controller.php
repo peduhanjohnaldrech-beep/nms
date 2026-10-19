@@ -71,6 +71,7 @@ class Controller
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return true;
         if ($role === 'midwife') return $module === 'validation';
+        if (in_array($role, ['bns', 'bhw']) && $module === 'programs') return true;
         return in_array($module, (array)Session::get('user_permissions', []));
     }
 
