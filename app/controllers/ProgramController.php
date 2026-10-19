@@ -685,7 +685,7 @@ class ProgramController extends Controller
             'bnsCoverage'            => $bnsCoverage,
             'distributionCompletions'=> $distributionCompletions,
             'tracker'                => $tracker,
-            'canRecord'              => $this->hasPermission('programs'),
+            'canRecord'              => false, // Recording is app-only; web is view/reporting only
             'tclList'                => $tclList,
         ]);
     }
