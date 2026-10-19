@@ -836,7 +836,7 @@ $tclPct      = $tclTotal > 0 ? round($tclComplete / $tclTotal * 100) : 0;
                     <?php elseif ($r['mnp_date']): ?>
                         <i class="bi bi-check-circle-fill text-success"></i>
                         <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['mnp_date']) ?></div>
-                        <?php if ($r['mnp_sachets']): ?><div class="text-muted" style="font-size:.7rem;"><?= $r['mnp_sachets'] ?> sachets</div><?php endif; ?>
+
                     <?php else: ?>
                         <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php endif; ?>
@@ -848,7 +848,7 @@ $tclPct      = $tclTotal > 0 ? round($tclComplete / $tclTotal * 100) : 0;
                     <?php elseif ($r['lns_date']): ?>
                         <i class="bi bi-check-circle-fill text-success"></i>
                         <div class="text-success" style="font-size:.72rem;"><?= htmlspecialchars($r['lns_date']) ?></div>
-                        <?php if ($r['lns_sachets']): ?><div class="text-muted" style="font-size:.7rem;"><?= $r['lns_sachets'] ?> pkts</div><?php endif; ?>
+
                     <?php else: ?>
                         <i class="bi bi-x-circle-fill text-danger"></i>
                     <?php endif; ?>

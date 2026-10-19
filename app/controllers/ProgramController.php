@@ -634,12 +634,8 @@ class ProgramController extends Controller
                          WHERE v.beneficiary_id = b.id AND v.round = 'October' AND v.year = $year LIMIT 1) AS vita_oct_date,
                         (SELECT m.date_given FROM mnp_records m
                          WHERE m.beneficiary_id = b.id AND m.year = $year ORDER BY m.date_given ASC LIMIT 1) AS mnp_date,
-                        (SELECT m.sachets_distributed FROM mnp_records m
-                         WHERE m.beneficiary_id = b.id AND m.year = $year ORDER BY m.date_given ASC LIMIT 1) AS mnp_sachets,
                         (SELECT l.date_given FROM lns_sq_records l
-                         WHERE l.beneficiary_id = b.id AND l.year = $year ORDER BY l.date_given ASC LIMIT 1) AS lns_date,
-                        (SELECT l.sachets_distributed FROM lns_sq_records l
-                         WHERE l.beneficiary_id = b.id AND l.year = $year ORDER BY l.date_given ASC LIMIT 1) AS lns_sachets
+                         WHERE l.beneficiary_id = b.id AND l.year = $year ORDER BY l.date_given ASC LIMIT 1) AS lns_date
                  FROM beneficiaries b
                  WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                  AND $beneFilter$brgyWhere$purokWhere
