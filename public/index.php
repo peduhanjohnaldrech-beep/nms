@@ -211,6 +211,7 @@ $router->put('/api/beneficiaries/{id}',             'BeneficiaryApiController@up
 $router->delete('/api/beneficiaries/{id}',          'BeneficiaryApiController@destroy');
 $router->post('/api/beneficiaries/{id}/restore',    'BeneficiaryApiController@restore');
 $router->post('/api/beneficiaries/{id}/submit',     'BeneficiaryApiController@submitToAdmin');
+$router->get('/api/beneficiaries/{id}/programs',    'BeneficiaryApiController@programs');
 
 // Assessments
 $router->get('/api/assessments',            'AssessmentApiController@index');

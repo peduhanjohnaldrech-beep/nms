@@ -494,6 +494,67 @@ class BeneficiaryApiController extends ApiController
         $this->success([], 'Beneficiary submitted to admin successfully');
     }
 
+    /**
+     * GET /api/beneficiaries/{id}/programs
+     * Returns all MNS, DSP, and assessment records for a beneficiary.
+     */
+    public function programs(string $id): void
+    {
+        $this->requireApiAuth();
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare('SELECT id, barangay FROM beneficiaries WHERE id = ? AND deleted_at IS NULL');
+        $stmt->execute([$id]);
+        $bene = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$bene) { $this->error('Beneficiary not found', 404); }
+        if ($this->isBhw() && $bene['barangay'] !== $this->userBarangay()) {
+            $this->error('Access denied', 403);
+        }
+
+        // Vitamin A
+        $vitaStmt = $db->prepare(
+            'SELECT id, round, year, distribution_date, dosage_iu, capsule_color, delivery_mode
+             FROM vitamin_a_records WHERE beneficiary_id = ? ORDER BY distribution_date DESC'
+        );
+        $vitaStmt->execute([$id]);
+        $vitaRecords = $vitaStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // MNP
+        $mnpStmt = $db->prepare(
+            'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
+             FROM mnp_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
+        );
+        $mnpStmt->execute([$id]);
+        $mnpRecords = $mnpStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // LNS-SQ
+        $lnsStmt = $db->prepare(
+            'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine, weight_kg
+             FROM lns_sq_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
+        );
+        $lnsStmt->execute([$id]);
+        $lnsRecords = $lnsStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // DSP enrollment
+        $dspStmt = $db->prepare(
+            "SELECT id, enrollment_date, end_date, status, cycle_year,
+                    intervention_type, pre_weight_kg, post_weight_kg, notes
+             FROM program_enrollments
+             WHERE beneficiary_id = ? AND program = 'DSP'
+             ORDER BY enrollment_date DESC"
+        );
+        $dspStmt->execute([$id]);
+        $dspRecords = $dspStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $this->success([
+            'vitamin_a' => $vitaRecords,
+            'mnp'       => $mnpRecords,
+            'lns_sq'    => $lnsRecords,
+            'dsp'       => $dspRecords,
+        ]);
+    }
+
     // -------------------------------------------------------
     private function validate(array $data, int $excludeId = 0): array
     {
