@@ -123,27 +123,6 @@
     </div>
 </div>
 
-<?php if (!empty($pendingValidation) && $pendingValidation > 0): ?>
-<div class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3" style="background:rgba(217,119,6,.12);border-left:4px solid #d97706 !important;">
-    <i class="bi bi-shield-exclamation fs-4" style="color:#d97706"></i>
-    <div class="flex-grow-1">
-        <strong><?= $pendingValidation ?> beneficiary registration<?= $pendingValidation > 1 ? 's' : '' ?> pending validation.</strong>
-        Review and approve or reject them to unlock assessments.
-    </div>
-    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-warning text-white">Review</a>
-</div>
-<?php endif; ?>
-
-<?php if (!empty($pendingAssessmentValidation) && $pendingAssessmentValidation > 0): ?>
-<div class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3" style="background:rgba(37,99,235,.1);border-left:4px solid #2563eb !important;">
-    <i class="bi bi-clipboard2-pulse fs-4 text-primary"></i>
-    <div class="flex-grow-1">
-        <strong><?= $pendingAssessmentValidation ?> assessment<?= $pendingAssessmentValidation > 1 ? 's' : '' ?> from mobile pending validation.</strong>
-        These were submitted via the BNS mobile app and need midwife review.
-    </div>
-    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-primary">Review</a>
-</div>
-<?php endif; ?>
 
 <?php if (in_array(strtolower(\Core\Session::get('user_role','')), ['admin','nutritionist']) && ($submittedCount > 0 || !empty($recentSubmissions))): ?>
 <div class="card border-0 shadow-sm mb-4">
