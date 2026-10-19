@@ -108,6 +108,7 @@ class MnpRecord extends Model
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
+               AND (SELECT COUNT(*) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) < 2
                AND NOT EXISTS (
                    SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = ?
                )$extra
