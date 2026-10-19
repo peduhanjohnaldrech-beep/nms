@@ -334,8 +334,9 @@ class BeneficiaryController extends Controller
         $userId = Session::get('user_id');
 
         $db->prepare(
-            "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL WHERE id=?"
-        )->execute([$userId, (int)$id]);
+            "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL,
+             submitted_at=IFNULL(submitted_at,NOW()), submitted_by=IFNULL(submitted_by,?) WHERE id=?"
+        )->execute([$userId, $userId, (int)$id]);
 
         // Auto-validate all pending assessments for this beneficiary
         $db->prepare(
