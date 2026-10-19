@@ -80,8 +80,6 @@
             <div class="col-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/summary" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
-                <a href="?year=<?= $year ?>&period=<?= urlencode($period) ?>&barangay=<?= urlencode($barangay) ?>&export=excel"
-                   class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
             </div>
         </form>
     </div>
@@ -172,11 +170,15 @@ $totMalnut   = $totals['assessed'] > 0 ? round(($totals['suw'] + $totals['uw']) 
 
 <!-- Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span><i class="bi bi-table me-2"></i>By Barangay
             <span class="text-muted fw-normal small ms-1"><?= $year ?><?= $period ? " — $period" : '' ?></span>
+            <span class="badge bg-secondary ms-1"><?= count($summaryRows) ?></span>
         </span>
-        <span class="badge bg-secondary"><?= count($summaryRows) ?> barangays</span>
+        <div class="d-flex gap-1 no-print">
+            <a href="?year=<?= $year ?>&period=<?= urlencode($period) ?>&barangay=<?= urlencode($barangay) ?>&export=excel"
+               class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

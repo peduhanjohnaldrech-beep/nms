@@ -114,7 +114,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
         <div class="px-3 pt-3 pb-0">
             <div class="alert alert-light border py-2 px-3 small mb-3">
                 <i class="bi bi-info-circle me-1 text-primary" aria-hidden="true"></i>
-                <strong>Dispensing Records</strong> is the general ledger — every supplement or medicine given to any beneficiary, across all programs (OPT, DSP, MNS, Vitamin A, etc.).
+                <strong>Dispensing Records</strong> is the general ledger — every supplement or medicine given to any beneficiary across all programs (MNS, Vitamin A, Iron, Deworming, etc.).
                 To view MNP, LNS-SQ, and Vitamin A by month, use the <strong>MNS Monthly Log</strong> tab.
             </div>
         </div>
@@ -248,7 +248,6 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                 <tbody>
                     <?php
                     $pc = ['OPT'=>'success','DSP'=>'warning','MNS'=>'primary','General'=>'secondary'];
-                    foreach ($activePrograms as $__p) $pc[$__p['code']] = $__p['color'] ?? 'secondary';
                     ?>
                     <?php foreach ($records as $r): ?>
                     <tr>
@@ -260,7 +259,9 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                         </td>
                         <td class="text-muted small"><?= htmlspecialchars($r['barangay']) ?></td>
                         <td>
-                            <span class="badge bg-<?= $pc[$r['program']] ?? 'secondary' ?> bg-opacity-15 text-<?= $pc[$r['program']] ?? 'secondary' ?> border border-<?= $pc[$r['program']] ?? 'secondary' ?> border-opacity-25 fw-semibold">
+                            <?php $color = $pc[$r['program']] ?? 'secondary';
+                                  $textCls = in_array($color, ['warning', 'light']) ? 'text-dark' : 'text-white'; ?>
+                            <span class="badge bg-<?= $color ?> <?= $textCls ?>">
                                 <?= htmlspecialchars($r['program']) ?>
                             </span>
                         </td>
@@ -337,7 +338,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                 <strong>MNS Monthly Log</strong> shows micronutrient supplements given this month:
                 <strong>MNP</strong> (ages 6–59 mo, monthly),
                 <strong>LNS-SQ</strong> (ages 6–23 mo, monthly), and
-                <strong>Vitamin A</strong> (all ages, Feb &amp; Aug rounds).
+                <strong>Vitamin A</strong> (all ages, April &amp; October rounds).
             </div>
         </div>
 
@@ -448,7 +449,7 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="fw-semibold"><i class="bi bi-capsule-pill me-1 text-warning" aria-hidden="true"></i>Vitamin A</span>
                         <span class="badge bg-warning text-dark rounded-pill"><?= count($vitaMonthRecords) ?></span>
-                        <span class="text-muted small">From Dispensing Records — Feb &amp; Aug rounds</span>
+                        <span class="text-muted small">From Dispensing Records — April &amp; October rounds</span>
                     </div>
                     <div class="border rounded overflow-hidden">
                         <div class="table-responsive">

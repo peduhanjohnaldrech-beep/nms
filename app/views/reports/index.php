@@ -17,7 +17,7 @@
         <li><strong>Monthly weighing results?</strong> → <a href="<?= APP_URL ?>/reports/opt" class="alert-link">OPT Report</a></li>
         <li><strong>Who is enrolled in the feeding program?</strong> → <a href="<?= APP_URL ?>/reports/dsp" class="alert-link">DSP Report</a></li>
         <li><strong>Overall malnutrition rate per barangay?</strong> → <a href="<?= APP_URL ?>/reports/summary" class="alert-link">Summary Report</a></li>
-        <li><strong>Vitamin A or MNP/LNS coverage?</strong> → <a href="<?= APP_URL ?>/reports/mns?tab=vita" class="alert-link">MNS Reports</a></li>
+        <li><strong>Vitamin A or MNP/LNS coverage?</strong> → <a href="<?= APP_URL ?>/reports/mns" class="alert-link">MNS Report</a></li>
         <li><strong>Has malnutrition improved over time?</strong> → <a href="<?= APP_URL ?>/reports/comparison" class="alert-link">Period Comparison</a></li>
     </ul>
 </div>
@@ -89,50 +89,16 @@
         <div class="card h-100 border-0 shadow-sm report-card">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-capsule fs-4 text-warning" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">Vitamin A</h6>
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 small">April &amp; October Rounds</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Coverage report for Vitamin A supplementation — April and October distribution rounds per barangay.</p>
-                <a href="<?= APP_URL ?>/reports/mns?tab=vita" class="btn btn-warning btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Vitamin A Report</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
                     <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-prescription fs-4 text-primary" aria-hidden="true"></i>
+                        <i class="bi bi-capsule fs-4 text-primary" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-0">MNP Report</h6>
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small">Ages 6–59 months</span>
+                        <h6 class="fw-bold mb-0">MNS Report</h6>
+                        <span class="badge bg-primary small">Micronutrient Supplementation</span>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">Micronutrient Powder distribution records — monthly tracking for children 6–59 months old.</p>
-                <a href="<?= APP_URL ?>/reports/mns?tab=mnp" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View MNP Report</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-prescription2 fs-4 text-success" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">LNS-SQ Report</h6>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">Ages 6–23 months</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Lipid-based Nutrient Supplement distribution — monthly tracking for infants and young children 6–23 months old.</p>
-                <a href="<?= APP_URL ?>/reports/mns?tab=lns" class="btn btn-success btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View LNS-SQ Report</a>
+                <p class="text-muted small mb-3">Vitamin A (April &amp; October rounds), MNP (ages 6–59 mo), and LNS-SQ (ages 6–23 mo) — distribution records and coverage by barangay.</p>
+                <a href="<?= APP_URL ?>/reports/mns" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View MNS Report</a>
             </div>
         </div>
     </div>
@@ -140,7 +106,7 @@
 
 <!-- Analytics -->
 <p class="text-muted small fw-semibold text-uppercase mb-2 ps-1">
-    <i class="bi bi-graph-up me-1" aria-hidden="true"></i>Analytics &amp; Summary
+    <i class="bi bi-graph-up me-1" aria-hidden="true"></i>Analytics
 </p>
 <div class="row g-3">
     <div class="col-sm-6 col-lg-4">
@@ -172,7 +138,7 @@
                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small">Year A vs Year B</span>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">Compare OPT (Q1) malnutrition rates between two years — shows whether malnutrition improved or worsened over time.</p>
+                <p class="text-muted small mb-3">Compare OPT malnutrition rates between two years and periods — shows whether malnutrition improved or worsened over time.</p>
                 <a href="<?= APP_URL ?>/reports/comparison" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Year Comparison</a>
             </div>
         </div>

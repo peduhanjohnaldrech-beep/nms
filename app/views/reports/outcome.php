@@ -78,11 +78,6 @@
                 <button class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/outcome" class="btn btn-sm btn-outline-secondary" aria-label="Clear filters"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
             </div>
-            <div class="col text-end d-flex gap-1 justify-content-end align-items-end">
-                <span class="text-muted small me-1">Export:</span>
-                <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>"
-                   class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
-            </div>
         </form>
     </div>
 </div>
@@ -162,11 +157,17 @@ $improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) 
 
 <!-- Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold d-flex align-items-center gap-2">
-        <i class="bi bi-table me-1 text-secondary" aria-hidden="true"></i>
-        DSP Enrollees — Pre/Post Weight Comparison
-        <span class="badge bg-secondary ms-1"><?= count($rows) ?></span>
-        <span class="fw-normal small text-muted ms-1">— <?= $year ?></span>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>
+            <i class="bi bi-table me-1 text-secondary" aria-hidden="true"></i>
+            DSP Enrollees — Pre/Post Weight Comparison
+            <span class="badge bg-secondary ms-1"><?= count($rows) ?></span>
+            <span class="fw-normal small text-muted ms-1">— <?= $year ?></span>
+        </span>
+        <div class="d-flex gap-1 no-print">
+            <a href="<?= APP_URL ?>/reports/export?type=dsp&format=excel&year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>"
+               class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

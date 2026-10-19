@@ -48,14 +48,6 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
             <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
-            <div class="col-md-2">
-                <label class="form-label small">Date From</label>
-                <input type="date" name="date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($dateFrom ?? '') ?>">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Date To</label>
-                <input type="date" name="date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($dateTo ?? '') ?>">
-            </div>
             <div class="col-md-1">
                 <label class="form-label small">Year</label>
                 <select name="year" class="form-select form-select-sm">
@@ -102,17 +94,6 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/mns" class="btn btn-sm btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
             </div>
-            <?php if ($tab !== 'monthly'):
-                $exportQs = 'type=' . $exportType . '&year=' . $year . '&period=' . urlencode($round) . '&barangay=' . urlencode($barangay);
-                if (!empty($dateFrom)) $exportQs .= '&date_from=' . urlencode($dateFrom);
-                if (!empty($dateTo))   $exportQs .= '&date_to='   . urlencode($dateTo);
-            ?>
-            <div class="col text-end d-flex gap-1 justify-content-end">
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
-            </div>
-            <?php endif; ?>
         </form>
     </div>
 </div>
@@ -259,16 +240,26 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
 
 <?php else: ?>
 
+<?php
+$exportQs = 'type=' . $exportType . '&year=' . $year . '&period=' . urlencode($round) . '&barangay=' . urlencode($barangay);
+?>
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold">
-        <?php if ($tab === 'vita'): ?>
-            <i class="bi bi-capsule me-1 text-primary"></i>Vitamin A Distribution Records
-        <?php elseif ($tab === 'mnp'): ?>
-            <i class="bi bi-prescription me-1 text-warning"></i>MNP Records
-        <?php else: ?>
-            <i class="bi bi-prescription2 me-1 text-success"></i>LNS-SQ Records
-        <?php endif; ?>
-        <span class="badge bg-secondary ms-2"><?= count($rows) ?></span>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>
+            <?php if ($tab === 'vita'): ?>
+                <i class="bi bi-capsule me-1 text-primary"></i>Vitamin A Distribution Records
+            <?php elseif ($tab === 'mnp'): ?>
+                <i class="bi bi-prescription me-1 text-warning"></i>MNP Records
+            <?php else: ?>
+                <i class="bi bi-prescription2 me-1 text-success"></i>LNS-SQ Records
+            <?php endif; ?>
+            <span class="badge bg-secondary ms-1"><?= count($rows) ?></span>
+        </span>
+        <div class="d-flex gap-1 no-print">
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

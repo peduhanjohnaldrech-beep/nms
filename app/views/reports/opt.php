@@ -111,16 +111,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
                     <i class="bi bi-x-lg" aria-hidden="true"></i> Clear
                 </a>
             </div>
-            <?php
-            $exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&barangay=' . urlencode($barangay);
-            ?>
-            <div class="col-12 col-md text-md-end d-flex gap-1 flex-wrap justify-content-md-end mt-1 mt-md-0">
-                <span class="text-muted small align-self-center me-1">Export:</span>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-secondary"><i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>CSV</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>PDF</a>
-                <a href="<?= APP_URL ?>/reports/export-eopt?year=<?= $year ?>&period=<?= urlencode($period) ?>&barangay=<?= urlencode($barangay) ?>" class="btn btn-sm btn-outline-warning"><i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i>eOPT</a>
-            </div>
         </form>
     </div>
 </div>
@@ -170,7 +160,7 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 <?php endif; ?>
 
 <!-- Active filter label -->
-<?php if ($barangay || $period || ($dateFrom && $dateTo)): ?>
+<?php if ($barangay || $period): ?>
 <div class="mb-3 d-flex align-items-center gap-2 flex-wrap">
     <span class="text-muted small">Showing:</span>
     <?php if ($period): ?>
@@ -178,9 +168,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
     <?php endif; ?>
     <?php if ($barangay): ?>
     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= htmlspecialchars($barangay) ?></span>
-    <?php endif; ?>
-    <?php if ($dateFrom && $dateTo): ?>
-    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><?= $dateFrom ?> → <?= $dateTo ?></span>
     <?php endif; ?>
     <a href="<?= APP_URL ?>/reports/opt" class="small text-muted"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Clear filters</a>
 </div>
@@ -245,13 +232,39 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 document.getElementById('ageGroupTable').addEventListener('show.bs.collapse',  () => document.getElementById('ageChev').className = 'bi bi-chevron-up');
 document.getElementById('ageGroupTable').addEventListener('hide.bs.collapse', () => document.getElementById('ageChev').className = 'bi bi-chevron-down');
 </script>
+<script>
+const toggleZscoreBtn = document.getElementById('toggleZscore');
+if (toggleZscoreBtn) {
+    let zVisible = false;
+    toggleZscoreBtn.addEventListener('click', function () {
+        zVisible = !zVisible;
+        document.querySelectorAll('.col-zscore').forEach(el => el.classList.toggle('d-none', !zVisible));
+        this.classList.toggle('btn-outline-secondary', !zVisible);
+        this.classList.toggle('btn-secondary', zVisible);
+    });
+}
+</script>
 <?php endif; ?>
 
 <!-- Results Table -->
+<?php
+$exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&barangay=' . urlencode($barangay);
+?>
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center py-2">
-        <span><i class="bi bi-table me-1" aria-hidden="true"></i>Assessment Records</span>
-        <span class="badge bg-secondary"><?= $totalRows ?> records</span>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center py-2 flex-wrap gap-2">
+        <span>
+            <i class="bi bi-table me-1" aria-hidden="true"></i>Assessment Records
+            <span class="badge bg-secondary ms-1"><?= $totalRows ?></span>
+        </span>
+        <div class="d-flex gap-1 align-items-center flex-wrap no-print">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleZscore" title="Show/hide Z-score column">
+                <i class="bi bi-columns me-1"></i>Z-score
+            </button>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=eopt"  class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>eOPT</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -264,7 +277,7 @@ document.getElementById('ageGroupTable').addEventListener('hide.bs.collapse', ()
                         <th scope="col" title="Age in months">Age<br><small class="fw-normal text-muted">(months)</small></th>
                         <th scope="col" title="Weight in kilograms">Weight<br><small class="fw-normal text-muted">(kg)</small></th>
                         <th scope="col" title="Height in centimeters">Height<br><small class="fw-normal text-muted">(cm)</small></th>
-                        <th scope="col" title="Weight-for-Age Z-score">WFA Z<br><small class="fw-normal text-muted">score</small></th>
+                        <th scope="col" title="Weight-for-Age Z-score" class="col-zscore d-none">WFA Z<br><small class="fw-normal text-muted">score</small></th>
                         <th scope="col" title="Weight-for-Age status">WFA<br><small class="fw-normal text-muted">status</small></th>
                         <th scope="col" title="Height-for-Age status">HFA<br><small class="fw-normal text-muted">status</small></th>
                         <th scope="col" title="Weight-for-Length/Height status">WFL/H<br><small class="fw-normal text-muted">status</small></th>
@@ -293,7 +306,7 @@ document.getElementById('ageGroupTable').addEventListener('hide.bs.collapse', ()
                         <td class="text-center"><?= $r['age_in_months'] ?></td>
                         <td class="text-center"><?= $r['weight_kg'] ?></td>
                         <td class="text-center"><?= $r['height_cm'] ?: '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center text-muted small"><?= $r['weight_for_age_zscore'] !== null ? number_format($r['weight_for_age_zscore'], 2) : '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center text-muted small col-zscore d-none"><?= $r['weight_for_age_zscore'] !== null ? number_format($r['weight_for_age_zscore'], 2) : '<span class="text-muted">—</span>' ?></td>
                         <td><span class="badge status-<?= strtolower($r['nutritional_status']) ?>"><?= $r['nutritional_status'] ?></span></td>
                         <td><?= !empty($r['hfa_status'])  ? '<span class="badge status-' . strtolower($r['hfa_status'])  . '">' . $r['hfa_status']  . '</span>' : '<span class="text-muted">—</span>' ?></td>
                         <td><?= !empty($r['wflh_status']) ? '<span class="badge status-' . strtolower($r['wflh_status']) . '">' . $r['wflh_status'] . '</span>' : '<span class="text-muted">—</span>' ?></td>

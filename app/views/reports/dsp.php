@@ -85,17 +85,6 @@
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/dsp" class="btn btn-sm btn-outline-secondary" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
             </div>
-            <?php
-            $exportQs = 'type=dsp&year=' . $year . '&barangay=' . urlencode($barangay);
-            if (!empty($dateFrom)) $exportQs .= '&date_from=' . urlencode($dateFrom);
-            if (!empty($dateTo))   $exportQs .= '&date_to='   . urlencode($dateTo);
-            ?>
-            <div class="col text-end d-flex gap-1 justify-content-end align-items-end">
-                <span class="text-muted small me-1">Export:</span>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>CSV</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
-                <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>PDF</a>
-            </div>
         </form>
     </div>
 </div>
@@ -133,11 +122,19 @@ $avgGain   = count($withBoth) > 0
 
 <!-- Records Table -->
 <div class="card border-0 shadow-sm">
-    <div class="card-header fw-semibold d-flex align-items-center gap-2">
-        <i class="bi bi-table me-1 text-warning" aria-hidden="true"></i>
-        DSP Records
-        <span class="badge bg-secondary ms-1"><?= count($rows) ?></span>
-        <span class="fw-normal small text-muted ms-1">— <?= $year ?><?= !empty($barangay) ? ' · ' . htmlspecialchars($barangay) : '' ?></span>
+    <?php $exportQs = 'type=dsp&year=' . $year . '&barangay=' . urlencode($barangay); ?>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>
+            <i class="bi bi-table me-1 text-warning" aria-hidden="true"></i>
+            DSP Records
+            <span class="badge bg-secondary ms-1"><?= count($rows) ?></span>
+            <span class="fw-normal small text-muted ms-1">— <?= $year ?><?= !empty($barangay) ? ' · ' . htmlspecialchars($barangay) : '' ?></span>
+        </span>
+        <div class="d-flex gap-1 no-print">
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=csv"   class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+            <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

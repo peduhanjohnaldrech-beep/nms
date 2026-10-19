@@ -319,7 +319,14 @@ thead.table-light th {
 [data-theme="dark"] .alert-danger  { background-color: rgba(220,38,38,.12);  border-color: rgba(220,38,38,.3);   color: #fca5a5; }
 
 /* ── Badges ─────────────────────────────────────────────── */
-[data-theme="dark"] .badge.bg-light { background-color: #0D1A35 !important; color: #C8DFF0 !important; }
+[data-theme="dark"] .badge.bg-light     { background-color: #0D1A35 !important; color: #C8DFF0 !important; }
+/* Ensure badge text is always readable (dark mode td rule uses !important and bleeds into badges) */
+.badge.bg-primary   { color: #fff !important; }
+.badge.bg-success   { color: #fff !important; }
+.badge.bg-warning   { color: #000 !important; }
+.badge.bg-danger    { color: #fff !important; }
+.badge.bg-secondary { color: #fff !important; }
+[data-theme="dark"] .badge.bg-warning   { color: #000 !important; }
 
 /* ── Modals ─────────────────────────────────────────────── */
 [data-theme="dark"] .modal-content {
