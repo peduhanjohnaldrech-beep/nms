@@ -525,7 +525,7 @@ class BeneficiaryApiController extends ApiController
         // MNP
         try {
             $mnpStmt = $db->prepare(
-                'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
+                'SELECT id, year, date_given, age_group, completed_routine
                  FROM mnp_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
             );
             $mnpStmt->execute([$id]);
@@ -535,7 +535,7 @@ class BeneficiaryApiController extends ApiController
         // LNS-SQ
         try {
             $lnsStmt = $db->prepare(
-                'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
+                'SELECT id, year, date_given, age_group, completed_routine
                  FROM lns_sq_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
             );
             $lnsStmt->execute([$id]);
