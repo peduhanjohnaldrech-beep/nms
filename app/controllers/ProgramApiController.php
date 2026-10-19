@@ -341,44 +341,90 @@ class ProgramApiController extends ApiController
     public function mnsVitaminA(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $this->requireRole(['encoder','nutritionist','bhw','bns','midwife']);
         $db   = Database::getInstance();
         $data = $this->body();
         if (empty($data['beneficiary_id']))    $this->error('beneficiary_id required', 422);
         if (empty($data['distribution_date'])) $this->error('distribution_date required', 422);
-        $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,delivery_mode,created_by) VALUES (?,?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$data['delivery_mode']??'Health Post',$this->userId()]);
+
+        // Check if delivery_mode column exists (migration 04 may not have run on older installs)
+        $hasDeliveryMode = (bool) $db->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vitamin_a_records' AND COLUMN_NAME = 'delivery_mode'"
+        )->fetchColumn();
+
+        try {
+            if ($hasDeliveryMode) {
+                $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,delivery_mode,created_by) VALUES (?,?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$data['delivery_mode']??'Health Post',$this->userId()]);
+            } else {
+                $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,created_by) VALUES (?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$this->userId()]);
+            }
+        } catch (\PDOException $e) {
+            $this->error('Database error: ' . $e->getMessage(), 500);
+        }
         $this->success([], 'Vitamin A record saved');
     }
 
     public function mnsMnp(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $this->requireRole(['encoder','nutritionist','bhw','bns','midwife']);
         $db   = Database::getInstance();
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
         $this->validateDistributionDate($data['date_given'], 90);
         $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
-        $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,counseling_given,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),(int)($data['counseling_given']??0),$sachets,$data['notes']??null,$this->userId()]);
+
+        $hasCounseling = (bool) $db->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mnp_records' AND COLUMN_NAME = 'counseling_given'"
+        )->fetchColumn();
+
+        try {
+            if ($hasCounseling) {
+                $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,counseling_given,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),(int)($data['counseling_given']??0),$sachets,$data['notes']??null,$this->userId()]);
+            } else {
+                $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+            }
+        } catch (\PDOException $e) {
+            $this->error('Database error: ' . $e->getMessage(), 500);
+        }
         $this->success([], 'MNP record saved');
     }
 
     public function mnsLnsSq(): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $this->requireRole(['encoder','nutritionist','bhw','bns','midwife']);
         $db   = Database::getInstance();
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
         $this->validateDistributionDate($data['date_given'], 90);
-        $sachets    = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
-        $weightKg   = isset($data['weight_kg']) && $data['weight_kg'] !== null && $data['weight_kg'] !== '' ? (float)$data['weight_kg'] : null;
-        $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,weight_kg,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$weightKg,$data['notes']??null,$this->userId()]);
+        $sachets  = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
+        $weightKg = isset($data['weight_kg']) && $data['weight_kg'] !== null && $data['weight_kg'] !== '' ? (float)$data['weight_kg'] : null;
+
+        $hasWeightKg = (bool) $db->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lns_sq_records' AND COLUMN_NAME = 'weight_kg'"
+        )->fetchColumn();
+
+        try {
+            if ($hasWeightKg) {
+                $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,weight_kg,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$weightKg,$data['notes']??null,$this->userId()]);
+            } else {
+                $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+            }
+        } catch (\PDOException $e) {
+            $this->error('Database error: ' . $e->getMessage(), 500);
+        }
         $this->success([], 'LNS-SQ record saved');
     }
 
