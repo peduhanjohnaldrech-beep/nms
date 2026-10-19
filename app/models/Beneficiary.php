@@ -8,12 +8,12 @@ class Beneficiary extends Model
 {
     protected string $table = 'beneficiaries';
 
-    // Reusable SQL snippet: exclude BNS mobile records not yet validated by midwife
+    // Reusable SQL snippet: exclude BNS mobile records still pending validation
+    // Once a midwife validates, the record becomes visible regardless of submitted_at
     // Use with alias 'b' for beneficiaries table
-    // Use with alias 'b' for beneficiaries table
-    const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
+    const BNS_SUBMITTED_FILTER = "NOT (b.source = 'Mobile' AND b.validation_status = 'pending' AND EXISTS (SELECT 1 FROM users u WHERE u.id = b.created_by AND LOWER(u.role) = 'bns'))";
     // Use when beneficiaries table has no alias
-    const BNS_SUBMITTED_FILTER_NO_ALIAS = "NOT (source = 'Mobile' AND submitted_at IS NULL AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
+    const BNS_SUBMITTED_FILTER_NO_ALIAS = "NOT (source = 'Mobile' AND validation_status = 'pending' AND EXISTS (SELECT 1 FROM users u WHERE u.id = created_by AND LOWER(u.role) = 'bns'))";
 
     public function submitToAdmin(int $id, int $userId): void
     {
