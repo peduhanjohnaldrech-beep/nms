@@ -248,6 +248,7 @@ $router->post('/api/programs/mns/mnp',                  'ProgramApiController@mn
 $router->post('/api/programs/mns/mnp/{id}/complete',    'ProgramApiController@mnpComplete');
 $router->post('/api/programs/mns/lnssq',                  'ProgramApiController@mnsLnsSq');
 $router->post('/api/programs/mns/lnssq/{id}/complete',    'ProgramApiController@lnsSqComplete');
+$router->post('/api/programs/mns/lnssq/recover',          'ProgramApiController@lnsRecover');
 $router->post('/api/programs/mns/defaulter/reason',       'ProgramApiController@mnsDefaulterReason');
 $router->post('/api/programs/mns/distribution-complete',  'ProgramApiController@mnsDistributionComplete');
 $router->get('/api/programs/mns/distribution-status',     'ProgramApiController@mnsDistributionStatus');

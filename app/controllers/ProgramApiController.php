@@ -344,10 +344,10 @@ class ProgramApiController extends ApiController
         $this->requireRole(['encoder','nutritionist','bhw','bns']);
         $db   = Database::getInstance();
         $data = $this->body();
-        if (empty($data['beneficiary_id']))   $this->error('beneficiary_id required', 422);
+        if (empty($data['beneficiary_id']))    $this->error('beneficiary_id required', 422);
         if (empty($data['distribution_date'])) $this->error('distribution_date required', 422);
-        $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,created_by) VALUES (?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$this->userId()]);
+        $db->prepare("INSERT INTO vitamin_a_records (beneficiary_id,distribution_date,round,year,dosage_iu,capsule_color,administered_by,delivery_mode,created_by) VALUES (?,?,?,?,?,?,?,?,?)")
+           ->execute([$data['beneficiary_id'],$data['distribution_date'],$data['round']??'April',$data['year']??date('Y'),$data['dosage_iu']??100000,$data['capsule_color']??'Blue',$data['administered_by']??$this->apiUser['full_name'],$data['delivery_mode']??'Health Post',$this->userId()]);
         $this->success([], 'Vitamin A record saved');
     }
 
@@ -359,10 +359,10 @@ class ProgramApiController extends ApiController
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
-        $this->validateDistributionDate($data['date_given']);
+        $this->validateDistributionDate($data['date_given'], 90);
         $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
-        $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+        $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,counseling_given,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
+           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),(int)($data['counseling_given']??0),$sachets,$data['notes']??null,$this->userId()]);
         $this->success([], 'MNP record saved');
     }
 
@@ -374,19 +374,34 @@ class ProgramApiController extends ApiController
         $data = $this->body();
         if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
         if (empty($data['date_given']))     $this->error('date_given required', 422);
-        $this->validateDistributionDate($data['date_given']);
-        $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
-        $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
-           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+        $this->validateDistributionDate($data['date_given'], 90);
+        $sachets    = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
+        $weightKg   = isset($data['weight_kg']) && $data['weight_kg'] !== null && $data['weight_kg'] !== '' ? (float)$data['weight_kg'] : null;
+        $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,weight_kg,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
+           ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$weightKg,$data['notes']??null,$this->userId()]);
         $this->success([], 'LNS-SQ record saved');
     }
 
-    private function validateDistributionDate(string $date): void
+    public function lnsRecover(): void
+    {
+        $this->requireApiAuth();
+        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $data = $this->body();
+        if (empty($data['beneficiary_id'])) $this->error('beneficiary_id required', 422);
+        $bid  = (int)$data['beneficiary_id'];
+        $year = (int)($data['year'] ?? date('Y'));
+        $date = $data['recovery_date'] ?? date('Y-m-d');
+        $notes = trim($data['notes'] ?? '');
+        (new \App\Models\LnsRecovery())->markRecovered($bid, $year, $date, $this->userId(), $notes);
+        $this->success([], 'Child marked as recovered from LNS program');
+    }
+
+    private function validateDistributionDate(string $date, int $maxDaysBack = 90): void
     {
         $given = strtotime($date);
         if ($given === false) $this->error('Invalid date', 422);
-        $cutoff = strtotime('-30 days');
-        if ($given < $cutoff) $this->error('Date is too far in the past. Maximum 30 days back allowed.', 422);
+        $cutoff = strtotime("-{$maxDaysBack} days");
+        if ($given < $cutoff) $this->error("Date is too far in the past. Maximum {$maxDaysBack} days back allowed.", 422);
         if ($given > strtotime('+1 day')) $this->error('Date cannot be in the future', 422);
     }
 
