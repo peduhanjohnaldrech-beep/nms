@@ -72,15 +72,6 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label for="dsp_source" class="form-label small mb-1">Source</label>
-                <select id="dsp_source" name="source" class="form-select form-select-sm">
-                    <option value="">All Sources</option>
-                    <option value="Walk-in" <?= ($source ?? '') === 'Walk-in' ? 'selected' : '' ?>>Walk-in</option>
-                    <option value="Mobile"  <?= ($source ?? '') === 'Mobile'  ? 'selected' : '' ?>>Mobile</option>
-                    <option value="Excel"   <?= ($source ?? '') === 'Excel'   ? 'selected' : '' ?>>Excel Import</option>
-                </select>
-            </div>
-            <div class="col-md-2">
                 <label for="dsp_status" class="form-label small mb-1">Status</label>
                 <select id="dsp_status" name="status" class="form-select form-select-sm">
                     <option value="">All Statuses</option>

@@ -19,7 +19,7 @@
     </div>
     <div class="flex-grow-1">
         <h4 class="mb-0">Year-over-Year Comparison</h4>
-        <p class="text-muted small mb-0">Compare OPT (Q1) malnutrition rates between two years</p>
+        <p class="text-muted small mb-0">Compare OPT malnutrition rates between two years</p>
     </div>
     <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-printer me-1"></i>Print
@@ -30,7 +30,7 @@
 <div class="d-none d-print-block text-center mb-3">
     <h5 class="mb-0 fw-bold">YEAR-OVER-YEAR COMPARISON REPORT</h5>
     <div class="small">
-        Year A: <?= $yearA ?> vs Year B: <?= $yearB ?>
+        Year A: <?= $yearA ?> vs Year B: <?= $yearB ?> — <?= htmlspecialchars($period ?? 'January') ?> Period
         <?php if ($barangay): ?> &nbsp;|&nbsp; Barangay: <?= htmlspecialchars($barangay) ?><?php endif; ?>
         &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
     </div>
@@ -48,6 +48,13 @@
                 <label for="cmp_year_b" class="form-label small mb-1">Year B (later)</label>
                 <input type="number" id="cmp_year_b" name="year_b" class="form-control form-control-sm"
                        value="<?= $yearB ?>" min="2000" max="<?= date('Y') + 1 ?>">
+            </div>
+            <div class="col-md-2">
+                <label for="cmp_period" class="form-label small mb-1">Period</label>
+                <select id="cmp_period" name="period" class="form-select form-select-sm">
+                    <option value="January" <?= ($period ?? 'January') === 'January' ? 'selected' : '' ?>>January</option>
+                    <option value="July"    <?= ($period ?? '') === 'July'    ? 'selected' : '' ?>>July</option>
+                </select>
             </div>
             <div class="col-md-3">
                 <label for="cmp_barangay" class="form-label small mb-1">Barangay</label>
@@ -78,7 +85,7 @@
             </div>
             <div class="col text-end d-flex gap-1 justify-content-end align-items-end">
                 <span class="text-muted small me-1">Export:</span>
-                <a href="?year_a=<?= $yearA ?>&year_b=<?= $yearB ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>&export=excel"
+                <a href="?year_a=<?= $yearA ?>&year_b=<?= $yearB ?>&period=<?= urlencode($period ?? 'January') ?>&barangay=<?= urlencode($barangay) ?>&purok=<?= urlencode($purok ?? '') ?>&export=excel"
                    class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel</a>
             </div>
         </form>
@@ -116,7 +123,7 @@ endif;
 
 <div class="alert alert-light border mb-3 py-2 px-3 small">
     <i class="bi bi-info-circle me-1 text-primary" aria-hidden="true"></i>
-    Comparing OPT Q1 results: <strong><?= $yearA ?></strong> vs <strong><?= $yearB ?></strong>.
+    Comparing OPT <strong><?= htmlspecialchars($period ?? 'January') ?></strong> results: <strong><?= $yearA ?></strong> vs <strong><?= $yearB ?></strong>.
     A <span class="text-success fw-semibold"><i class="bi bi-arrow-down-short" aria-hidden="true"></i>negative change</span> means malnutrition rate <strong>decreased</strong> (improved).
     A <span class="text-danger fw-semibold"><i class="bi bi-arrow-up-short" aria-hidden="true"></i>positive change</span> means it <strong>increased</strong> (worsened).
 </div>
@@ -125,7 +132,7 @@ endif;
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center text-muted py-5">
         <i class="bi bi-clipboard2-x fs-3 d-block mb-2" aria-hidden="true"></i>
-        No OPT data found for <?= $yearA ?> or <?= $yearB ?>. Make sure both years have January period assessments.
+        No OPT data found for <?= $yearA ?> or <?= $yearB ?> (<?= htmlspecialchars($period ?? 'January') ?> period). Try selecting a different period or year.
     </div>
 </div>
 <?php else:

@@ -94,7 +94,7 @@
                     </div>
                     <div>
                         <h6 class="fw-bold mb-0">Vitamin A</h6>
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 small">Feb &amp; Aug Rounds</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 small">April &amp; October Rounds</span>
                     </div>
                 </div>
                 <p class="text-muted small mb-3">Coverage report for Vitamin A supplementation — April and October distribution rounds per barangay.</p>

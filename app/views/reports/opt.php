@@ -74,8 +74,9 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
             <div class="col-6 col-md-2">
                 <label class="form-label small fw-semibold mb-1" for="f_period">Period</label>
                 <select id="f_period" name="period" class="form-select form-select-sm">
-                    <option value="">All</option>
-                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January (Q1)</option>
+                    <option value="">All Periods</option>
+                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January</option>
+                    <option value="July"    <?= $period === 'July'    ? 'selected' : '' ?>>July</option>
                 </select>
             </div>
             <?php if (!$isBhw): ?>
@@ -102,17 +103,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
                 </select>
             </div>
             <?php endif; ?>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold mb-1" for="f_date_from">Date From</label>
-                <input type="date" id="f_date_from" name="date_from" class="form-control form-control-sm"
-                       value="<?= htmlspecialchars($dateFrom ?? '') ?>"
-                       title="Optional: filter by exact date range instead of period">
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold mb-1" for="f_date_to">Date To</label>
-                <input type="date" id="f_date_to" name="date_to" class="form-control form-control-sm"
-                       value="<?= htmlspecialchars($dateTo ?? '') ?>">
-            </div>
             <div class="col-auto d-flex gap-1 flex-wrap">
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-search me-1" aria-hidden="true"></i>Apply
@@ -123,8 +113,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
             </div>
             <?php
             $exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&barangay=' . urlencode($barangay);
-            if (!empty($dateFrom)) $exportQs .= '&date_from=' . urlencode($dateFrom);
-            if (!empty($dateTo))   $exportQs .= '&date_to='   . urlencode($dateTo);
             ?>
             <div class="col-12 col-md text-md-end d-flex gap-1 flex-wrap justify-content-md-end mt-1 mt-md-0">
                 <span class="text-muted small align-self-center me-1">Export:</span>

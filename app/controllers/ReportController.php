@@ -288,6 +288,7 @@ class ReportController extends Controller
         $curYear  = (int)date('Y');
         $yearA    = (int)($_GET['year_a'] ?? $curYear - 1);
         $yearB    = (int)($_GET['year_b'] ?? $curYear);
+        $period   = in_array($_GET['period'] ?? '', ['January', 'July']) ? ($_GET['period'] ?? 'January') : 'January';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $purok    = $_GET['purok'] ?? '';
         $db       = Database::getInstance();
@@ -299,16 +300,15 @@ class ReportController extends Controller
 
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
 
-        // Query both years, January period only (OPT is Q1 annual)
         $stmt = $db->prepare(
             "SELECT b.barangay, a.assessment_year, a.nutritional_status, COUNT(*) as cnt
              FROM assessments a JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $bnsFilter
-               AND a.period = 'January' AND a.assessment_year IN (?,?)" . $bWhere . "
+               AND a.period = ? AND a.assessment_year IN (?,?)" . $bWhere . "
              GROUP BY b.barangay, a.assessment_year, a.nutritional_status
              ORDER BY b.barangay, a.assessment_year"
         );
-        $stmt->execute(array_merge([$yearA, $yearB], $bParams));
+        $stmt->execute(array_merge([$period, $yearA, $yearB], $bParams));
 
         $raw = [];
         foreach ($stmt->fetchAll() as $r) {
@@ -339,7 +339,7 @@ class ReportController extends Controller
         $beneModel = new Beneficiary();
         $barangays = $beneModel->getAllBarangays();
         $puroks    = $beneModel->getPuroksByBarangay($barangay);
-        $this->view('reports/comparison', compact('rows', 'yearA', 'yearB', 'barangay', 'purok', 'barangays', 'puroks'));
+        $this->view('reports/comparison', compact('rows', 'yearA', 'yearB', 'period', 'barangay', 'purok', 'barangays', 'puroks'));
     }
 
     public function summary(): void

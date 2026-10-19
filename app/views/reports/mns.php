@@ -98,17 +98,6 @@ $monthNames = ['','January','February','March','April','May','June','July','Augu
                 </select>
             </div>
             <?php endif; ?>
-            <?php if (!$isBhw): ?>
-            <div class="col-md-2">
-                <label class="form-label small">Source</label>
-                <select name="source" class="form-select form-select-sm">
-                    <option value="">All Sources</option>
-                    <option value="Walk-in" <?= ($source ?? '') === 'Walk-in' ? 'selected' : '' ?>>Walk-in</option>
-                    <option value="Mobile"  <?= ($source ?? '') === 'Mobile'  ? 'selected' : '' ?>>Mobile</option>
-                    <option value="Excel"   <?= ($source ?? '') === 'Excel'   ? 'selected' : '' ?>>Excel Import</option>
-                </select>
-            </div>
-            <?php endif; ?>
             <div class="col-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filter</button>
                 <a href="<?= APP_URL ?>/reports/mns" class="btn btn-sm btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
