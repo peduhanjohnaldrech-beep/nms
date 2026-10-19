@@ -124,56 +124,6 @@
 </div>
 
 
-<?php if (in_array(strtolower(\Core\Session::get('user_role','')), ['admin','nutritionist']) && ($submittedCount > 0 || !empty($recentSubmissions))): ?>
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <span class="fw-semibold small text-uppercase text-muted">
-            <i class="bi bi-phone me-1 text-primary"></i>Mobile Submissions Inbox
-        </span>
-        <a href="<?= APP_URL ?>/beneficiaries?source=mobile" class="btn btn-sm btn-outline-primary">
-            View All <span class="badge bg-primary ms-1"><?= $submittedCount ?></span>
-        </a>
-    </div>
-    <?php if (!empty($recentSubmissions)): ?>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Beneficiary</th>
-                    <th scope="col">Barangay</th>
-                    <th scope="col">Submitted By (BNS)</th>
-                    <th scope="col">Submitted At</th>
-                    <th scope="col"><span class="visually-hidden">Actions</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($recentSubmissions as $s): ?>
-                <tr>
-                    <td class="fw-semibold">
-                        <a href="<?= APP_URL ?>/beneficiaries/<?= $s['id'] ?>" class="text-decoration-none">
-                            <?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?>
-                        </a>
-                    </td>
-                    <td><?= htmlspecialchars($s['barangay']) ?></td>
-                    <td><?= htmlspecialchars($s['submitted_by_name'] ?? '—') ?></td>
-                    <td class="text-muted small"><?= date('M j, Y g:i a', strtotime($s['submitted_at'])) ?></td>
-                    <td>
-                        <a href="<?= APP_URL ?>/beneficiaries/<?= $s['id'] ?>" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-person me-1"></i>View
-                        </a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <?php else: ?>
-    <div class="card-body text-center text-muted py-3 small">
-        <i class="bi bi-inbox fs-4 d-block mb-1"></i>No submissions yet.
-    </div>
-    <?php endif; ?>
-</div>
-<?php endif; ?>
 
 <!-- Charts Row 1 -->
 <div class="row g-3 mb-4">
