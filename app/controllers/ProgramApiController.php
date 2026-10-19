@@ -378,18 +378,25 @@ class ProgramApiController extends ApiController
         $this->validateDistributionDate($data['date_given'], 90);
         $sachets = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
 
+        $hasSachetsMnp = (bool) $db->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mnp_records' AND COLUMN_NAME = 'sachets_distributed'"
+        )->fetchColumn();
         $hasCounseling = (bool) $db->query(
             "SELECT COUNT(*) FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mnp_records' AND COLUMN_NAME = 'counseling_given'"
         )->fetchColumn();
 
         try {
-            if ($hasCounseling) {
+            if ($hasCounseling && $hasSachetsMnp) {
                 $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,counseling_given,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
                    ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),(int)($data['counseling_given']??0),$sachets,$data['notes']??null,$this->userId()]);
-            } else {
+            } elseif ($hasSachetsMnp) {
                 $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
                    ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+            } else {
+                $db->prepare("INSERT INTO mnp_records (beneficiary_id,date_given,year,age_group,completed_routine,notes,given_by) VALUES (?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$data['notes']??null,$this->userId()]);
             }
         } catch (\PDOException $e) {
             $this->error('Database error: ' . $e->getMessage(), 500);
@@ -409,18 +416,25 @@ class ProgramApiController extends ApiController
         $sachets  = isset($data['sachets_distributed']) && $data['sachets_distributed'] !== null ? (int)$data['sachets_distributed'] : null;
         $weightKg = isset($data['weight_kg']) && $data['weight_kg'] !== null && $data['weight_kg'] !== '' ? (float)$data['weight_kg'] : null;
 
+        $hasSachetsLns = (bool) $db->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lns_sq_records' AND COLUMN_NAME = 'sachets_distributed'"
+        )->fetchColumn();
         $hasWeightKg = (bool) $db->query(
             "SELECT COUNT(*) FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lns_sq_records' AND COLUMN_NAME = 'weight_kg'"
         )->fetchColumn();
 
         try {
-            if ($hasWeightKg) {
+            if ($hasWeightKg && $hasSachetsLns) {
                 $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,weight_kg,notes,given_by) VALUES (?,?,?,?,?,?,?,?,?)")
                    ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$weightKg,$data['notes']??null,$this->userId()]);
-            } else {
+            } elseif ($hasSachetsLns) {
                 $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,sachets_distributed,notes,given_by) VALUES (?,?,?,?,?,?,?,?)")
                    ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$sachets,$data['notes']??null,$this->userId()]);
+            } else {
+                $db->prepare("INSERT INTO lns_sq_records (beneficiary_id,date_given,year,age_group,completed_routine,notes,given_by) VALUES (?,?,?,?,?,?,?)")
+                   ->execute([$data['beneficiary_id'],$data['date_given'],$data['year']??date('Y'),$data['age_group']??'6-11 months',(int)($data['completed_routine']??0),$data['notes']??null,$this->userId()]);
             }
         } catch (\PDOException $e) {
             $this->error('Database error: ' . $e->getMessage(), 500);
