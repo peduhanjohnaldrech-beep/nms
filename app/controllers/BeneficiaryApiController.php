@@ -513,28 +513,34 @@ class BeneficiaryApiController extends ApiController
         }
 
         // Vitamin A
-        $vitaStmt = $db->prepare(
-            'SELECT id, round, year, distribution_date, dosage_iu, capsule_color, delivery_mode
-             FROM vitamin_a_records WHERE beneficiary_id = ? ORDER BY distribution_date DESC'
-        );
-        $vitaStmt->execute([$id]);
-        $vitaRecords = $vitaStmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $vitaStmt = $db->prepare(
+                'SELECT id, round, year, distribution_date, dosage_iu, capsule_color
+                 FROM vitamin_a_records WHERE beneficiary_id = ? ORDER BY distribution_date DESC'
+            );
+            $vitaStmt->execute([$id]);
+            $vitaRecords = $vitaStmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) { $vitaRecords = []; }
 
         // MNP
-        $mnpStmt = $db->prepare(
-            'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
-             FROM mnp_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
-        );
-        $mnpStmt->execute([$id]);
-        $mnpRecords = $mnpStmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $mnpStmt = $db->prepare(
+                'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
+                 FROM mnp_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
+            );
+            $mnpStmt->execute([$id]);
+            $mnpRecords = $mnpStmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) { $mnpRecords = []; }
 
         // LNS-SQ
-        $lnsStmt = $db->prepare(
-            'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine, weight_kg
-             FROM lns_sq_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
-        );
-        $lnsStmt->execute([$id]);
-        $lnsRecords = $lnsStmt->fetchAll(\PDO::FETCH_ASSOC);
+        try {
+            $lnsStmt = $db->prepare(
+                'SELECT id, year, date_given, age_group, sachets_distributed, completed_routine
+                 FROM lns_sq_records WHERE beneficiary_id = ? ORDER BY date_given DESC'
+            );
+            $lnsStmt->execute([$id]);
+            $lnsRecords = $lnsStmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) { $lnsRecords = []; }
 
         // DSP enrollment
         $dspStmt = $db->prepare(
