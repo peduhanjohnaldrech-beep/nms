@@ -8,6 +8,7 @@ use Core\Database;
 use App\Models\Assessment;
 use App\Models\Beneficiary;
 use App\Helpers\EoptExport;
+use App\Helpers\EoptRegion6Export;
 
 class ReportController extends Controller
 {
@@ -545,6 +546,43 @@ class ReportController extends Controller
 
         $suffix   = $year . ($period ? '_' . $period : '') . ($barangay ? '_' . preg_replace('/[^A-Za-z0-9]/', '_', $barangay) : '');
         $filename = 'eOPT_' . $suffix . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Content-Length: ' . filesize($tmp));
+
+        readfile($tmp);
+        unlink($tmp);
+        exit;
+    }
+
+    public function exportEoptRegion6(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('reports');
+        ini_set('memory_limit', '512M');
+
+        $tpl = BASE_PATH . '/storage/templates/eopt_region6.xltx';
+        if (!file_exists($tpl)) {
+            Session::flash('error', 'Region6 eOPT template not found. Please upload it to storage/templates/.');
+            $this->redirect('/reports/opt');
+        }
+
+        $year     = (int)($_GET['year']     ?? date('Y'));
+        $period   = $_GET['period']          ?? '';
+        $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+
+        try {
+            $export = new EoptRegion6Export($year, $period, $barangay);
+            $tmp    = $export->generate();
+        } catch (\Throwable $e) {
+            Session::flash('error', 'Region6 eOPT export failed: ' . $e->getMessage());
+            $this->redirect('/reports/opt');
+        }
+
+        $suffix   = $year . ($period ? '_' . $period : '') . ($barangay ? '_' . preg_replace('/[^A-Za-z0-9]/', '_', $barangay) : '');
+        $filename = 'eOPT_Region6_' . $suffix . '.xlsx';
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . $filename . '"');

@@ -264,6 +264,7 @@ $exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&baran
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=eopt"  class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>eOPT</a>
+            <a href="<?= APP_URL ?>/reports/export-eopt-region6?year=<?= $year ?>&period=<?= urlencode($period) ?>&barangay=<?= urlencode($barangay) ?>" class="btn btn-sm btn-outline-info"><i class="bi bi-file-earmark-spreadsheet me-1"></i>eOPT Region6</a>
         </div>
     </div>
     <div class="card-body p-0">
