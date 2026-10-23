@@ -263,7 +263,8 @@ class EoptRegion6Export
                     'R' => ['s', $this->wflhCode($c['wflh_status'] ?? '')],
                 ]);
 
-                return '<row r="' . $rowNum . '"' . $rowAttrs . '>' . $cells . $rowBody . '</row>';
+                $fullBody = $this->sortRowCells($cells . $rowBody);
+                return '<row r="' . $rowNum . '"' . $rowAttrs . '>' . $fullBody . '</row>';
             },
             $xml
         );
@@ -287,8 +288,7 @@ class EoptRegion6Export
 
                 foreach ($cells as $col => [$type, $val]) {
                     $ref = $col . $rowNum;
-                    // Remove existing cell with this exact ref (formula or blank)
-                    $rq      = preg_quote($ref, '/');
+                    $rq  = preg_quote($ref, '/');
                     $rowBody = preg_replace('/<c r="' . $rq . '"[^>\/]*\s*>.*?<\/c>/s', '', $rowBody);
                     $rowBody = preg_replace('/<c r="' . $rq . '"[^>]*\/>/s',            '', $rowBody);
 
@@ -302,10 +302,47 @@ class EoptRegion6Export
                     }
                 }
 
+                // XLSX requires cells to be in ascending column order within a row.
+                // Re-sort all cells after appending new ones.
+                $rowBody = $this->sortRowCells($rowBody);
+
                 return '<row r="' . $rowNum . '"' . $attrs . '>' . $rowBody . '</row>';
             },
             $xml
         );
+    }
+
+    /**
+     * Re-order all <c> elements within a row body by column reference.
+     * XLSX is invalid if cells are out of column order.
+     */
+    private function sortRowCells(string $rowBody): string
+    {
+        $cellMap = [];
+
+        // Full cells: <c r="X"> ... </c>
+        preg_match_all('/(<c r="([^"]+)"[^>\/]*>.*?<\/c>)/s', $rowBody, $m1, PREG_SET_ORDER);
+        foreach ($m1 as $m) {
+            $col = preg_replace('/\d+/', '', $m[2]);
+            $cellMap[$col] = $m[1];
+        }
+
+        // Self-closing: <c r="X" ... />
+        preg_match_all('/(<c r="([^"]+)"[^>]*\/>)/s', $rowBody, $m2, PREG_SET_ORDER);
+        foreach ($m2 as $m) {
+            $col = preg_replace('/\d+/', '', $m[2]);
+            if (!isset($cellMap[$col])) {
+                $cellMap[$col] = $m[1];
+            }
+        }
+
+        // Sort: shorter column letters first (A before AA), then alphabetically
+        uksort($cellMap, function (string $a, string $b): int {
+            $la = strlen($a); $lb = strlen($b);
+            return $la !== $lb ? $la - $lb : strcmp($a, $b);
+        });
+
+        return implode('', array_values($cellMap));
     }
 
     /**
