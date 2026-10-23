@@ -51,13 +51,13 @@ class AssessmentController extends Controller
                 return;
             }
 
-            // Block duplicate assessment for same beneficiary/period/year
+            // Block duplicate assessment for same beneficiary/year (OPT is once a year)
             $dupStmt = Database::getInstance()->prepare(
-                "SELECT assessment_date FROM assessments WHERE beneficiary_id = ? AND period = ? AND assessment_year = ?"
+                "SELECT assessment_date FROM assessments WHERE beneficiary_id = ? AND assessment_year = ?"
             );
-            $dupStmt->execute([$bid, $period, $year]);
+            $dupStmt->execute([$bid, $year]);
             if ($dupStmt->fetch()) {
-                Session::flash('error', "A <strong>$period $year</strong> assessment already exists for this beneficiary. Only one assessment per period is allowed.");
+                Session::flash('error', "A <strong>$year</strong> assessment already exists for this beneficiary. Only one assessment per year is allowed.");
                 $this->redirect("/assessments/create?beneficiary_id={$bid}");
             }
 
@@ -117,9 +117,8 @@ class AssessmentController extends Controller
             $stmt->execute([$bid]);
             $lastAssessment = $stmt->fetch() ?: null;
 
-            $curPeriod = (int)date('n') <= 6 ? 'January' : 'July';
-            $stmt2     = $db->prepare("SELECT assessment_date FROM assessments WHERE beneficiary_id = ? AND period = ? AND assessment_year = ?");
-            $stmt2->execute([$bid, $curPeriod, (int)date('Y')]);
+            $stmt2     = $db->prepare("SELECT assessment_date FROM assessments WHERE beneficiary_id = ? AND assessment_year = ?");
+            $stmt2->execute([$bid, (int)date('Y')]);
             $existingThisPeriod = $stmt2->fetch() ?: null;
         }
 
@@ -127,11 +126,10 @@ class AssessmentController extends Controller
 
         $alreadyAssessedIds = [];
         if (!$beneficiary) {
-            $curPeriod2 = (int)date('n') <= 6 ? 'January' : 'July';
             $stmt3 = Database::getInstance()->prepare(
-                "SELECT DISTINCT beneficiary_id FROM assessments WHERE period = ? AND assessment_year = ?"
+                "SELECT DISTINCT beneficiary_id FROM assessments WHERE assessment_year = ?"
             );
-            $stmt3->execute([$curPeriod2, (int)date('Y')]);
+            $stmt3->execute([(int)date('Y')]);
             $alreadyAssessedIds = array_fill_keys(array_column($stmt3->fetchAll(), 'beneficiary_id'), true);
         }
 
@@ -168,22 +166,19 @@ class AssessmentController extends Controller
             return \DateHelper::ageInMonths($b['date_of_birth'], $assessmentDate) < 72;
         }));
 
-        $showAll        = isset($_GET['show_all']);
-        $datePeriod     = (int)date('n', strtotime($assessmentDate)) <= 6 ? 'January' : 'July';
         $dateYear       = (int)date('Y', strtotime($assessmentDate));
         $alreadyWeighedMap = [];
 
         if (!empty($allBeneficiaries)) {
             $stmt = Database::getInstance()->prepare(
-                "SELECT DISTINCT beneficiary_id FROM assessments WHERE period = ? AND assessment_year = ?"
+                "SELECT DISTINCT beneficiary_id FROM assessments WHERE assessment_year = ?"
             );
-            $stmt->execute([$datePeriod, $dateYear]);
+            $stmt->execute([$dateYear]);
             $alreadyWeighedMap = array_fill_keys(array_column($stmt->fetchAll(), 'beneficiary_id'), true);
         }
 
-        $beneficiaries = $showAll
-            ? $allBeneficiaries
-            : array_values(array_filter($allBeneficiaries, fn($b) => !isset($alreadyWeighedMap[$b['id']])));
+        // Always show only unweighed beneficiaries — OPT is once a year, no follow-up
+        $beneficiaries = array_values(array_filter($allBeneficiaries, fn($b) => !isset($alreadyWeighedMap[$b['id']])));
 
         if ($this->isPost() && !empty($_POST['entries'])) {
             $this->validateCsrf();
@@ -243,8 +238,6 @@ class AssessmentController extends Controller
             'selectedBarangay'  => $selectedBarangay,
             'assessmentDate'    => $assessmentDate,
             'alreadyWeighedMap' => $alreadyWeighedMap,
-            'showAll'           => $showAll,
-            'totalInBarangay'   => count($allBeneficiaries),
         ]);
     }
 

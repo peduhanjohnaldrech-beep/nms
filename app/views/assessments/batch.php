@@ -39,24 +39,9 @@
     <?= \Core\Session::csrfField() ?>
     <input type="hidden" name="assessment_date" value="<?= htmlspecialchars($assessmentDate) ?>">
 
-    <?php $alreadyCount = count($alreadyWeighedMap ?? []); ?>
-    <?php if ($alreadyCount > 0): ?>
-    <div class="d-flex align-items-center gap-2 mb-2">
-        <span class="badge bg-success"><?= $alreadyCount ?> already weighed</span>
-        <span class="badge bg-secondary"><?= count($beneficiaries ?? []) ?> remaining</span>
-        <?php if ($showAll): ?>
-        <a href="?barangay=<?= urlencode($selectedBarangay) ?>&assessment_date=<?= urlencode($assessmentDate) ?>"
-           class="btn btn-sm btn-outline-secondary py-0">Show Unweighed Only</a>
-        <?php else: ?>
-        <a href="?barangay=<?= urlencode($selectedBarangay) ?>&assessment_date=<?= urlencode($assessmentDate) ?>&show_all=1"
-           class="btn btn-sm btn-outline-secondary py-0">Show All <?= $totalInBarangay ?></a>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
     <div class="alert alert-info border-0 small mb-2">
         <i class="bi bi-info-circle me-1"></i>
         Assessment Date: <strong><?= date('F j, Y', strtotime($assessmentDate)) ?></strong>
-        &mdash; Period: <strong><?= (int)date('n', strtotime($assessmentDate)) <= 6 ? 'January' : 'July' ?></strong>
         &mdash; Leave weight blank to skip a beneficiary.
     </div>
     <div class="row g-2 mb-3 align-items-center">
@@ -87,15 +72,11 @@
                     </thead>
                     <tbody>
                         <?php foreach ($beneficiaries as $i => $b): ?>
-                        <?php $alreadyWeighed = isset($alreadyWeighedMap[$b['id']]); ?>
                         <input type="hidden" name="entries[<?= $i ?>][beneficiary_id]" value="<?= $b['id'] ?>">
-                        <tr class="<?= $alreadyWeighed ? 'table-warning' : '' ?>">
+                        <tr>
                             <td class="text-muted small"><?= $i + 1 ?></td>
                             <td>
                                 <strong><?= htmlspecialchars($b['last_name'] . ', ' . $b['first_name']) ?></strong>
-                                <?php if ($alreadyWeighed): ?>
-                                <span class="badge bg-warning text-dark ms-1" style="font-size:.7rem;">Already Weighed</span>
-                                <?php endif; ?>
                                 <br><span class="text-muted small"><?= htmlspecialchars($b['purok_zone'] ?? '') ?></span>
                             </td>
                             <td class="small"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></td>
