@@ -56,7 +56,7 @@ if (in_array($userRole, ['admin', 'nutritionist'])) {
     } catch (\Throwable $__e) {}
 }
 $__uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$__assessOpen  = str_contains($__uri, '/assessments') || str_contains($__uri, '/beneficiaries/followup');
+$__assessOpen  = str_contains($__uri, '/assessments');
 $__programsOpen = str_contains($__uri, '/programs');
 $__reportsOpen = str_contains($__uri, '/reports');
 $__dataOpen    = str_contains($__uri, '/dispensing') || str_contains($__uri, '/import');
@@ -196,9 +196,6 @@ foreach ($__crumbSegs as $seg) {
                 <?php endif; ?>
                 <a class="nav-link ps-4 <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
                     <i class="bi bi-clipboard2-data me-2"></i>Batch Assessment
-                </a>
-                <a class="nav-link ps-4 <?= __navActive('/beneficiaries/followup') ?>" href="<?= APP_URL ?>/beneficiaries/followup">
-                    <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>For Follow-up
                 </a>
             </div>
 
