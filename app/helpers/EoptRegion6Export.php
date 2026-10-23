@@ -119,7 +119,7 @@ class EoptRegion6Export
                     a.assessment_date
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL AND $where
+             WHERE b.deleted_at IS NULL AND b.validation_status = 'validated' AND $where
                AND a.id = (
                    SELECT id FROM assessments a2
                    WHERE a2.beneficiary_id = a.beneficiary_id
@@ -131,6 +131,13 @@ class EoptRegion6Export
         );
         $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (empty($rows)) {
+            $detail = "Year={$this->year}";
+            if ($this->period)   $detail .= ", Period={$this->period}";
+            if ($this->barangay) $detail .= ", Barangay={$this->barangay}";
+            throw new \RuntimeException("No validated records found ({$detail}). Please check your filters.");
+        }
 
         foreach ($rows as $r) {
             if (!$this->municipality && !empty($r['city_municipality'])) $this->municipality = $r['city_municipality'];
@@ -219,6 +226,10 @@ class EoptRegion6Export
             'J' => ['s', $this->region],
         ]);
 
+        // Nut_StatusTool XML is large (~19 MB); increase PCRE limits to prevent silent failure
+        $prevBacktrack  = ini_set('pcre.backtrack_limit', 10000000);
+        $prevRecursion  = ini_set('pcre.recursion_limit',   500000);
+
         // Fill data rows (10 to 1009) — preserve existing formula cells (AI+)
         $xml = preg_replace_callback(
             '/<row r="(\d+)"([^>]*)>(.*?)<\/row>/s',
@@ -268,6 +279,17 @@ class EoptRegion6Export
             },
             $xml
         );
+
+        // Restore previous PCRE limits
+        ini_set('pcre.backtrack_limit', $prevBacktrack);
+        ini_set('pcre.recursion_limit',  $prevRecursion);
+
+        if ($xml === null || preg_last_error() !== PREG_NO_ERROR) {
+            throw new \RuntimeException(
+                'PCRE failed on Nut_StatusTool XML (error ' . preg_last_error() . '). '
+                . 'The sheet XML is too large for PHP regex processing.'
+            );
+        }
 
         $zip->addFromString($map[$key], $xml, \ZipArchive::FL_OVERWRITE);
     }
