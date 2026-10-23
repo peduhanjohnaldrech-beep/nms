@@ -218,18 +218,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 document.getElementById('ageGroupTable').addEventListener('show.bs.collapse',  () => document.getElementById('ageChev').className = 'bi bi-chevron-up');
 document.getElementById('ageGroupTable').addEventListener('hide.bs.collapse', () => document.getElementById('ageChev').className = 'bi bi-chevron-down');
 </script>
-<script>
-const toggleZscoreBtn = document.getElementById('toggleZscore');
-if (toggleZscoreBtn) {
-    let zVisible = false;
-    toggleZscoreBtn.addEventListener('click', function () {
-        zVisible = !zVisible;
-        document.querySelectorAll('.col-zscore').forEach(el => el.classList.toggle('d-none', !zVisible));
-        this.classList.toggle('btn-outline-secondary', !zVisible);
-        this.classList.toggle('btn-secondary', zVisible);
-    });
-}
-</script>
 <?php endif; ?>
 
 <!-- Results Table -->
@@ -315,3 +303,15 @@ $exportQs = 'type=opt&year=' . $year . '&barangay=' . urlencode($barangay);
         <?php endif; ?>
     </div>
 </div>
+<script>
+const toggleZscoreBtn = document.getElementById('toggleZscore');
+if (toggleZscoreBtn) {
+    let zVisible = false;
+    toggleZscoreBtn.addEventListener('click', function () {
+        zVisible = !zVisible;
+        document.querySelectorAll('.col-zscore').forEach(el => el.classList.toggle('d-none', !zVisible));
+        this.classList.toggle('btn-outline-secondary', !zVisible);
+        this.classList.toggle('btn-secondary', zVisible);
+    });
+}
+</script>
