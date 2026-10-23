@@ -43,19 +43,19 @@ class ZScoreHelper
 
         if (empty($table)) return null;
 
-        $h    = (int) round($height);
+        // Round to nearest 0.5 cm for better precision than rounding to integer
+        $h    = round($height * 2) / 2;
         $keys = array_keys($table);
         $h    = max(min($keys), min(max($keys), $h));
 
         if (isset($table[$h])) {
             $sd = $table[$h];
         } else {
-            $lower = $h;
-            while ($lower >= min($keys) && !isset($table[$lower])) $lower--;
-            $upper = $h;
-            while ($upper <= max($keys) && !isset($table[$upper])) $upper++;
+            // Interpolate between the two nearest integer entries
+            $lower = (int) floor($h);
+            $upper = (int) ceil($h);
             if (!isset($table[$lower]) || !isset($table[$upper])) return null;
-            $frac = ($h - $lower) / ($upper - $lower);
+            $frac = $h - $lower;
             $sd   = [];
             foreach (['n3', 'n2', 'med', 'p2', 'p3'] as $k) {
                 $sd[$k] = $table[$lower][$k] + $frac * ($table[$upper][$k] - $table[$lower][$k]);
