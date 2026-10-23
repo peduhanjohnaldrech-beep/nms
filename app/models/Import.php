@@ -144,6 +144,15 @@ class Import extends Model
                     $ageMonths    = \DateHelper::ageInMonths($data['date_of_birth'], $data['assessment_date']);
                     $period       = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
                     $year         = (int)date('Y', strtotime($data['assessment_date']));
+
+                    // Skip if an assessment already exists for this beneficiary this year (OPT is once a year)
+                    $dupChk = $db->prepare("SELECT id FROM assessments WHERE beneficiary_id = ? AND assessment_year = ? LIMIT 1");
+                    $dupChk->execute([$beneficiaryId, $year]);
+                    if ($dupChk->fetch()) {
+                        $success++;
+                        continue;
+                    }
+
                     $assessmentId = $assessmentModel->createWithZScore([
                         'beneficiary_id'  => $beneficiaryId,
                         'assessment_date' => $data['assessment_date'],
