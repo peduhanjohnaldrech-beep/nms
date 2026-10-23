@@ -38,7 +38,6 @@ class ReportController extends Controller
         $this->requirePermission('reports');
 
         $year     = (int)($_GET['year'] ?? date('Y'));
-        $period   = $_GET['period']   ?? '';
         $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
         $purok    = $_GET['purok']    ?? '';
         $source   = $_GET['source']   ?? '';
@@ -46,11 +45,11 @@ class ReportController extends Controller
         $dateTo   = $_GET['date_to']   ?? '';
 
         $beneModel     = new Beneficiary();
-        $ageGroupStats = (new Assessment())->getAgeGroupStats($year, $period, $barangay);
+        $ageGroupStats = (new Assessment())->getAgeGroupStats($year, '', $barangay);
 
         $this->view('reports/opt', array_merge(
-            ['rows' => $this->getReportData('opt', $year, $period, $barangay, $source, $dateFrom, $dateTo, $purok)],
-            ['year' => $year, 'period' => $period, 'barangay' => $barangay, 'purok' => $purok,
+            ['rows' => $this->getReportData('opt', $year, '', $barangay, $source, $dateFrom, $dateTo, $purok)],
+            ['year' => $year, 'period' => '', 'barangay' => $barangay, 'purok' => $purok,
              'source' => $source, 'dateFrom' => $dateFrom, 'dateTo' => $dateTo,
              'isBhw' => in_array(Session::get('user_role'), ['bhw', 'bns']),
              'ageGroupStats' => $ageGroupStats,

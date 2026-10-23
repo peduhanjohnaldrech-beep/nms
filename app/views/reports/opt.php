@@ -46,7 +46,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
     <h5 class="mb-0 fw-bold">OPT REPORT — OPERATION TIMBANG PLUS</h5>
     <div class="small">
         Year: <?= $year ?>
-        <?php if ($period): ?> &nbsp;|&nbsp; Period: <?= htmlspecialchars($period) ?><?php endif; ?>
         <?php if ($barangay): ?> &nbsp;|&nbsp; Barangay: <?= htmlspecialchars($barangay) ?><?php endif; ?>
         &nbsp;|&nbsp; Total Records: <?= $totalRows ?>
         &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
@@ -57,7 +56,7 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 <div class="card border-0 shadow-sm mb-3 no-print">
     <div class="card-header fw-semibold py-2 px-3">
         <i class="bi bi-funnel me-1 text-primary" aria-hidden="true"></i>Filters
-        <?php if ($barangay || $period || ($dateFrom && $dateTo)): ?>
+        <?php if ($barangay || ($dateFrom && $dateTo)): ?>
         <span class="badge bg-primary ms-2 small">Active</span>
         <?php endif; ?>
     </div>
@@ -69,14 +68,6 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
                     <?php for ($y = date('Y') + 1; $y >= 2020; $y--): ?>
                     <option value="<?= $y ?>" <?= $year === $y ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold mb-1" for="f_period">Period</label>
-                <select id="f_period" name="period" class="form-select form-select-sm">
-                    <option value="">All Periods</option>
-                    <option value="January" <?= $period === 'January' ? 'selected' : '' ?>>January</option>
-                    <option value="July"    <?= $period === 'July'    ? 'selected' : '' ?>>July</option>
                 </select>
             </div>
             <?php if (!$isBhw): ?>
@@ -160,15 +151,10 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
 <?php endif; ?>
 
 <!-- Active filter label -->
-<?php if ($barangay || $period): ?>
+<?php if ($barangay): ?>
 <div class="mb-3 d-flex align-items-center gap-2 flex-wrap">
     <span class="text-muted small">Showing:</span>
-    <?php if ($period): ?>
-    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><?= $period ?> Period</span>
-    <?php endif; ?>
-    <?php if ($barangay): ?>
     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><?= htmlspecialchars($barangay) ?></span>
-    <?php endif; ?>
     <a href="<?= APP_URL ?>/reports/opt" class="small text-muted"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Clear filters</a>
 </div>
 <?php endif; ?>
@@ -248,7 +234,7 @@ if (toggleZscoreBtn) {
 
 <!-- Results Table -->
 <?php
-$exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&barangay=' . urlencode($barangay);
+$exportQs = 'type=opt&year=' . $year . '&barangay=' . urlencode($barangay);
 ?>
 <div class="card border-0 shadow-sm">
     <div class="card-header fw-semibold d-flex justify-content-between align-items-center py-2 flex-wrap gap-2">
@@ -264,7 +250,7 @@ $exportQs = 'type=opt&year=' . $year . '&period=' . urlencode($period) . '&baran
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=excel" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=pdf"   class="btn btn-sm btn-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
             <a href="<?= APP_URL ?>/reports/export?<?= $exportQs ?>&format=eopt"  class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-text me-1"></i>eOPT</a>
-            <a href="<?= APP_URL ?>/reports/export-eopt-region6?year=<?= $year ?>&period=<?= urlencode($period) ?>&barangay=<?= urlencode($barangay) ?>" class="btn btn-sm btn-outline-info"><i class="bi bi-file-earmark-spreadsheet me-1"></i>eOPT Region6</a>
+            <a href="<?= APP_URL ?>/reports/export-eopt-region6?year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>" class="btn btn-sm btn-outline-info"><i class="bi bi-file-earmark-spreadsheet me-1"></i>eOPT Region6</a>
         </div>
     </div>
     <div class="card-body p-0">

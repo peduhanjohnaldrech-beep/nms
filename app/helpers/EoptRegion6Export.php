@@ -107,7 +107,6 @@ class EoptRegion6Export
     {
         $params = [$this->year];
         $where  = 'a.assessment_year = ?';
-        if ($this->period)   { $where .= ' AND a.period = ?';   $params[] = $this->period; }
         if ($this->barangay) { $where .= ' AND b.barangay = ?'; $params[] = $this->barangay; }
 
         $stmt = $this->db->prepare(
@@ -134,7 +133,6 @@ class EoptRegion6Export
 
         if (empty($rows)) {
             $detail = "Year={$this->year}";
-            if ($this->period)   $detail .= ", Period={$this->period}";
             if ($this->barangay) $detail .= ", Barangay={$this->barangay}";
             throw new \RuntimeException("No validated records found ({$detail}). Please check your filters.");
         }
