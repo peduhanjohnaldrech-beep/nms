@@ -304,9 +304,9 @@ class ProgramApiController extends ApiController
             'muac_cm'          => (float)$data['muac_cm'],
             'monitored_by'     => $data['monitored_by'] ?? $this->apiUser['full_name'],
             'remarks'          => $data['remarks'] ?? null,
-            'validation_status' => $this->isFieldWorker() ? 'pending' : 'validated',
-            'validated_by'     => $this->isFieldWorker() ? null : $this->userId(),
-            'validated_at'     => $this->isFieldWorker() ? null : date('Y-m-d H:i:s'),
+            'validation_status' => 'validated',
+            'validated_by'     => $this->userId(),
+            'validated_at'     => date('Y-m-d H:i:s'),
             'created_by'       => $this->userId(),
         ]);
 
