@@ -88,24 +88,6 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-2">
-        <a href="<?= APP_URL ?>/beneficiaries/followup" class="text-decoration-none" aria-label="<?= number_format($followupCount) ?> For Follow-up<?= $followupCount > 0 ? ' — needs attention' : '' ?>">
-        <div class="card border-0 shadow-sm h-100 card-hover <?= $followupCount > 0 ? 'border-danger border-2 card-pulse' : '' ?>">
-            <div class="card-body d-flex align-items-center gap-3 py-3">
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px" aria-hidden="true">
-                    <i class="bi bi-exclamation-triangle-fill fs-5 text-danger <?= $followupCount > 0 ? 'icon-shake' : '' ?>"></i>
-                </div>
-                <div>
-                    <div class="fs-3 fw-bold lh-1 text-danger" aria-hidden="true"><?= number_format($followupCount) ?></div>
-                    <div class="text-muted small mt-1">For Follow-up</div>
-                    <?php if ($followupCount > 0): ?>
-                    <div class="text-danger" style="font-size:0.7rem;" aria-hidden="true"><i class="bi bi-exclamation-circle me-1"></i>Needs attention</div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-xl-2">
         <a href="<?= APP_URL ?>/beneficiaries?age_status=active" class="text-decoration-none" aria-label="<?= number_format($notAssessedCount) ?> Not Yet Assessed this <?= $periodLabel ?> <?= $currentYear ?> period">
         <div class="card border-0 shadow-sm h-100 card-hover <?= $notAssessedCount > 0 ? 'border-warning border-2' : '' ?>">
             <div class="card-body d-flex align-items-center gap-3 py-3">
