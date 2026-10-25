@@ -154,6 +154,12 @@ class AssessmentApiController extends ApiController
         $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
         $year   = (int)date('Y', strtotime($data['assessment_date']));
 
+        $dupChk = $db->prepare("SELECT id FROM assessments WHERE beneficiary_id = ? AND assessment_year = ? LIMIT 1");
+        $dupChk->execute([(int)$data['beneficiary_id'], $year]);
+        if ($dupChk->fetch()) {
+            $this->error("This beneficiary already has a $year assessment.", 409);
+        }
+
         $model = new Assessment();
         try {
             $id = $model->createWithZScore([
@@ -310,6 +316,9 @@ class AssessmentApiController extends ApiController
                 $checkOutliers = $autoValidated && !$isAuthRole;
                 $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
                 $year   = (int)date('Y', strtotime($data['assessment_date']));
+                $dupChk = $db->prepare("SELECT id FROM assessments WHERE beneficiary_id = ? AND assessment_year = ? LIMIT 1");
+                $dupChk->execute([(int)$data['beneficiary_id'], $year]);
+                if ($dupChk->fetch()) { $failed[] = ['beneficiary_id' => $data['beneficiary_id'] ?? null, 'errors' => ["Already has a $year assessment"]]; continue; }
                 $newId  = $model->createWithZScore([
                     'beneficiary_id'   => (int)$data['beneficiary_id'],
                     'sex'              => $bene['sex'],
