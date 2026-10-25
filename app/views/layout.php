@@ -181,24 +181,14 @@ foreach ($__crumbSegs as $seg) {
 
 
             <?php if (hasPerm('assessments')): ?>
-            <?php /* Assessments dropdown */ ?>
-            <a class="nav-link d-flex justify-content-between align-items-center <?= $__assessOpen ? '' : 'collapsed' ?>"
-               data-bs-toggle="collapse" href="#sidebarAssessments" role="button"
-               aria-expanded="<?= $__assessOpen ? 'true' : 'false' ?>" aria-controls="sidebarAssessments">
-                <span><i class="bi bi-clipboard2-pulse me-2" aria-hidden="true"></i>Assessments</span>
-                <i class="bi bi-chevron-down small sidebar-chevron" aria-hidden="true"></i>
-            </a>
-            <div class="collapse <?= $__assessOpen ? 'show' : '' ?>" id="sidebarAssessments">
                 <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
-                <a class="nav-link ps-4 <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
+                <a class="nav-link <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
                     <i class="bi bi-plus-circle me-2"></i>New Assessment
                 </a>
                 <?php endif; ?>
-                <a class="nav-link ps-4 <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
+                <a class="nav-link <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
                     <i class="bi bi-clipboard2-data me-2"></i>Batch Assessment
                 </a>
-            </div>
-
             <?php endif; /* assessments */ ?>
 
             <?php if (hasPerm('programs')): ?>
