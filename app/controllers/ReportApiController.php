@@ -9,7 +9,7 @@ class ReportApiController extends ApiController
 {
     public function summary(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
 
         $year   = (int)($_GET['year']   ?? date('Y'));
@@ -91,7 +91,7 @@ class ReportApiController extends ApiController
 
     public function opt(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $year = (int)($_GET['year'] ?? date('Y'));
         $period = $_GET['period'] ?? '';
@@ -117,7 +117,7 @@ class ReportApiController extends ApiController
 
     public function dsp(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $year = (int)($_GET['year'] ?? date('Y'));
         $role = strtolower($user['role'] ?? '');
@@ -160,7 +160,7 @@ class ReportApiController extends ApiController
 
     public function mns(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $year = (int)($_GET['year'] ?? date('Y'));
         $role = strtolower($user['role'] ?? '');
@@ -219,7 +219,7 @@ class ReportApiController extends ApiController
 
     public function outcome(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $year = (int)($_GET['year'] ?? date('Y'));
         $role = strtolower($user['role'] ?? '');
@@ -238,7 +238,7 @@ class ReportApiController extends ApiController
 
     public function comparison(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $role = strtolower($user['role'] ?? '');
         $brgy = in_array($role,['bhw','encoder']) ? ($user['barangay']??null) : ($_GET['barangay']??null);
@@ -259,7 +259,7 @@ class ReportApiController extends ApiController
 
     public function export(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db     = Database::getInstance();
         $type   = $_GET['type']   ?? 'opt';
         $format = $_GET['format'] ?? 'csv'; // csv | excel
@@ -391,7 +391,7 @@ class ReportApiController extends ApiController
 
     public function distribution(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
         $year = (int)($_GET['year'] ?? date('Y'));
         $period = $_GET['period'] ?? '';

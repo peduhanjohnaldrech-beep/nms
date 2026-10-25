@@ -8,7 +8,7 @@ class ActivityApiController extends ApiController
 {
     public function index(): void
     {
-        $this->requireAuth();
+        $this->requireApiAuth();
         $user = $this->apiUser;
         $db   = Database::getInstance();
 

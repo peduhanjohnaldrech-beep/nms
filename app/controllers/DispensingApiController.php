@@ -8,7 +8,7 @@ class DispensingApiController extends ApiController
 {
     public function index(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $db   = Database::getInstance();
 
         $year    = (int)($_GET['year']    ?? date('Y'));
@@ -41,7 +41,7 @@ class DispensingApiController extends ApiController
 
     public function store(): void
     {
-        $this->requireAuth(); $user = $this->apiUser;
+        $this->requireApiAuth(); $user = $this->apiUser;
         $body = $this->body();
         $db   = Database::getInstance();
 
