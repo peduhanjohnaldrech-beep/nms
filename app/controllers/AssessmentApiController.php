@@ -215,7 +215,8 @@ class AssessmentApiController extends ApiController
         $assessment = $stmt->fetch(\PDO::FETCH_ASSOC);
         if (!$assessment) $this->error('Assessment not found', 404);
 
-        if (!in_array($assessment['validation_status'], ['rejected', 'pending'])) {
+        $canEditAny = in_array(strtolower($this->apiUser['role'] ?? ''), ['admin', 'nutritionist', 'midwife']);
+        if (!$canEditAny && !in_array($assessment['validation_status'], ['rejected', 'pending'])) {
             $this->error('Only rejected or pending assessments can be edited', 403);
         }
         if ($this->isFieldWorker() && (int)$assessment['created_by'] !== $this->userId()) {
