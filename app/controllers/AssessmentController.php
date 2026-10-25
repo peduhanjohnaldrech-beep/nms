@@ -62,7 +62,7 @@ class AssessmentController extends Controller
             }
 
             $role             = strtolower(Session::get('user_role'));
-            $needsValidation  = in_array($role, ['bns', 'bhw']);
+            $needsValidation  = false;
 
             $assessmentId = $this->model->createWithZScore([
                 'beneficiary_id'    => $bid,
@@ -191,7 +191,7 @@ class AssessmentController extends Controller
 
             $assessedBy      = trim($_POST['assessed_by'] ?? Session::get('user_name', ''));
             $batchRole       = strtolower(Session::get('user_role'));
-            $needsValidation = in_array($batchRole, ['bns', 'bhw']);
+            $needsValidation = false;
 
             foreach ($_POST['entries'] as $entry) {
                 $bid      = (int)($entry['beneficiary_id'] ?? 0);

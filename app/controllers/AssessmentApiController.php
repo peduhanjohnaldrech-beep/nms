@@ -147,9 +147,8 @@ class AssessmentApiController extends ApiController
         }
 
         $role          = strtolower($this->apiUser['role'] ?? '');
-        $autoValidated = in_array($role, ['admin', 'nutritionist', 'midwife'])
-            || ($bene['validation_status'] ?? '') === 'validated';
-        $checkOutliers = $autoValidated && !in_array($role, ['admin', 'nutritionist', 'midwife']);
+        $autoValidated = true;
+        $checkOutliers = false;
 
         $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
         $year   = (int)date('Y', strtotime($data['assessment_date']));
@@ -313,8 +312,8 @@ class AssessmentApiController extends ApiController
                 if (!$bene) { $failed[] = ['errors' => ['beneficiary not found']]; continue; }
                 if (($this->isBhw() || $this->isBns()) && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
                 if ($this->isMidwife() && $this->userBarangay() && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
-                $autoValidated = $isAuthRole || ($bene['validation_status'] ?? '') === 'validated';
-                $checkOutliers = $autoValidated && !$isAuthRole;
+                $autoValidated = true;
+                $checkOutliers = false;
                 $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
                 $year   = (int)date('Y', strtotime($data['assessment_date']));
                 $dupChk = $db->prepare("SELECT id FROM assessments WHERE beneficiary_id = ? AND assessment_year = ? LIMIT 1");

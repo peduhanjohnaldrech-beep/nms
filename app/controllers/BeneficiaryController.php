@@ -253,54 +253,9 @@ class BeneficiaryController extends Controller
         $rows      = $stmt->fetchAll();
         $barangays = $sessionBrgy ? [] : $this->model->getAllBarangays();
 
-        // Fetch pending assessments for each beneficiary
-        if (!empty($rows)) {
-            $beneIds      = array_column($rows, 'id');
-            $placeholders = implode(',', array_fill(0, count($beneIds), '?'));
-            $aStmt = $db->prepare(
-                "SELECT id, beneficiary_id, assessment_date, age_in_months,
-                        weight_kg, height_cm, muac_cm, nutritional_status,
-                        period, assessment_year, assessed_by, validation_status,
-                        rejection_note, created_at
-                 FROM assessments
-                 WHERE beneficiary_id IN ($placeholders)
-                   AND validation_status = 'pending'
-                 ORDER BY beneficiary_id, assessment_date DESC"
-            );
-            $aStmt->execute($beneIds);
-            $assessmentMap = [];
-            foreach ($aStmt->fetchAll() as $a) {
-                $assessmentMap[$a['beneficiary_id']][] = $a;
-            }
-            foreach ($rows as &$bene) {
-                $bene['assessments'] = $assessmentMap[$bene['id']] ?? [];
-            }
-            unset($bene);
-        }
-
-        // Also load pending assessments where the beneficiary is already validated
-        $aWhere  = ["a.validation_status = 'pending'", "b.validation_status = 'validated'", 'b.deleted_at IS NULL'];
-        $aParams = [];
-        if ($filterBrgy) { $aWhere[] = 'b.barangay = ?'; $aParams[] = $filterBrgy; }
-        $aWhereClause = 'WHERE ' . implode(' AND ', $aWhere);
-        $aStmt = $db->prepare(
-            "SELECT a.id, a.beneficiary_id, a.assessment_date, a.age_in_months,
-                    a.weight_kg, a.height_cm, a.muac_cm, a.nutritional_status,
-                    a.period, a.assessment_year, a.assessed_by, a.created_at,
-                    b.last_name, b.first_name, b.barangay,
-                    u.full_name AS created_by_name
-             FROM assessments a
-             JOIN beneficiaries b ON b.id = a.beneficiary_id
-             LEFT JOIN users u ON u.id = a.created_by
-             $aWhereClause
-             ORDER BY a.created_at DESC"
-        );
-        $aStmt->execute($aParams);
-        $pendingAssessments = $aStmt->fetchAll();
-
         $this->view('beneficiaries/validation', [
             'rows'               => $rows,
-            'pendingAssessments' => $pendingAssessments,
+            'pendingAssessments' => [],
             'barangays'          => $barangays,
             'filterBrgy'         => $filterBrgy,
             'sessionBrgy'        => $sessionBrgy,

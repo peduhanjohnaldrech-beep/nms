@@ -42,9 +42,7 @@ if (in_array($userRole, ['midwife', 'admin', 'nutritionist'])) {
         $__vStmt = $__vDb->prepare("SELECT COUNT(*) FROM beneficiaries WHERE validation_status = 'pending' AND deleted_at IS NULL");
         $__vStmt->execute();
         $__pendingValidation = (int)$__vStmt->fetchColumn();
-        $__aStmt = $__vDb->prepare("SELECT COUNT(*) FROM assessments WHERE validation_status = 'pending'");
-        $__aStmt->execute();
-        $__pendingAssessments = (int)$__aStmt->fetchColumn();
+        $__pendingAssessments = 0;
     } catch (\Throwable $__e) {}
 }
 if (in_array($userRole, ['admin', 'nutritionist'])) {
