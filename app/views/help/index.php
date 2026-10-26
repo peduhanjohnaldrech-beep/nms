@@ -2,6 +2,9 @@
 
 <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <h4 class="mb-0"><i class="bi bi-question-circle me-2"></i>Help &amp; User Guide</h4>
+    <a href="<?= APP_URL ?>/nms.apk" class="btn btn-success" download>
+        <i class="bi bi-android2 me-1"></i>Download NMS App
+    </a>
 </div>
 
 <div class="row g-4">

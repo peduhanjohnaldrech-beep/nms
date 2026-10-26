@@ -120,13 +120,29 @@ class Beneficiary extends Model
 
     public function getAllBarangays(): array
     {
-        $config  = require BASE_PATH . '/config/barangays.php';
-        $fromDb  = $this->fetchAll(
+        $db = \Core\Database::getInstance();
+
+        // From managed barangays table (may not exist yet on older installs)
+        try {
+            $fromTable = $db->query("SELECT name FROM barangays ORDER BY name")->fetchAll(\PDO::FETCH_COLUMN);
+        } catch (\Throwable $e) {
+            $fromTable = [];
+        }
+
+        // Fallback: config file (used if table is empty or missing)
+        if (empty($fromTable)) {
+            $fromTable = require BASE_PATH . '/config/barangays.php';
+        }
+
+        // Also pull any barangay values already in beneficiaries that aren't in the table
+        $fromBenef = $this->fetchAll(
             "SELECT DISTINCT barangay FROM beneficiaries WHERE deleted_at IS NULL ORDER BY barangay"
         );
-        $merged  = array_unique(array_merge($config, array_column($fromDb, 'barangay')));
+
+        $merged = array_unique(array_merge($fromTable, array_column($fromBenef, 'barangay')));
+        $merged = array_filter($merged, fn($b) => !empty(trim((string)$b)));
         sort($merged);
-        return array_map(fn($b) => ['barangay' => $b], $merged);
+        return array_map(fn($b) => ['barangay' => $b], array_values($merged));
     }
 
     /** Returns distinct non-empty puroks for a given barangay (or all if empty). */

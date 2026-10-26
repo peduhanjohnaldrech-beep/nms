@@ -15,13 +15,23 @@ class StatsApiController extends ApiController
         $this->requireApiAuth();
 
         $db   = Database::getInstance();
+        // Merge master list + any barangay already in beneficiaries
+        try {
+            $master = $db->query("SELECT name FROM barangays ORDER BY name")->fetchAll(\PDO::FETCH_COLUMN);
+        } catch (\Throwable $e) {
+            $master = [];
+        }
+
         $stmt = $db->prepare(
             "SELECT DISTINCT barangay FROM beneficiaries
              WHERE deleted_at IS NULL AND barangay IS NOT NULL AND barangay != ''
              ORDER BY barangay"
         );
         $stmt->execute();
-        $barangays = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        $fromBenef = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+        $barangays = array_values(array_unique(array_merge($master, $fromBenef)));
+        sort($barangays);
 
         $this->success(['barangays' => $barangays]);
     }

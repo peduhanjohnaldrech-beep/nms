@@ -5,7 +5,36 @@
         <h4 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Barangay Directory</h4>
         <p class="text-muted small mb-0"><?= count($barangays) ?> barangays — click any row to view its beneficiaries</p>
     </div>
+    <?php if (\Core\Session::get('user_role') === 'admin'): ?>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBarangayModal">
+        <i class="bi bi-plus-lg me-1"></i>Add Barangay
+    </button>
+    <?php endif; ?>
 </div>
+
+<?php if (\Core\Session::get('user_role') === 'admin'): ?>
+<!-- Add Barangay Modal -->
+<div class="modal fade" id="addBarangayModal" tabindex="-1" aria-labelledby="addBarangayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form method="POST" action="<?= APP_URL ?>/barangays">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBarangayModalLabel"><i class="bi bi-geo-alt me-2"></i>Add Barangay</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-semibold">Barangay Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="e.g. Sta. Cruz" required maxlength="100" autofocus>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
@@ -70,6 +99,15 @@
                                onclick="event.stopPropagation()">
                                 <i class="bi bi-people me-1"></i>View All
                             </a>
+                            <?php if (\Core\Session::get('user_role') === 'admin' && isset($b['id'])): ?>
+                            <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/delete"
+                                  class="d-inline" onclick="event.stopPropagation()"
+                                  onsubmit="return confirm('Delete barangay \'<?= htmlspecialchars(addslashes($b['name'])) ?>\'? This cannot be undone.')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

@@ -66,7 +66,18 @@ class BarangayController extends Controller
             $statusByBar[$r['barangay']][$r['nutritional_status']] = (int)$r['cnt'];
         }
 
-        // Merge config list with DB data, exclude numeric-only names
+        // Fetch managed barangays with their IDs
+        try {
+            $managedRows = $db->query("SELECT id, name FROM barangays ORDER BY name")->fetchAll();
+        } catch (\Throwable $e) {
+            $managedRows = [];
+        }
+        $managedIds = [];
+        foreach ($managedRows as $r) {
+            $managedIds[$r['name']] = $r['id'];
+        }
+
+        // Merge managed list with DB data, exclude numeric-only names
         $configBars = array_column((new Beneficiary())->getAllBarangays(), 'barangay');
         $allBars    = array_filter(
             array_unique(array_merge($configBars, array_keys($counts))),
@@ -79,6 +90,7 @@ class BarangayController extends Controller
             $c = $counts[$bar] ?? ['total' => 0, 'active' => 0, 'pending' => 0];
             $s = $statusByBar[$bar] ?? [];
             $barangays[] = [
+                'id'      => $managedIds[$bar] ?? null,
                 'name'    => $bar,
                 'total'   => (int)$c['total'],
                 'active'  => (int)$c['active'],
@@ -92,5 +104,59 @@ class BarangayController extends Controller
         }
 
         $this->view('barangays/index', ['barangays' => $barangays]);
+    }
+
+    public function store(): void
+    {
+        $this->requireAdmin();
+
+        $name = trim($_POST['name'] ?? '');
+        if ($name === '') {
+            Session::flash('error', 'Barangay name cannot be empty.');
+            $this->redirect('/barangays');
+        }
+
+        $db = Database::getInstance();
+
+        // Check duplicate
+        $exists = $db->prepare("SELECT id FROM barangays WHERE LOWER(name) = LOWER(?)");
+        $exists->execute([$name]);
+        if ($exists->fetch()) {
+            Session::flash('error', "Barangay \"" . htmlspecialchars($name) . "\" already exists.");
+            $this->redirect('/barangays');
+        }
+
+        $db->prepare("INSERT INTO barangays (name) VALUES (?)")->execute([$name]);
+        Session::flash('success', "Barangay \"" . htmlspecialchars($name) . "\" added successfully.");
+        $this->redirect('/barangays');
+    }
+
+    public function destroy(string $id): void
+    {
+        $this->requireAdmin();
+
+        $db  = Database::getInstance();
+        $row = $db->prepare("SELECT id, name FROM barangays WHERE id = ?");
+        $row->execute([$id]);
+        $bar = $row->fetch();
+
+        if (!$bar) {
+            Session::flash('error', 'Barangay not found.');
+            $this->redirect('/barangays');
+        }
+
+        // Prevent deletion if beneficiaries are assigned to this barangay
+        $inUse = $db->prepare(
+            "SELECT COUNT(*) FROM beneficiaries WHERE barangay = ? AND deleted_at IS NULL"
+        );
+        $inUse->execute([$bar['name']]);
+        if ((int)$inUse->fetchColumn() > 0) {
+            Session::flash('error', "Cannot delete \"" . htmlspecialchars($bar['name']) . "\" — it still has beneficiaries assigned.");
+            $this->redirect('/barangays');
+        }
+
+        $db->prepare("DELETE FROM barangays WHERE id = ?")->execute([$id]);
+        Session::flash('success', "Barangay \"" . htmlspecialchars($bar['name']) . "\" deleted.");
+        $this->redirect('/barangays');
     }
 }
