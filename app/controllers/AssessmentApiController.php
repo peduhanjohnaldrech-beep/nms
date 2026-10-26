@@ -200,7 +200,7 @@ class AssessmentApiController extends ApiController
     public function update(string $id): void
     {
         $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns']);
+        $this->requireRole(['admin','encoder','nutritionist','midwife','bhw','bns']);
 
         $id   = (int)$id;
         $data = $this->body();
@@ -215,9 +215,6 @@ class AssessmentApiController extends ApiController
         if (!$assessment) $this->error('Assessment not found', 404);
 
         $canEditAny = in_array(strtolower($this->apiUser['role'] ?? ''), ['admin', 'nutritionist', 'midwife']);
-        if (!$canEditAny && !in_array($assessment['validation_status'], ['rejected', 'pending'])) {
-            $this->error('Only rejected or pending assessments can be edited', 403);
-        }
         if ($this->isFieldWorker() && (int)$assessment['created_by'] !== $this->userId()) {
             $this->error('You can only edit your own assessments', 403);
         }
@@ -248,8 +245,8 @@ class AssessmentApiController extends ApiController
                 height_for_age_zscore = ?, hfa_status = ?,
                 wflh_zscore = ?, wflh_status = ?,
                 remarks = ?,
-                validation_status = 'pending',
-                validated_by = NULL, validated_at = NULL, rejection_note = NULL,
+                validation_status = 'validated',
+                validated_by = ?, validated_at = NOW(), rejection_note = NULL,
                 updated_at = NOW()
              WHERE id = ?"
         )->execute([
@@ -258,6 +255,7 @@ class AssessmentApiController extends ApiController
             $hfaZscore !== null ? round($hfaZscore, 3) : null, $hfaStatus,
             $wflhZscore, $wflhStatus,
             $data['remarks'] ?? $assessment['remarks'],
+            $this->userId(),
             $id,
         ]);
 
