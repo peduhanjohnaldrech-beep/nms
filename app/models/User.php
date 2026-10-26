@@ -24,7 +24,7 @@ class User extends Model
     public function getAllUsers(): array
     {
         return $this->fetchAll(
-            "SELECT id, username, full_name, role, barangay, is_active, created_at FROM users ORDER BY full_name"
+            "SELECT id, username, full_name, role, barangay, is_active, created_at, device_token FROM users ORDER BY full_name"
         );
     }
 

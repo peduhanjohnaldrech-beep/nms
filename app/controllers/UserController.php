@@ -166,6 +166,24 @@ class UserController extends Controller
         $this->redirect('/users');
     }
 
+    public function resetDevice(string $id): void
+    {
+        $this->requireAdmin();
+        if (!$this->isPost()) { $this->redirect('/users'); }
+        $this->validateCsrf();
+
+        $id   = (int)$id;
+        $user = $this->model->findById($id);
+        if ($user && strtolower($user['role']) === 'admin') {
+            $db = \Core\Database::getInstance();
+            $db->prepare("UPDATE users SET device_token = NULL WHERE id = ?")->execute([$id]);
+            Session::flash('success', "Trusted device reset for '{$user['username']}'. They can log in from any device once.");
+        } else {
+            Session::flash('error', 'Only admin accounts have a trusted device.');
+        }
+        $this->redirect('/users');
+    }
+
     public function activate(string $id): void
     {
         $this->requireAdmin();

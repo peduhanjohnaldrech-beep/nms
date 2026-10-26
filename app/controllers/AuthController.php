@@ -112,6 +112,27 @@ class AuthController extends Controller
 
         $this->clearFailedAttempts($username);
 
+        // Trusted device check — admin accounts are restricted to one registered PC
+        if (strtolower($user['role']) === 'admin') {
+            $storedToken = $user['device_token'] ?? null;
+            $cookieToken = $_COOKIE['nms_device_token'] ?? null;
+            $db          = \Core\Database::getInstance();
+
+            if ($storedToken === null) {
+                // No device registered yet — register this one
+                $token = bin2hex(random_bytes(32));
+                $db->prepare("UPDATE users SET device_token = ? WHERE id = ?")->execute([$token, $user['id']]);
+                setcookie('nms_device_token', $token, time() + 365 * 24 * 3600, '/', '', false, true);
+            } elseif (!$cookieToken || !hash_equals($storedToken, $cookieToken)) {
+                // Device not recognized
+                $attempts = $this->recordFailedAttempt($username);
+                \ActivityLog::log('login_failed', "Admin login blocked — unrecognized device for: $username");
+                Session::flash('error', 'Access denied. This device is not authorized for this admin account.');
+                $this->view('auth/login', ['username' => $this->clean($username)], false);
+                return;
+            }
+        }
+
         Session::regenerate();
         Session::set('user_id',          $user['id']);
         Session::set('user_name',        $user['full_name']);

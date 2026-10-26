@@ -186,7 +186,8 @@ $router->post('/users/create',   'UserController@create');
 $router->get('/users/{id}/edit', 'UserController@edit');
 $router->post('/users/{id}/edit','UserController@edit');
 $router->post('/users/{id}/delete',   'UserController@delete');
-$router->post('/users/{id}/activate', 'UserController@activate');
+$router->post('/users/{id}/activate',      'UserController@activate');
+$router->post('/users/{id}/reset-device',  'UserController@resetDevice');
 $router->post('/users/{id}/destroy',  'UserController@destroy');
 
 // ============================================================

@@ -42,6 +42,20 @@
                             <a href="<?= APP_URL ?>/users/<?= $u['id'] ?>/edit" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            <?php if (strtolower($u['role']) === 'admin'): ?>
+                            <form action="<?= APP_URL ?>/users/<?= $u['id'] ?>/reset-device" method="post" class="d-inline">
+                                <?= \Core\Session::csrfField() ?>
+                                <button type="button" class="btn btn-sm btn-outline-secondary confirm-trigger"
+                                        title="<?= !empty($u['device_token']) ? 'Reset trusted device' : 'No device registered yet' ?>"
+                                        <?= empty($u['device_token']) ? 'disabled' : '' ?>
+                                        data-confirm-title="Reset Trusted Device"
+                                        data-confirm-message="This will allow <strong><?= htmlspecialchars($u['username']) ?></strong> to log in from any device once, then re-register a new trusted device."
+                                        data-confirm-btn="Reset"
+                                        data-confirm-class="btn-warning">
+                                    <i class="bi bi-pc-display"></i>
+                                </button>
+                            </form>
+                            <?php endif; ?>
                             <?php if ($u['id'] !== (int)\Core\Session::get('user_id')): ?>
                             <?php if ($u['is_active']): ?>
                             <form action="<?= APP_URL ?>/users/<?= $u['id'] ?>/delete" method="post" class="d-inline">
