@@ -1,36 +1,67 @@
-<?php $pageTitle = 'Barangay Directory'; ?>
+<?php
+$pageTitle  = 'Barangay Directory';
+$isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
+?>
 
 <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
     <div>
         <h4 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Barangay Directory</h4>
         <p class="text-muted small mb-0"><?= count($barangays) ?> barangays — click any row to view its beneficiaries</p>
     </div>
-    <?php if (\Core\Session::get('user_role') === 'admin'): ?>
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBarangayModal">
-        <i class="bi bi-plus-lg me-1"></i>Add Barangay
+    <?php if ($isAdmin): ?>
+    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#manageBarangaysModal">
+        <i class="bi bi-pencil-square me-1"></i>Manage Barangays
     </button>
     <?php endif; ?>
 </div>
 
-<?php if (\Core\Session::get('user_role') === 'admin'): ?>
-<!-- Add Barangay Modal -->
-<div class="modal fade" id="addBarangayModal" tabindex="-1" aria-labelledby="addBarangayModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+<?php if ($isAdmin): ?>
+<!-- Manage Barangays Modal -->
+<div class="modal fade" id="manageBarangaysModal" tabindex="-1" aria-labelledby="manageBarangaysModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
-            <form method="POST" action="<?= APP_URL ?>/barangays">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addBarangayModalLabel"><i class="bi bi-geo-alt me-2"></i>Add Barangay</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageBarangaysModalLabel"><i class="bi bi-geo-alt me-2"></i>Manage Barangays</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Add new -->
+                <div class="p-3 border-bottom bg-light">
+                    <form method="POST" action="<?= APP_URL ?>/barangays" class="d-flex gap-2">
+                        <input type="text" name="name" class="form-control form-control-sm" placeholder="New barangay name" required maxlength="100">
+                        <button type="submit" class="btn btn-primary btn-sm text-nowrap">
+                            <i class="bi bi-plus-lg me-1"></i>Add
+                        </button>
+                    </form>
                 </div>
-                <div class="modal-body">
-                    <label class="form-label fw-semibold">Barangay Name</label>
-                    <input type="text" name="name" class="form-control" placeholder="e.g. Sta. Cruz" required maxlength="100" autofocus>
+                <!-- Barangay list -->
+                <div style="max-height:380px;overflow-y:auto;">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <tbody>
+                            <?php foreach ($barangays as $b): ?>
+                            <tr>
+                                <td class="ps-3"><i class="bi bi-geo-alt me-1 text-muted"></i><?= htmlspecialchars($b['name']) ?></td>
+                                <td class="text-end pe-3" style="width:1%">
+                                    <?php if (isset($b['id'])): ?>
+                                    <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/delete"
+                                          onsubmit="return confirm('Delete \'<?= htmlspecialchars(addslashes($b['name'])) ?>\'?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <?php else: ?>
+                                    <span class="text-muted small">legacy</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -99,15 +130,6 @@
                                onclick="event.stopPropagation()">
                                 <i class="bi bi-people me-1"></i>View All
                             </a>
-                            <?php if (\Core\Session::get('user_role') === 'admin' && isset($b['id'])): ?>
-                            <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/delete"
-                                  class="d-inline" onclick="event.stopPropagation()"
-                                  onsubmit="return confirm('Delete barangay \'<?= htmlspecialchars(addslashes($b['name'])) ?>\'? This cannot be undone.')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
