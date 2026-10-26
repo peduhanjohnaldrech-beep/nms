@@ -412,16 +412,16 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
             <div class="card-header collapse-header d-flex justify-content-between align-items-center"
                  data-bs-toggle="collapse" data-bs-target="#collapseGrowthChart" aria-expanded="false">
                 <span class="fw-semibold"><i class="bi bi-graph-up me-2 text-success"></i>Growth Chart</span>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation()">
-                        <button type="button" class="btn btn-outline-secondary active" id="chartToggleWeight">Weight</button>
-                        <button type="button" class="btn btn-outline-secondary" id="chartToggleHeight">Height</button>
-                    </div>
-                    <i class="bi bi-chevron-down small chevron"></i>
-                </div>
+                <i class="bi bi-chevron-down small chevron"></i>
             </div>
             <div class="collapse" id="collapseGrowthChart">
                 <div class="card-body">
+                    <div class="d-flex justify-content-end mb-2">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" id="chartToggleWeight">Weight</button>
+                            <button type="button" class="btn btn-outline-secondary" id="chartToggleHeight">Height</button>
+                        </div>
+                    </div>
                     <canvas id="growthChart" height="100"></canvas>
                     <div class="mt-2 d-flex gap-3 small text-muted">
                         <span><span style="display:inline-block;width:12px;height:3px;background:#ef4444;vertical-align:middle;"></span> SUW (&lt;-3 SD)</span>
