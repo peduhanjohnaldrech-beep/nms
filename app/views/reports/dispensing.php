@@ -1,6 +1,30 @@
 <?php $pageTitle = 'Dispensing Report'; ?>
 
-<div class="d-flex align-items-center justify-content-between mt-3 mb-3">
+<style>
+@media print {
+    .no-print { display: none !important; }
+    .print-header { display: block !important; }
+    body { font-size: 12px; }
+    .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+    .badge { border: 1px solid #ccc !important; color: #000 !important; background: #f8f9fa !important; }
+}
+.print-header { display: none; }
+</style>
+
+<!-- Print Header (hidden on screen, shown when printing) -->
+<div class="print-header mb-3">
+    <div class="text-center border-bottom pb-2 mb-2">
+        <h5 class="fw-bold mb-0">Dispensing Summary Report</h5>
+        <p class="small text-muted mb-0">
+            Year: <?= $year ?>
+            <?= $barangay ? " | Barangay: $barangay" : ' | All Barangays' ?>
+            <?= $program  ? " | Program: $program"   : ' | All Programs' ?>
+            &nbsp;|&nbsp; Printed: <?= date('F j, Y') ?>
+        </p>
+    </div>
+</div>
+
+<div class="d-flex align-items-center justify-content-between mt-3 mb-3 no-print">
     <div>
         <h4 class="mb-0 fw-bold"><i class="bi bi-prescription2 me-2 text-primary"></i>Dispensing Report</h4>
         <p class="text-muted small mb-0">Summary of medicines &amp; supplements given to beneficiaries</p>
@@ -11,7 +35,7 @@
 </div>
 
 <!-- Filters -->
-<div class="card border-0 shadow-sm mb-3">
+<div class="card border-0 shadow-sm mb-3 no-print">
     <div class="card-body py-2 px-3">
         <form method="get" class="row g-2 align-items-end">
             <div class="col-auto">
@@ -61,10 +85,15 @@
             <?= $year ?><?= $barangay ? " — $barangay" : '' ?>
             <span class="text-muted fw-normal ms-1">(<?= count($summary) ?> supplement types)</span>
         </span>
-        <a href="<?= APP_URL ?>/dispensing/export?year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&program=<?= urlencode($program) ?>&format=excel"
-           class="btn btn-sm btn-outline-success">
-            <i class="bi bi-file-earmark-excel me-1"></i>Export to Excel
-        </a>
+        <div class="d-flex gap-1 no-print">
+            <a href="<?= APP_URL ?>/dispensing/export?year=<?= $year ?>&barangay=<?= urlencode($barangay) ?>&program=<?= urlencode($program) ?>&format=excel"
+               class="btn btn-sm btn-outline-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table table-sm table-hover align-middle mb-0">
