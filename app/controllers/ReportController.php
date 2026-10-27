@@ -514,6 +514,76 @@ class ReportController extends Controller
         $this->view('reports/distribution');
     }
 
+    public function dispensing(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('reports');
+
+        $db       = Database::getInstance();
+        $year     = (int)($_GET['year']     ?? date('Y'));
+        $barangay = $this->resolveBarangay($_GET['barangay'] ?? '');
+        $program  = $_GET['program'] ?? '';
+
+        // Build WHERE for dispensing_records
+        $drWhere  = "b.deleted_at IS NULL AND YEAR(dr.date_dispensed) = ?";
+        $drParams = [$year];
+        if ($barangay) { $drWhere .= " AND b.barangay = ?"; $drParams[] = $barangay; }
+        if ($program)  { $drWhere .= " AND dr.program = ?"; $drParams[] = $program; }
+
+        // MNP/LNS conditions
+        $mnsWhere  = "b.deleted_at IS NULL AND YEAR(x.date_given) = ?";
+        $mnsParams = [$year];
+        if ($barangay) { $mnsWhere .= " AND b.barangay = ?"; $mnsParams[] = $barangay; }
+
+        $includeMns = !$program || $program === 'MNS';
+
+        // Summary by supplement type
+        $sql = "SELECT program, supplement_type,
+                       COUNT(*) AS records,
+                       COUNT(DISTINCT beneficiary_id) AS beneficiaries
+                FROM (
+                    SELECT dr.program, dr.supplement_type, dr.beneficiary_id
+                    FROM dispensing_records dr
+                    JOIN beneficiaries b ON b.id = dr.beneficiary_id
+                    WHERE $drWhere";
+
+        if ($includeMns) {
+            $sql .= "
+                    UNION ALL
+                    SELECT 'MNS', 'MNP (Micronutrient Powder)', x.beneficiary_id
+                    FROM mnp_records x JOIN beneficiaries b ON b.id = x.beneficiary_id
+                    WHERE $mnsWhere
+                    UNION ALL
+                    SELECT 'MNS', 'LNS-SQ (Lipid-based Nutrient Supplement)', x.beneficiary_id
+                    FROM lns_sq_records x JOIN beneficiaries b ON b.id = x.beneficiary_id
+                    WHERE $mnsWhere";
+            $allParams = array_merge($drParams, $mnsParams, $mnsParams);
+        } else {
+            $allParams = $drParams;
+        }
+
+        $sql .= ") t GROUP BY program, supplement_type ORDER BY program, records DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($allParams);
+        $summary = $stmt->fetchAll();
+
+        // Barangay coverage per supplement
+        $sql2 = "SELECT supplement_type, COUNT(DISTINCT b.barangay) AS barangays
+                 FROM dispensing_records dr
+                 JOIN beneficiaries b ON b.id = dr.beneficiary_id
+                 WHERE $drWhere GROUP BY supplement_type";
+        $stmt2 = $db->prepare($sql2);
+        $stmt2->execute($drParams);
+        $coverage = [];
+        foreach ($stmt2->fetchAll() as $r) {
+            $coverage[$r['supplement_type']] = $r['barangays'];
+        }
+
+        $barangays = (new Beneficiary())->getAllBarangays();
+
+        $this->view('reports/dispensing', compact('summary', 'coverage', 'year', 'barangay', 'program', 'barangays'));
+    }
+
     public function exportEopt(): void
     {
         $this->requireAuth();

@@ -19,6 +19,7 @@
         <li><strong>Overall malnutrition rate per barangay?</strong> → <a href="<?= APP_URL ?>/reports/summary" class="alert-link">Summary Report</a></li>
         <li><strong>Vitamin A or MNP/LNS coverage?</strong> → <a href="<?= APP_URL ?>/reports/mns" class="alert-link">MNS Report</a></li>
         <li><strong>Has malnutrition improved over time?</strong> → <a href="<?= APP_URL ?>/reports/comparison" class="alert-link">Period Comparison</a></li>
+        <li><strong>How many supplements were dispensed?</strong> → <a href="<?= APP_URL ?>/reports/dispensing" class="alert-link">Dispensing Report</a></li>
     </ul>
 </div>
 

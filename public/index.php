@@ -141,6 +141,7 @@ $router->get('/reports/mns',          'ReportController@mns');
 $router->get('/reports/outcome',      'ReportController@outcome');
 $router->get('/reports/summary',      'ReportController@summary');
 $router->get('/reports/comparison',   'ReportController@comparison');
+$router->get('/reports/dispensing',   'ReportController@dispensing');
 $router->get('/reports/export',       'ReportController@export');
 $router->get('/reports/export-eopt',         'ReportController@exportEopt');
 $router->get('/reports/export-eopt-region6', 'ReportController@exportEoptRegion6');
