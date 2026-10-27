@@ -90,13 +90,15 @@ class LnsSqRecord extends Model
     public function getNotYetReceived(int $year, string $asOfDate = '', string $barangay = '', string $purok = ''): array
     {
         $ref = $asOfDate ?: date('Y-m-d');
-        // params: age range ref, OPT year check, lns year check
-        $extra = ''; $params = [$ref, $year, $year, $year];
+        // params: age range ref, assessment year, recovery year
+        $extra = ''; $params = [$ref, $year, $year];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months,
+                    (SELECT COUNT(*) FROM lns_sq_records lc WHERE lc.beneficiary_id = b.id) AS doses_given,
+                    (SELECT MAX(date_given) FROM lns_sq_records lc WHERE lc.beneficiary_id = b.id) AS last_dose_date
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
@@ -109,8 +111,11 @@ class LnsSqRecord extends Model
                           OR a.wflh_status IN ('SW','MW')
                           OR a.hfa_status IN ('SSt','St'))
                )
+               AND (SELECT COUNT(*) FROM lns_sq_records lc WHERE lc.beneficiary_id = b.id) < 18
                AND NOT EXISTS (
-                   SELECT 1 FROM lns_sq_records l WHERE l.beneficiary_id = b.id AND l.year = ?
+                   SELECT 1 FROM lns_sq_records l
+                   WHERE l.beneficiary_id = b.id
+                     AND l.date_given >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                )
                AND NOT EXISTS (
                    SELECT 1 FROM lns_recoveries lr WHERE lr.beneficiary_id = b.id AND lr.year = ?

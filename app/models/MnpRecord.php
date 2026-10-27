@@ -99,19 +99,26 @@ class MnpRecord extends Model
     public function getNotYetReceived(int $year, string $asOfDate = '', string $barangay = '', string $purok = ''): array
     {
         $ref = $asOfDate ?: date('Y-m-d');
-        $extra = ''; $params = [$ref, $year];
+        $extra = ''; $params = [$ref];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months,
+                    (SELECT COUNT(*) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) AS batches_given,
+                    (SELECT MAX(date_given) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) AS last_batch_date
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
                AND TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) BETWEEN 6 AND 23
-               AND (SELECT COUNT(*) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) < 2
-               AND NOT EXISTS (
-                   SELECT 1 FROM mnp_records m WHERE m.beneficiary_id = b.id AND m.year = ?
+               AND (
+                   -- Never received MNP
+                   (SELECT COUNT(*) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) = 0
+                   OR (
+                       -- Got Batch 1 only, and 180+ days have passed → due for Batch 2
+                       (SELECT COUNT(*) FROM mnp_records mx WHERE mx.beneficiary_id = b.id) = 1
+                       AND DATEDIFF(CURDATE(), (SELECT MAX(date_given) FROM mnp_records mx WHERE mx.beneficiary_id = b.id)) >= 180
+                   )
                )$extra
              ORDER BY b.barangay, b.last_name",
             $params
