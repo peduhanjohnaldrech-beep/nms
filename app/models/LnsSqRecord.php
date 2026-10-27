@@ -90,13 +90,13 @@ class LnsSqRecord extends Model
     public function getNotYetReceived(int $year, string $asOfDate = '', string $barangay = '', string $purok = ''): array
     {
         $ref = $asOfDate ?: date('Y-m-d');
-        // params: age_months ref, age range ref, OPT year check, lns year check
-        $extra = ''; $params = [$ref, $ref, $year, $year, $year];
+        // params: age range ref, OPT year check, lns year check
+        $extra = ''; $params = [$ref, $year, $year, $year];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.id, b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL AND b.validation_status = 'validated'
                AND " . Beneficiary::BNS_SUBMITTED_FILTER . "
