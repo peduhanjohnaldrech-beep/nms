@@ -488,7 +488,7 @@ class ProgramController extends Controller
     {
         $this->requireAuth();
 
-        $round    = $_GET['round']    ?? 'April';
+        $round    = $_GET['round']    ?? (date('n') >= 7 ? 'October' : 'April');
         $year     = (int)($_GET['year'] ?? date('Y'));
         $tab      = $_GET['tab']      ?? 'vitaminA';
         $barangay = trim($_GET['barangay'] ?? '');
