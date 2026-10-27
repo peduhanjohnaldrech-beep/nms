@@ -43,6 +43,8 @@ class DispensingRecord extends Model
     {
         // Only include MNP/LNS rows when program filter is blank or matches MNS
         $includeMns = !$program || $program === 'MNS';
+        // Only include DSP enrollment rows when program filter is blank or matches DSP
+        $includeDsp = !$program || $program === 'DSP';
 
         // --- dispensing_records params ---
         $drParams = [];
@@ -122,6 +124,50 @@ class DispensingRecord extends Model
                 LEFT JOIN users u ON u.id = l.given_by
                 WHERE $lnsWhere";
             $allParams = array_merge($allParams, $lnsParams);
+        }
+
+        if ($includeDsp) {
+            // --- program_enrollments (DSP) params ---
+            $dspParams = [];
+            $dspWhere  = "pe.program = 'DSP' AND b.deleted_at IS NULL";
+            if ($year)          { $dspWhere .= " AND YEAR(pe.enrollment_date) = ?"; $dspParams[] = $year; }
+            if ($barangay)      { $dspWhere .= " AND b.barangay = ?";               $dspParams[] = $barangay; }
+            if ($beneficiaryId) { $dspWhere .= " AND pe.beneficiary_id = ?";        $dspParams[] = $beneficiaryId; }
+
+            $sql .= "
+                UNION ALL
+                SELECT pe.id, pe.beneficiary_id, pe.enrollment_date AS date_dispensed, 'DSP' AS program,
+                       COALESCE(pe.intervention_type, 'Supplementary Food') AS supplement_type,
+                       1 AS quantity, 'enrollment' AS unit,
+                       pe.enrollment_notes AS notes,
+                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
+                       u.full_name AS dispensed_by_name
+                FROM program_enrollments pe
+                JOIN beneficiaries b ON b.id = pe.beneficiary_id
+                LEFT JOIN users u ON u.id = pe.enrolled_by
+                WHERE $dspWhere";
+            $allParams = array_merge($allParams, $dspParams);
+
+            // --- dsp_monitoring (monthly visits) params ---
+            $dmParams = [];
+            $dmWhere  = "b.deleted_at IS NULL AND dm.validation_status = 'validated'";
+            if ($year)          { $dmWhere .= " AND YEAR(dm.monitoring_date) = ?"; $dmParams[] = $year; }
+            if ($barangay)      { $dmWhere .= " AND b.barangay = ?";               $dmParams[] = $barangay; }
+            if ($beneficiaryId) { $dmWhere .= " AND b.id = ?";                     $dmParams[] = $beneficiaryId; }
+
+            $sql .= "
+                UNION ALL
+                SELECT dm.id, pe2.beneficiary_id, dm.monitoring_date AS date_dispensed, 'DSP' AS program,
+                       'DSP Monitoring Visit' AS supplement_type,
+                       1 AS quantity, 'visit' AS unit,
+                       CONCAT('Wt: ', dm.weight_kg, 'kg | Status: ', COALESCE(dm.nutritional_status,'—')) AS notes,
+                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
+                       NULL AS dispensed_by_name
+                FROM dsp_monitoring dm
+                JOIN program_enrollments pe2 ON pe2.id = dm.enrollment_id
+                JOIN beneficiaries b ON b.id = pe2.beneficiary_id
+                WHERE $dmWhere";
+            $allParams = array_merge($allParams, $dmParams);
         }
 
         $sql .= " ORDER BY date_dispensed DESC, barangay, last_name LIMIT 2000";
