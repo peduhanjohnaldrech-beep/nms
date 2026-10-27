@@ -752,6 +752,21 @@ canvas { max-width: 100%; }
         z-index: 1039;
         backdrop-filter: blur(2px);
     }
+
+    /* Tables: scroll horizontally, don't overflow viewport */
+    .table-responsive-stack { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    main.container-fluid { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+    /* Cards: full width on small screens */
+    .col-lg-4, .col-lg-8, .col-md-6 { width: 100%; }
+
+    /* Prevent wide content from pushing page */
+    .page-content { overflow-x: hidden; }
+    main { overflow-x: auto; }
+
+    /* Nav tabs: scroll horizontally on mobile */
+    .nav-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+    .nav-tabs .nav-item { flex-shrink: 0; }
 }
 
 /* ── Info badge fix (Submitted Records) ─────────────────── */

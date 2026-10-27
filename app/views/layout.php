@@ -122,8 +122,19 @@ foreach ($__crumbSegs as $seg) {
         </button>
         <a class="navbar-brand fw-bold d-flex align-items-center" href="<?= APP_URL ?>/dashboard">
             <img src="<?= APP_URL ?>/img/logo.jpg" alt="Logo" style="height:36px;width:36px;object-fit:cover;border-radius:50%;margin-right:8px;">
-            <?= APP_NAME ?>
+            <span class="d-none d-sm-inline"><?= APP_NAME ?></span>
         </a>
+        <!-- Mobile-only: dark mode + logout always visible -->
+        <div class="d-flex align-items-center gap-2 ms-auto d-lg-none">
+            <button id="darkModeToggleMobile" title="Toggle dark / light mode" aria-label="Toggle dark mode"
+                    style="background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:6px;padding:4px 8px;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;">
+                <i id="darkModeIconMobile" class="bi bi-moon-fill" aria-hidden="true"></i>
+            </button>
+            <a href="<?= APP_URL ?>/logout" class="btn btn-sm" style="border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);font-size:0.82rem;">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+        <!-- Desktop navbar -->
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item">

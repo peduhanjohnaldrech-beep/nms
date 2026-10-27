@@ -14,12 +14,15 @@
         const icon = document.getElementById('darkModeIcon');
         const lbl  = document.getElementById('darkModeLabel');
         if (!btn) return;
+        const mobileIcon = document.getElementById('darkModeIconMobile');
         if (theme === 'dark') {
-            icon && (icon.className = 'bi bi-sun-fill');
-            lbl  && (lbl.textContent = 'Light');
+            icon       && (icon.className = 'bi bi-sun-fill');
+            lbl        && (lbl.textContent = 'Light');
+            mobileIcon && (mobileIcon.className = 'bi bi-sun-fill');
         } else {
-            icon && (icon.className = 'bi bi-moon-fill');
-            lbl  && (lbl.textContent = 'Dark');
+            icon       && (icon.className = 'bi bi-moon-fill');
+            lbl        && (lbl.textContent = 'Dark');
+            mobileIcon && (mobileIcon.className = 'bi bi-moon-fill');
         }
     }
 
@@ -27,13 +30,15 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         applyTheme(stored);   // re-run after DOM is ready
-        const btn = document.getElementById('darkModeToggle');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                applyTheme(next);
-            });
-        }
+        ['darkModeToggle', 'darkModeToggleMobile'].forEach(function(id) {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    applyTheme(next);
+                });
+            }
+        });
     });
 })();
 
