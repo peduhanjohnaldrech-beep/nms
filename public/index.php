@@ -23,7 +23,7 @@ function hasPerm(string $m): bool {
         $perms = (array)(\Core\Session::get('user_permissions') ?? []);
     }
     if ($isAdm) return true;
-    if ($isMid) return $m === 'validation';
+    if ($isMid) return in_array($m, ['beneficiaries', 'validation', 'assessments', 'reports']);
     return in_array($m, $perms);
 }
 
@@ -86,8 +86,6 @@ $router->post('/beneficiaries/{id}/submit',      'BeneficiaryController@submitTo
 // Assessments
 $router->get('/assessments/create',    'AssessmentController@create');
 $router->post('/assessments/create',   'AssessmentController@create');
-$router->get('/assessments/batch',     'AssessmentController@batch');
-$router->post('/assessments/batch',    'AssessmentController@batch');
 $router->post('/assessments/{id}/delete',   'AssessmentController@delete');
 $router->post('/assessments/{id}/validate', 'BeneficiaryController@validateAssessment');
 $router->post('/assessments/{id}/reject',   'BeneficiaryController@rejectAssessment');
@@ -221,7 +219,6 @@ $router->get('/api/beneficiaries/{id}/programs',    'BeneficiaryApiController@pr
 // Assessments
 $router->get('/api/assessments',            'AssessmentApiController@index');
 $router->post('/api/assessments',           'AssessmentApiController@store');
-$router->post('/api/assessments/batch',     'AssessmentApiController@batch');
 $router->get('/api/assessments/{id}',       'AssessmentApiController@show');
 $router->put('/api/assessments/{id}',       'AssessmentApiController@update');
 $router->delete('/api/assessments/{id}',    'AssessmentApiController@destroy');
