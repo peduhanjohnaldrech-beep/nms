@@ -74,7 +74,7 @@ class DispensingRecord extends Model
                 UNION ALL
                 SELECT m.id, m.beneficiary_id, m.date_given AS date_dispensed, 'MNS' AS program,
                        'MNP (Micronutrient Powder)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
-                       NULL AS notes,
+                       m.age_group AS notes,
                        b.last_name, b.first_name, b.barangay, b.date_of_birth,
                        u.full_name AS dispensed_by_name
                 FROM mnp_records m
@@ -94,7 +94,7 @@ class DispensingRecord extends Model
                 UNION ALL
                 SELECT l.id, l.beneficiary_id, l.date_given AS date_dispensed, 'MNS' AS program,
                        'LNS-SQ (Lipid-based Nutrient Supplement)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
-                       NULL AS notes,
+                       l.age_group AS notes,
                        b.last_name, b.first_name, b.barangay, b.date_of_birth,
                        u.full_name AS dispensed_by_name
                 FROM lns_sq_records l
