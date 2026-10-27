@@ -15,15 +15,17 @@ require BASE_PATH . '/app/helpers/BackupScheduler.php';
 require BASE_PATH . '/app/helpers/ReportCache.php';
 
 function hasPerm(string $m): bool {
-    static $isAdm, $isMid, $perms;
+    static $isAdm, $isMid, $isBns, $perms;
     if ($isAdm === null) {
         $role  = strtolower(\Core\Session::get('user_role', ''));
         $isAdm = $role === 'admin' || $role === 'nutritionist';
         $isMid = $role === 'midwife';
+        $isBns = $role === 'bns';
         $perms = (array)(\Core\Session::get('user_permissions') ?? []);
     }
     if ($isAdm) return true;
     if ($isMid) return in_array($m, ['beneficiaries', 'validation', 'assessments', 'reports']);
+    if ($isBns) return in_array($m, ['beneficiaries', 'assessments', 'reports']);
     return in_array($m, $perms);
 }
 

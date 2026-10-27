@@ -141,7 +141,7 @@ class AuthController extends Controller
         Session::set('user_permissions', json_decode($user['permissions'] ?? '[]', true) ?: []);
 
         // BNS and BHW are app-only — block web login
-        if (in_array(strtolower($user['role']), ['bns', 'bhw'])) {
+        if (in_array(strtolower($user['role']), ['bhw'])) {
             Session::flash('error', 'Your account is for the mobile app only. Please use the NMS Mobile app.');
             $this->view('auth/login', ['username' => $this->clean($username)], false);
             return;
