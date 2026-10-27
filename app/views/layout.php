@@ -184,9 +184,6 @@ foreach ($__crumbSegs as $seg) {
                     <i class="bi bi-plus-circle me-2"></i>New Assessment
                 </a>
                 <?php endif; ?>
-                <a class="nav-link <?= __navActive('/assessments/batch') ?>" href="<?= APP_URL ?>/assessments/batch">
-                    <i class="bi bi-clipboard2-data me-2"></i>Batch Assessment
-                </a>
             <?php endif; /* assessments */ ?>
 
             <?php if (hasPerm('programs')): ?>

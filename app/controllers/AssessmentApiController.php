@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 namespace App\Controllers;
 
 use Core\ApiController;
@@ -195,7 +195,7 @@ class AssessmentApiController extends ApiController
     }
 
     /**
-     * PUT /api/assessments/{id}  — edit a rejected/pending assessment and resubmit
+     * PUT /api/assessments/{id}  â€” edit a rejected/pending assessment and resubmit
      */
     public function update(string $id): void
     {
@@ -284,73 +284,6 @@ class AssessmentApiController extends ApiController
         $this->logActivity('assessment_delete', "Deleted assessment ID $id");
         $this->success([], 'Assessment deleted');
     }
-
-    /**
-     * POST /api/assessments/batch
-     */
-    public function batch(): void
-    {
-        $this->requireApiAuth();
-        $this->requireRole(['encoder','nutritionist','bhw','bns','midwife']);
-        $body  = $this->body();
-        $items = $body['assessments'] ?? [];
-        if (empty($items)) $this->error('No assessments provided', 422);
-        $model   = new Assessment();
-        $db      = Database::getInstance();
-        $created = []; $failed = [];
-        $role    = strtolower($this->apiUser['role'] ?? '');
-        $isAuthRole = in_array($role, ['admin', 'nutritionist', 'midwife']);
-        foreach ($items as $data) {
-            $errors = $this->validate($data);
-            if ($errors) { $failed[] = ['errors' => $errors]; continue; }
-            try {
-                $stmt = $db->prepare('SELECT * FROM beneficiaries WHERE id=? AND deleted_at IS NULL');
-                $stmt->execute([$data['beneficiary_id']]);
-                $bene = $stmt->fetch(\PDO::FETCH_ASSOC);
-                if (!$bene) { $failed[] = ['errors' => ['beneficiary not found']]; continue; }
-                if (($this->isBhw() || $this->isBns()) && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
-                if ($this->isMidwife() && $this->userBarangay() && $bene['barangay'] !== $this->userBarangay()) { $failed[] = ['errors' => ['access denied']]; continue; }
-                $autoValidated = true;
-                $checkOutliers = false;
-                $period = (int)date('n', strtotime($data['assessment_date'])) <= 6 ? 'January' : 'July';
-                $year   = (int)date('Y', strtotime($data['assessment_date']));
-                $dupChk = $db->prepare("SELECT id FROM assessments WHERE beneficiary_id = ? AND assessment_year = ? LIMIT 1");
-                $dupChk->execute([(int)$data['beneficiary_id'], $year]);
-                if ($dupChk->fetch()) { $failed[] = ['beneficiary_id' => $data['beneficiary_id'] ?? null, 'errors' => ["Already has a $year assessment"]]; continue; }
-                $newId  = $model->createWithZScore([
-                    'beneficiary_id'   => (int)$data['beneficiary_id'],
-                    'sex'              => $bene['sex'],
-                    'age_in_months'    => (int)(($d1b=new \DateTime($bene['date_of_birth']))->diff($d2b=new \DateTime($data['assessment_date']))->m + ($d1b->diff($d2b)->y*12)),
-                    'assessment_date'  => $data['assessment_date'],
-                    'weight_kg'        => (float)$data['weight_kg'],
-                    'height_cm'        => isset($data['height_cm']) ? (float)$data['height_cm'] : null,
-                    'muac_cm'          => isset($data['muac_cm']) ? (float)$data['muac_cm'] : null,
-                    'period'           => $period,
-                    'assessment_year'  => $year,
-                    'assessed_by'      => $data['assessed_by'] ?? $this->apiUser['full_name'],
-                    'remarks'          => $data['remarks'] ?? null,
-                    'created_by'       => $this->userId(),
-                    'validation_status'=> $autoValidated ? 'validated' : 'pending',
-                    'validated_by'     => $autoValidated ? $this->userId() : null,
-                    'validated_at'     => $autoValidated ? date('Y-m-d H:i:s') : null,
-                    'check_outliers'   => $checkOutliers,
-                ]);
-                $created[] = $newId;
-            } catch (\PDOException $e) {
-                if ($e->getCode() === '23000') {
-                    $failed[] = ['beneficiary_id' => $data['beneficiary_id'] ?? null, 'errors' => ['Already assessed for this period']];
-                } else {
-                    error_log('[AssessmentApiController::batch] ' . $e->getMessage());
-                    $failed[] = ['beneficiary_id' => $data['beneficiary_id'] ?? null, 'errors' => [$e->getMessage()]];
-                }
-            } catch (\Throwable $e) {
-                error_log('[AssessmentApiController::batch] ' . $e->getMessage());
-                $failed[] = ['beneficiary_id' => $data['beneficiary_id'] ?? null, 'errors' => [$e->getMessage()]];
-            }
-        }
-        $this->success(['created' => count($created), 'failed' => $failed], count($created) . ' assessments saved');
-    }
-
     // -------------------------------------------------------
     private function validate(array $data): array
     {

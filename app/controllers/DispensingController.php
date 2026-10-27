@@ -67,17 +67,17 @@ class DispensingController extends Controller
         $stmt->execute($lParams);
         $lnsMonthRecords = $stmt->fetchAll();
 
-        // Vitamin A records for the month (from dispensing_records)
-        $vWhere  = "YEAR(d.date_dispensed) = ? AND MONTH(d.date_dispensed) = ? AND d.program = 'MNS' AND d.supplement_type LIKE '%Vitamin A%'";
+        // Vitamin A records for the month (from vitamin_a_records)
+        $vWhere  = "YEAR(v.distribution_date) = ? AND MONTH(v.distribution_date) = ?";
         $vParams = [$year, $selectedMonth];
         if ($barangay) { $vWhere .= ' AND b.barangay = ?';                   $vParams[] = $barangay; }
         if ($purok)    { $vWhere .= ' AND LOWER(b.purok_zone) = LOWER(?)';   $vParams[] = $purok; }
         $stmt = $db->prepare(
-            "SELECT d.id, d.beneficiary_id, d.date_dispensed AS date_given, d.supplement_type,
-                    d.quantity, d.unit, d.notes,
+            "SELECT v.id, v.beneficiary_id, v.distribution_date AS date_given,
+                    v.dosage_iu, v.capsule_color, v.round,
                     b.last_name, b.first_name, b.barangay, b.date_of_birth
-             FROM dispensing_records d JOIN beneficiaries b ON b.id = d.beneficiary_id
-             WHERE $vWhere ORDER BY d.date_dispensed, b.last_name"
+             FROM vitamin_a_records v JOIN beneficiaries b ON b.id = v.beneficiary_id
+             WHERE $vWhere ORDER BY v.distribution_date, b.last_name"
         );
         $stmt->execute($vParams);
         $vitaMonthRecords = $stmt->fetchAll();

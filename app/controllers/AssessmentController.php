@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -88,7 +88,7 @@ class AssessmentController extends Controller
             if (!empty($saved['wflh_status'])) $parts[] = sprintf('WFL/H: %s (Z=%s)', $saved['wflh_status'], number_format($saved['wflh_zscore'] ?? 0, 2));
 
             \ActivityLog::log('assessment_create', "Assessment recorded for beneficiary ID $bid ({$saved['nutritional_status']})");
-            \ReportCache::invalidate(); // new data � bust cached report results
+            \ReportCache::invalidate(); // new data ï¿½ bust cached report results
 
             if ($needsValidation) {
                 Session::flash('success', 'Assessment submitted and awaiting midwife validation. ' . implode(' | ', $parts));
@@ -100,7 +100,7 @@ class AssessmentController extends Controller
                     $newWfa  = $saved['nutritional_status'] ?? '';
                     $newWflh = $saved['wflh_status'] ?? '';
                     if (!in_array($newWfa, ['SUW', 'UW']) && !in_array($newWflh, ['SW', 'MW'])) {
-                        $flashMsg .= ' — <strong class="text-success">This child\'s nutritional status is now Normal. '
+                        $flashMsg .= ' â€” <strong class="text-success">This child\'s nutritional status is now Normal. '
                             . 'Consider discharging them from DSP.</strong>';
                     }
                 }
@@ -139,105 +139,6 @@ class AssessmentController extends Controller
             'alreadyAssessedIds' => $alreadyAssessedIds,
             'lastAssessment'     => $lastAssessment,
             'existingThisPeriod' => $existingThisPeriod,
-        ]);
-    }
-
-    public function batch(): void
-    {
-        $this->requireAuth();
-        $this->requirePermission('assessments');
-
-        $beneficiaryModel = new Beneficiary();
-        $role             = Session::get('user_role');
-
-        $selectedBarangay = trim($_GET['barangay'] ?? $_POST['barangay'] ?? '');
-        $assessmentDate   = trim($_GET['assessment_date'] ?? $_POST['assessment_date'] ?? date('Y-m-d'));
-
-        // BHW / BNS can only see their barangay
-        if (in_array($role, ['bhw', 'bns'])) {
-            $selectedBarangay = Session::get('user_barangay', '');
-        }
-
-        $barangays        = $beneficiaryModel->getAllBarangays();
-        $allBeneficiaries = $selectedBarangay !== '' ? $beneficiaryModel->findByBarangay($selectedBarangay) : [];
-
-        // Exclude aged-out beneficiaries (72+ months = 6 years old as of assessment date)
-        $allBeneficiaries = array_values(array_filter($allBeneficiaries, function ($b) use ($assessmentDate) {
-            return \DateHelper::ageInMonths($b['date_of_birth'], $assessmentDate) < 72;
-        }));
-
-        $dateYear       = (int)date('Y', strtotime($assessmentDate));
-        $alreadyWeighedMap = [];
-
-        if (!empty($allBeneficiaries)) {
-            $stmt = Database::getInstance()->prepare(
-                "SELECT DISTINCT beneficiary_id FROM assessments WHERE assessment_year = ?"
-            );
-            $stmt->execute([$dateYear]);
-            $alreadyWeighedMap = array_fill_keys(array_column($stmt->fetchAll(), 'beneficiary_id'), true);
-        }
-
-        // Always show only unweighed beneficiaries — OPT is once a year, no follow-up
-        $beneficiaries = array_values(array_filter($allBeneficiaries, fn($b) => !isset($alreadyWeighedMap[$b['id']])));
-
-        if ($this->isPost() && !empty($_POST['entries'])) {
-            $this->validateCsrf();
-
-            $date        = trim($_POST['assessment_date'] ?? date('Y-m-d'));
-            $period      = (int)date('n', strtotime($date)) <= 6 ? 'January' : 'July';
-            $year        = (int)date('Y', strtotime($date));
-            $saved       = 0;
-            $skipped     = 0;
-
-            $assessedBy      = trim($_POST['assessed_by'] ?? Session::get('user_name', ''));
-            $batchRole       = strtolower(Session::get('user_role'));
-            $needsValidation = false;
-
-            foreach ($_POST['entries'] as $entry) {
-                $bid      = (int)($entry['beneficiary_id'] ?? 0);
-                $weightKg = (float)($entry['weight_kg'] ?? 0);
-
-                if ($weightKg <= 0 || !$bid) { $skipped++; continue; }
-
-                $b = $beneficiaryModel->findById($bid);
-                if (!$b) { $skipped++; continue; }
-
-                $assessmentId = $this->model->createWithZScore([
-                    'beneficiary_id'    => $bid,
-                    'assessment_date'   => $date,
-                    'age_in_months'     => \DateHelper::ageInMonths($b['date_of_birth'], $date),
-                    'weight_kg'         => $weightKg,
-                    'height_cm'         => !empty($entry['height_cm']) ? (float)$entry['height_cm'] : null,
-                    'muac_cm'           => !empty($entry['muac_cm'])   ? (float)$entry['muac_cm']   : null,
-                    'sex'               => $b['sex'],
-                    'period'            => $period,
-                    'assessment_year'   => $year,
-                    'assessed_by'       => $assessedBy,
-                    'validation_status' => $needsValidation ? 'pending' : 'validated',
-                    'validated_by'      => $needsValidation ? null : Session::get('user_id'),
-                    'validated_at'      => $needsValidation ? null : date('Y-m-d H:i:s'),
-                    'created_by'        => Session::get('user_id'),
-                ]);
-
-                $saved++;
-            }
-
-            \ActivityLog::log('batch_assessment', "Batch assessment: $saved saved, $skipped skipped — barangay: $selectedBarangay");
-            \ReportCache::invalidate(); // new data � bust cached report results
-            $flashMsg = "$saved assessment" . ($saved !== 1 ? 's' : '') . " saved" . ($skipped ? ", $skipped skipped (no weight entered)" : '') . ".";
-            if ($needsValidation && $saved > 0) {
-                $flashMsg .= " Awaiting midwife validation before appearing in reports.";
-            }
-            Session::flash('success', $flashMsg);
-            $this->redirect('/beneficiaries');
-        }
-
-        $this->view('assessments/batch', [
-            'barangays'         => $barangays,
-            'beneficiaries'     => $beneficiaries,
-            'selectedBarangay'  => $selectedBarangay,
-            'assessmentDate'    => $assessmentDate,
-            'alreadyWeighedMap' => $alreadyWeighedMap,
         ]);
     }
 

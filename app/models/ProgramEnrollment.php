@@ -161,12 +161,12 @@ class ProgramEnrollment extends Model
     public function getEligibleForMNS(string $round, int $year, string $barangay = '', string $purok = ''): array
     {
         $refDate = $round === 'April' ? "{$year}-04-15" : "{$year}-10-15";
-        $extra = ''; $params = [$refDate, $refDate, $round, $year];
+        $extra = ''; $params = [$refDate, $round, $year];
         if ($barangay !== '') { $extra .= ' AND b.barangay = ?';                 $params[] = $barangay; }
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.*,
-                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months,
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) AS age_months,
                     (SELECT distribution_date FROM vitamin_a_records
                      WHERE beneficiary_id = b.id
                      ORDER BY distribution_date DESC LIMIT 1) AS last_vita_date
