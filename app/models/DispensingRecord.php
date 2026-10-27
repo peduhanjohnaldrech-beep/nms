@@ -63,6 +63,26 @@ class DispensingRecord extends Model
         $allParams = $drParams;
 
         if ($includeMns) {
+            // --- vitamin_a_records params ---
+            $vitaParams = [];
+            $vitaWhere  = "b.deleted_at IS NULL";
+            if ($year)          { $vitaWhere .= " AND v.year = ?";              $vitaParams[] = $year; }
+            if ($barangay)      { $vitaWhere .= " AND b.barangay = ?";          $vitaParams[] = $barangay; }
+            if ($beneficiaryId) { $vitaWhere .= " AND v.beneficiary_id = ?";    $vitaParams[] = $beneficiaryId; }
+
+            $sql .= "
+                UNION ALL
+                SELECT v.id, v.beneficiary_id, v.distribution_date AS date_dispensed, 'MNS' AS program,
+                       CASE WHEN v.dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END AS supplement_type,
+                       1 AS quantity, 'capsule' AS unit,
+                       CONCAT(v.round, ' ', v.year, ' round') AS notes,
+                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
+                       v.administered_by AS dispensed_by_name
+                FROM vitamin_a_records v
+                JOIN beneficiaries b ON b.id = v.beneficiary_id
+                WHERE $vitaWhere";
+            $allParams = array_merge($allParams, $vitaParams);
+
             // --- mnp_records params ---
             $mnpParams = [];
             $mnpWhere  = "b.deleted_at IS NULL";
@@ -113,11 +133,19 @@ class DispensingRecord extends Model
     {
         return $this->fetchAll(
             "SELECT supplement_type, COUNT(*) AS cnt, SUM(quantity) AS total_qty
-             FROM dispensing_records
-             WHERE YEAR(date_dispensed) = ?
+             FROM (
+                 SELECT supplement_type, quantity FROM dispensing_records WHERE YEAR(date_dispensed) = ?
+                 UNION ALL
+                 SELECT CASE WHEN dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END, 1
+                 FROM vitamin_a_records WHERE year = ?
+                 UNION ALL
+                 SELECT 'MNP (Micronutrient Powder)', 1 FROM mnp_records WHERE YEAR(date_given) = ?
+                 UNION ALL
+                 SELECT 'LNS-SQ (Lipid-based Nutrient Supplement)', 1 FROM lns_sq_records WHERE YEAR(date_given) = ?
+             ) AS combined
              GROUP BY supplement_type
              ORDER BY cnt DESC",
-            [$year]
+            [$year, $year, $year, $year]
         );
     }
 
