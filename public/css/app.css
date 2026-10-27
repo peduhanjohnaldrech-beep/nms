@@ -362,22 +362,22 @@ thead.table-light th {
 .breadcrumb-item.active { color: var(--text-main); font-weight: 500; }
 
 /* ── Status badges ──────────────────────────────────────── */
-.status-suw    { background-color: var(--status-suw);    color: #fff; }
-.status-uw     { background-color: var(--status-uw);     color: #fff; }
-.status-normal { background-color: var(--status-normal); color: #fff; }
-.status-ow     { background-color: var(--status-ow);     color: #fff; }
-.status-ob     { background-color: var(--status-ob);     color: #fff; }
-.status-sw     { background-color: var(--status-suw);    color: #fff; }
-.status-mw     { background-color: var(--status-uw);     color: #fff; }
-.status-sst    { background-color: #7c2d12;               color: #fff; }
-.status-st     { background-color: #92400e;               color: #fff; }
-.status-stunted{ background-color: #92400e;               color: #fff; }
-.status-tall   { background-color: #0891b2;               color: #fff; }
+.status-suw    { background-color: var(--status-suw);    color: #fff !important; }
+.status-uw     { background-color: var(--status-uw);     color: #fff !important; }
+.status-normal { background-color: var(--status-normal); color: #fff !important; }
+.status-ow     { background-color: var(--status-ow);     color: #fff !important; }
+.status-ob     { background-color: var(--status-ob);     color: #fff !important; }
+.status-sw     { background-color: var(--status-suw);    color: #fff !important; }
+.status-mw     { background-color: var(--status-uw);     color: #fff !important; }
+.status-sst    { background-color: #b45309;               color: #fff !important; }
+.status-st     { background-color: #d97706;               color: #fff !important; }
+.status-stunted{ background-color: #d97706;               color: #fff !important; }
+.status-tall   { background-color: #0891b2;               color: #fff !important; }
 
 /* Validation status badges */
-.status-pending  { background-color: #d97706; color: #fff; }
-.status-rejected { background-color: #dc2626; color: #fff; }
-.status-validated{ background-color: #16a34a; color: #fff; }
+.status-pending  { background-color: #d97706; color: #fff !important; }
+.status-rejected { background-color: #dc2626; color: #fff !important; }
+.status-validated{ background-color: #16a34a; color: #fff !important; }
 
 /* ── Global dark mode text & background overrides ───────── */
 [data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
