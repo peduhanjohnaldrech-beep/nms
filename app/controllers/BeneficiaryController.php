@@ -288,6 +288,14 @@ class BeneficiaryController extends Controller
 
         $userId = Session::get('user_id');
 
+        // No assessment, no validation
+        $aChk = $db->prepare("SELECT COUNT(*) FROM assessments WHERE beneficiary_id = ?");
+        $aChk->execute([(int)$id]);
+        if ((int)$aChk->fetchColumn() === 0) {
+            Session::flash('error', 'Cannot validate: this beneficiary has no assessment recorded. Please add an assessment first.');
+            $this->redirect("/beneficiaries/{$id}");
+        }
+
         $db->prepare(
             "UPDATE beneficiaries SET validation_status='validated', validated_by=?, validated_at=NOW(), rejection_note=NULL,
              submitted_at=IFNULL(submitted_at,NOW()), submitted_by=IFNULL(submitted_by,?) WHERE id=?"

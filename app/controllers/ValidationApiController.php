@@ -339,6 +339,13 @@ class ValidationApiController extends ApiController
             $this->error('Access denied', 403);
         }
 
+        // No assessment, no validation
+        $aChk = $db->prepare("SELECT COUNT(*) FROM assessments WHERE beneficiary_id = ?");
+        $aChk->execute([$id]);
+        if ((int)$aChk->fetchColumn() === 0) {
+            $this->error('Cannot validate: beneficiary has no assessment recorded. Please add an assessment first.', 422);
+        }
+
         $db->prepare("
             UPDATE beneficiaries
             SET validation_status = 'validated',
