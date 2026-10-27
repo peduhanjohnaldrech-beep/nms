@@ -76,9 +76,10 @@ class DispensingRecord extends Model
                        'MNP (Micronutrient Powder)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
                        NULL AS notes,
                        b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       NULL AS dispensed_by_name
+                       u.full_name AS dispensed_by_name
                 FROM mnp_records m
                 JOIN beneficiaries b ON b.id = m.beneficiary_id
+                LEFT JOIN users u ON u.id = m.given_by
                 WHERE $mnpWhere";
             $allParams = array_merge($allParams, $mnpParams);
 
@@ -95,9 +96,10 @@ class DispensingRecord extends Model
                        'LNS-SQ (Lipid-based Nutrient Supplement)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
                        NULL AS notes,
                        b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       NULL AS dispensed_by_name
+                       u.full_name AS dispensed_by_name
                 FROM lns_sq_records l
                 JOIN beneficiaries b ON b.id = l.beneficiary_id
+                LEFT JOIN users u ON u.id = l.given_by
                 WHERE $lnsWhere";
             $allParams = array_merge($allParams, $lnsParams);
         }

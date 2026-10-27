@@ -266,8 +266,8 @@ $uniqueBenes  = count(array_unique(array_column($records, 'beneficiary_id')));
                             </span>
                         </td>
                         <td class="fw-semibold"><?= htmlspecialchars($r['supplement_type']) ?></td>
-                        <td><?= $r['quantity'] == (int)$r['quantity'] ? (int)$r['quantity'] : number_format($r['quantity'], 1) ?></td>
-                        <td class="text-muted small"><?= htmlspecialchars($r['unit']) ?></td>
+                        <td><?= $r['program'] === 'DSP' ? '<span class="text-muted">—</span>' : ($r['quantity'] == (int)$r['quantity'] ? (int)$r['quantity'] : number_format($r['quantity'], 1)) ?></td>
+                        <td class="text-muted small"><?= $r['program'] === 'DSP' ? '<span class="text-muted">—</span>' : htmlspecialchars($r['unit']) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['dispensed_by_name'] ?? '—') ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['notes'] ?? '') ?></td>
                     </tr>
