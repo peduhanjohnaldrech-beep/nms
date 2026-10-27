@@ -261,7 +261,13 @@ class ReportController extends Controller
         if ($purok)    { $where[] = 'LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
 
         $stmt = $db->prepare(
-            "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.id AS beneficiary_id
+            "SELECT pe.*, b.last_name, b.first_name, b.barangay, b.date_of_birth, b.id AS beneficiary_id,
+                    (SELECT a.weight_kg FROM assessments a
+                     WHERE a.beneficiary_id = b.id AND a.validation_status = 'validated'
+                     ORDER BY a.assessment_date DESC LIMIT 1) AS latest_weight_kg,
+                    (SELECT a.assessment_date FROM assessments a
+                     WHERE a.beneficiary_id = b.id AND a.validation_status = 'validated'
+                     ORDER BY a.assessment_date DESC LIMIT 1) AS latest_assessment_date
              FROM program_enrollments pe JOIN beneficiaries b ON b.id = pe.beneficiary_id
              WHERE b.validation_status = 'validated' AND " . implode(' AND ', $where) . " ORDER BY b.barangay, b.last_name"
         );

@@ -83,11 +83,13 @@
 </div>
 
 <?php
-$withData    = array_filter($rows, fn($r) => $r['pre_weight_kg'] && $r['post_weight_kg']);
-$improved    = array_filter($withData, fn($r) => $r['post_weight_kg'] > $r['pre_weight_kg']);
-$notImproved = array_filter($withData, fn($r) => $r['post_weight_kg'] <= $r['pre_weight_kg']);
+// Use post_weight_kg if discharged, else latest assessment weight for active
+$resolvePost = fn($r) => $r['post_weight_kg'] ?: ($r['status'] === 'Active' ? ($r['latest_weight_kg'] ?? null) : null);
+$withData    = array_filter($rows, fn($r) => $r['pre_weight_kg'] && $resolvePost($r));
+$improved    = array_filter($withData, fn($r) => $resolvePost($r) > $r['pre_weight_kg']);
+$notImproved = array_filter($withData, fn($r) => $resolvePost($r) <= $r['pre_weight_kg']);
 $avgGain     = count($withData) > 0
-    ? array_sum(array_map(fn($r) => $r['post_weight_kg'] - $r['pre_weight_kg'], $withData)) / count($withData)
+    ? array_sum(array_map(fn($r) => $resolvePost($r) - $r['pre_weight_kg'], $withData)) / count($withData)
     : 0;
 $improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) * 100) : 0;
 ?>
@@ -134,15 +136,17 @@ $improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) 
 </div>
 <script>
 (function(){
-    const data = <?= json_encode(array_values(array_filter($rows, fn($r) => $r['pre_weight_kg'] && $r['post_weight_kg']))) ?>;
+    const data = <?= json_encode(array_values(array_map(fn($r) => array_merge($r, [
+        'resolved_post' => $r['post_weight_kg'] ?: ($r['status'] === 'Active' ? ($r['latest_weight_kg'] ?? null) : null)
+    ]), array_filter($rows, fn($r) => $r['pre_weight_kg'] && ($r['post_weight_kg'] ?: ($r['status'] === 'Active' ? ($r['latest_weight_kg'] ?? null) : null)))))) ?>;
     const labels = data.map(r => r.last_name + ', ' + r.first_name.charAt(0) + '.');
     new Chart(document.getElementById('outcomeChart'), {
         type: 'bar',
         data: {
             labels,
             datasets: [
-                { label: 'Pre-Weight (kg)',  data: data.map(r => r.pre_weight_kg),  backgroundColor: '#3b82f688', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3 },
-                { label: 'Post-Weight (kg)', data: data.map(r => r.post_weight_kg), backgroundColor: '#22c55e88', borderColor: '#22c55e', borderWidth: 1, borderRadius: 3 },
+                { label: 'Pre-Weight (kg)',  data: data.map(r => r.pre_weight_kg),   backgroundColor: '#3b82f688', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 3 },
+                { label: 'Post-Weight (kg)', data: data.map(r => r.resolved_post),  backgroundColor: '#22c55e88', borderColor: '#22c55e', borderWidth: 1, borderRadius: 3 },
             ],
         },
         options: {
@@ -193,9 +197,12 @@ $improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) 
                     <?php endif; ?>
                     <?php foreach ($rows as $r): ?>
                     <?php
-                    $diff = ($r['pre_weight_kg'] && $r['post_weight_kg'])
-                          ? round($r['post_weight_kg'] - $r['pre_weight_kg'], 2)
-                          : null;
+                    // For discharged: use post_weight_kg. For active: use latest assessment weight.
+                    $displayPost  = $r['post_weight_kg'] ?: ($r['status'] === 'Active' ? $r['latest_weight_kg'] : null);
+                    $isFollowUp   = !$r['post_weight_kg'] && $r['status'] === 'Active' && $r['latest_weight_kg'];
+                    $diff         = ($r['pre_weight_kg'] && $displayPost)
+                                  ? round($displayPost - $r['pre_weight_kg'], 2)
+                                  : null;
                     $sc = ['Active'=>'success','Completed'=>'secondary','Dropped'=>'danger'];
                     ?>
                     <tr>
@@ -207,8 +214,19 @@ $improvedPct = count($withData) > 0 ? round(count($improved) / count($withData) 
                         <td><?= htmlspecialchars($r['barangay']) ?></td>
                         <td class="small text-muted"><?= DateHelper::formatDate($r['enrollment_date'], 'M j, Y') ?></td>
                         <td><?= $r['intervention_type'] ? '<span class="badge bg-info text-dark">' . htmlspecialchars($r['intervention_type']) . '</span>' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $r['pre_weight_kg']  ? $r['pre_weight_kg']  . ' kg' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $r['post_weight_kg'] ? $r['post_weight_kg'] . ' kg' : '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center"><?= $r['pre_weight_kg'] ? $r['pre_weight_kg'] . ' kg' : '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center">
+                            <?php if ($displayPost): ?>
+                                <?= number_format((float)$displayPost, 2) ?> kg
+                                <?php if ($isFollowUp): ?>
+                                <br><span class="text-muted" style="font-size:0.72rem;">
+                                    follow-up <?= DateHelper::formatDate($r['latest_assessment_date'], 'M j') ?>
+                                </span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-center fw-semibold">
                             <?php if ($diff !== null): ?>
                             <span class="<?= $diff > 0 ? 'text-success' : ($diff < 0 ? 'text-danger' : 'text-muted') ?>">
