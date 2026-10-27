@@ -731,10 +731,10 @@ class ProgramController extends Controller
             $lastVDate = $lastVStmt->fetchColumn();
             if ($lastVDate) {
                 $monthsSince = \DateHelper::ageInMonths($lastVDate, $date);
-                if ($monthsSince < 5) {
+                if ($monthsSince < 6) {
                     Session::flash('error',
-                        'Vitamin A was last given on ' . \DateHelper::formatDate($lastVDate, 'M j, Y') .
-                        " ({$monthsSince} month(s) ago). Minimum 5-month gap required to prevent toxicity."
+                        'Cannot record — Vitamin A was last given on ' . \DateHelper::formatDate($lastVDate, 'M j, Y') .
+                        " ({$monthsSince} month(s) ago). A minimum 6-month gap is required."
                     );
                     $this->redirect('/programs/mns?tab=vitaminA&round=' . urlencode($round) . '&year=' . $year);
                     return;

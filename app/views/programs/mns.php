@@ -205,7 +205,8 @@ $tabBase = 'round=' . urlencode($round) . '&year=' . $year
                                             data-bs-toggle="modal" data-bs-target="#vitaModal"
                                             data-id="<?= $e['id'] ?>"
                                             data-name="<?= htmlspecialchars($e['last_name'] . ', ' . $e['first_name']) ?>"
-                                            data-dob="<?= $e['date_of_birth'] ?>">
+                                            data-dob="<?= $e['date_of_birth'] ?>"
+                                            data-last-vita-date="<?= htmlspecialchars($e['last_vita_date'] ?? '') ?>">
                                         <i class="bi bi-capsule me-1"></i>Record
                                     </button>
                                 </td>
@@ -990,6 +991,7 @@ function tclFilter(q) {
                 <?= \Core\Session::csrfField() ?>
                 <input type="hidden" name="beneficiary_id" id="vitaBeneficiaryId">
                 <input type="hidden" name="date_of_birth"  id="vitaDob">
+                <input type="hidden" id="vitaLastVitaDate">
                 <input type="hidden" name="round" value="<?= htmlspecialchars($round) ?>">
                 <input type="hidden" name="year"  value="<?= $year ?>">
                 <div class="modal-header">
@@ -1254,11 +1256,13 @@ document.getElementById('vitaModal')?.addEventListener('show.bs.modal', function
     document.getElementById('vitaBeneficiaryId').value = btn.dataset.id;
     document.getElementById('vitaName').textContent     = btn.dataset.name;
     document.getElementById('vitaDob').value            = btn.dataset.dob;
-    updateVitaPanel(btn.dataset.dob, document.getElementById('vitaDate').value);
+    document.getElementById('vitaLastVitaDate').value   = btn.dataset.lastVitaDate || '';
+    updateVitaPanel(btn.dataset.dob, document.getElementById('vitaDate').value, 'vitaEligPanel', btn.dataset.lastVitaDate || '');
 });
 document.getElementById('vitaDate')?.addEventListener('change', function() {
-    const dob = document.getElementById('vitaDob').value;
-    updateVitaPanel(dob, this.value);
+    const dob          = document.getElementById('vitaDob').value;
+    const lastVitaDate = document.getElementById('vitaLastVitaDate').value;
+    updateVitaPanel(dob, this.value, 'vitaEligPanel', lastVitaDate);
 });
 
 document.getElementById('manualVitaBeneficiary')?.addEventListener('change', function() {
@@ -1321,12 +1325,20 @@ function hidePanel(panelId) {
     if (el) el.className = 'alert py-2 px-3 small mb-3 d-none';
 }
 
-function updateVitaPanel(dob, date, panelId) {
+function updateVitaPanel(dob, date, panelId, lastVitaDate) {
     panelId = panelId || 'vitaEligPanel';
     const mo = ageInMonths(dob, date);
     if (mo < 0) { hidePanel(panelId); return; }
     if (mo < 6)  { showPanel(panelId, 'danger',  '\u26a0 Not yet eligible — child is only ' + mo + ' month(s) old (minimum: 6 months).'); return; }
     if (mo >= 60) { showPanel(panelId, 'danger', '\u26a0 Age exceeded — child is ' + mo + ' months old (Vitamin A ends at 60 months / 5 years).'); return; }
+    if (lastVitaDate && date) {
+        const monthsAgo = ageInMonths(lastVitaDate, date);
+        if (monthsAgo >= 0 && monthsAgo < 6) {
+            const fmt = new Date(lastVitaDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+            showPanel(panelId, 'danger', '\u26d4 Cannot record — last Vitamin A was given on ' + fmt + ' (' + monthsAgo + ' month(s) ago). Minimum 6-month gap required.');
+            return;
+        }
+    }
     const dose = mo <= 11 ? '100,000 IU — Blue capsule' : '200,000 IU — Red capsule';
     showPanel(panelId, 'success', '\u2713 Age ' + mo + ' month(s) — Dose: ' + dose);
 }

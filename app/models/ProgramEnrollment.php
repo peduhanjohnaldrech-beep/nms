@@ -166,7 +166,10 @@ class ProgramEnrollment extends Model
         if ($purok    !== '') { $extra .= ' AND LOWER(b.purok_zone) = LOWER(?)'; $params[] = $purok; }
         return $this->fetchAll(
             "SELECT b.*,
-                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months
+                    TIMESTAMPDIFF(MONTH, b.date_of_birth, ?) AS age_months,
+                    (SELECT distribution_date FROM vitamin_a_records
+                     WHERE beneficiary_id = b.id
+                     ORDER BY distribution_date DESC LIMIT 1) AS last_vita_date
              FROM beneficiaries b
              WHERE b.deleted_at IS NULL
              AND b.validation_status = 'validated'
