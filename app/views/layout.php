@@ -58,7 +58,7 @@ $__assessOpen  = str_contains($__uri, '/assessments');
 $__programsOpen = str_contains($__uri, '/programs');
 $__reportsOpen = str_contains($__uri, '/reports');
 $__dataOpen    = str_contains($__uri, '/dispensing') || str_contains($__uri, '/import');
-$__adminOpen   = str_contains($__uri, '/activity') || str_contains($__uri, '/users') || str_contains($__uri, '/programs-admin') || str_contains($__uri, '/backup');
+$__adminOpen   = str_contains($__uri, '/activity') || str_contains($__uri, '/users') || str_contains($__uri, '/programs-admin') || str_contains($__uri, '/backup') || str_contains($__uri, '/settings');
 
 // Active sidebar helper
 $__basePath = rtrim(parse_url(APP_URL, PHP_URL_PATH) ?? '', '/');
@@ -97,6 +97,8 @@ $__labelMap = [
     'summary'     => 'Summary Report',
     'barangays'   => 'Barangay Directory',
     'backup'      => 'Database Backup',
+    'settings'    => 'Settings',
+    '2fa'         => '2FA Security',
     'trash'       => 'Trash',
     'preview'     => 'Preview',
     'masterlist'  => 'Master List',
@@ -294,6 +296,9 @@ foreach ($__crumbSegs as $seg) {
                 <?php if ($isAdmin): ?>
                 <a class="nav-link ps-4 <?= __navActive('/backup') ?>" href="<?= APP_URL ?>/backup">
                     <i class="bi bi-database-fill-down me-2"></i>Database Backup
+                </a>
+                <a class="nav-link ps-4 <?= __navActive('/settings/2fa') ?>" href="<?= APP_URL ?>/settings/2fa">
+                    <i class="bi bi-shield-lock me-2"></i>2FA Security
                 </a>
                 <?php endif; ?>
             </div>

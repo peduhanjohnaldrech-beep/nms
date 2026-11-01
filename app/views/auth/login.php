@@ -75,6 +75,13 @@
                     </form>
                 </div>
             </div>
+            <div class="text-center mt-3">
+                <a href="<?= APP_URL ?>/nms.apk" class="btn btn-sm btn-outline-light"
+                   download style="border-color:rgba(255,255,255,.3);font-size:.8rem;">
+                    <i class="bi bi-android2 me-1"></i>Download NMS Mobile App
+                </a>
+            </div>
+
             <p class="text-white-50 small text-center mt-3 mb-1 px-2" style="font-size:.75rem;line-height:1.5;">
                 <i class="bi bi-shield-lock me-1"></i>
                 This system handles confidential child nutrition data in compliance with

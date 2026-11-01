@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Core\Controller;
 use Core\Session;
+use Core\Totp;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -133,6 +134,67 @@ class AuthController extends Controller
             }
         }
 
+        // 2FA — if admin has TOTP enabled, pause here and require the OTP code
+        if (strtolower($user['role']) === 'admin' && !empty($user['totp_enabled'])) {
+            Session::regenerate();
+            Session::set('2fa_pending_user_id', $user['id']);
+            $this->redirect('/2fa');
+            return;
+        }
+
+        $this->completeLogin($user);
+    }
+
+    // ----------------------------------------------------------------
+    // 2FA challenge
+    // ----------------------------------------------------------------
+
+    public function show2fa(): void
+    {
+        if (!Session::has('2fa_pending_user_id')) {
+            $this->redirect('/login');
+        }
+        $this->view('auth/2fa', [], false);
+    }
+
+    public function verify2fa(): void
+    {
+        $pendingId = Session::get('2fa_pending_user_id');
+        if (!$pendingId) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!\Core\Session::validateCsrf($csrfToken)) {
+            Session::flash('error', 'Page expired. Please try again.');
+            $this->redirect('/2fa');
+            return;
+        }
+
+        $code = trim($_POST['totp_code'] ?? '');
+        $db   = \Core\Database::getInstance();
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ? AND is_active = 1");
+        $stmt->execute([$pendingId]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$user || !Totp::verify($user['totp_secret'] ?? '', $code)) {
+            \ActivityLog::log('login_failed', "Failed 2FA attempt for user ID: $pendingId");
+            Session::flash('error', 'Invalid or expired code. Please try again.');
+            $this->redirect('/2fa');
+            return;
+        }
+
+        Session::remove('2fa_pending_user_id');
+        $this->completeLogin($user);
+    }
+
+    // ----------------------------------------------------------------
+    // Shared login finisher
+    // ----------------------------------------------------------------
+
+    private function completeLogin(array $user): void
+    {
         Session::regenerate();
         Session::set('user_id',          $user['id']);
         Session::set('user_name',        $user['full_name']);
@@ -143,7 +205,7 @@ class AuthController extends Controller
         // BNS and BHW are app-only — block web login
         if (in_array(strtolower($user['role']), ['bhw'])) {
             Session::flash('error', 'Your account is for the mobile app only. Please use the NMS Mobile app.');
-            $this->view('auth/login', ['username' => $this->clean($username)], false);
+            $this->view('auth/login', [], false);
             return;
         }
 
