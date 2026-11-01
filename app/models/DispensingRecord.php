@@ -12,19 +12,6 @@ class DispensingRecord extends Model
     public function __construct()
     {
         parent::__construct();
-        $this->db->exec("CREATE TABLE IF NOT EXISTS dispensing_records (
-            id              INT PRIMARY KEY AUTO_INCREMENT,
-            beneficiary_id  INT NOT NULL,
-            enrollment_id   INT,
-            program         VARCHAR(50)  NOT NULL,
-            supplement_type VARCHAR(100) NOT NULL,
-            quantity        DECIMAL(10,2) NOT NULL DEFAULT 1,
-            unit            VARCHAR(50)  NOT NULL DEFAULT 'piece(s)',
-            date_dispensed  DATE         NOT NULL,
-            dispensed_by    INT,
-            notes           TEXT,
-            created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
-        )");
     }
 
     public function getByBeneficiary(int $beneficiaryId): array
