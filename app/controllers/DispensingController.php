@@ -34,7 +34,7 @@ class DispensingController extends Controller
             $records   = $model->getAll($year, $program, $barangay, $beneficiaryId);
             $summary   = $model->getSummary($year);
         } catch (\Throwable $e) {
-            $dbError = 'The dispensing_records table does not exist yet. Please run the database migration: <code>php database/run_migrations.php</code>';
+            $dbError = 'Database error: ' . htmlspecialchars($e->getMessage());
         }
 
         // Monthly MNP & LNS-SQ log
@@ -166,7 +166,7 @@ class DispensingController extends Controller
                 );
                 Session::flash('success', 'Dispensing record saved.');
             } catch (\Throwable $e) {
-                Session::flash('error', 'Could not save record. The dispensing_records table may not exist yet. Run migrations first.');
+                Session::flash('error', 'Could not save record: ' . $e->getMessage());
             }
 
             $this->redirect($bid ? "/beneficiaries/{$bid}" : '/dispensing');
@@ -199,7 +199,7 @@ class DispensingController extends Controller
         try {
             $records = (new DispensingRecord())->getAll($year, $program, $barangay, $beneficiaryId);
         } catch (\Throwable $e) {
-            Session::flash('error', 'The dispensing_records table does not exist yet. Please run migrations.');
+            Session::flash('error', 'Database error: ' . $e->getMessage());
             $this->redirect('/dispensing');
         }
         $headers  = ['Barangay','Last Name','First Name','DOB','Program',
