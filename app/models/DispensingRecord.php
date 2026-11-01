@@ -126,7 +126,7 @@ class DispensingRecord extends Model
                 SELECT pe.id, pe.beneficiary_id, pe.enrollment_date AS date_dispensed, 'DSP' AS program,
                        COALESCE(pe.intervention_type, 'Supplementary Food') AS supplement_type,
                        1 AS quantity, 'enrollment' AS unit,
-                       pe.enrollment_notes AS notes,
+                       pe.notes AS notes,
                        b.last_name, b.first_name, b.barangay, b.date_of_birth,
                        u.full_name AS dispensed_by_name
                 FROM program_enrollments pe
