@@ -178,7 +178,7 @@ class DispensingRecord extends Model
                        CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
                        CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
                        b.date_of_birth,
-                       NULL COLLATE utf8mb4_general_ci AS dispensed_by_name
+                       CAST(NULL AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM dsp_monitoring dm
                 JOIN program_enrollments pe2 ON pe2.id = dm.enrollment_id
                 JOIN beneficiaries b ON b.id = pe2.beneficiary_id
@@ -196,14 +196,15 @@ class DispensingRecord extends Model
         return $this->fetchAll(
             "SELECT supplement_type, COUNT(*) AS cnt, SUM(quantity) AS total_qty
              FROM (
-                 SELECT supplement_type, quantity FROM dispensing_records WHERE YEAR(date_dispensed) = ?
+                 SELECT CONVERT(supplement_type USING utf8mb4) COLLATE utf8mb4_general_ci AS supplement_type, quantity
+                 FROM dispensing_records WHERE YEAR(date_dispensed) = ?
                  UNION ALL
-                 SELECT CASE WHEN dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END, 1
+                 SELECT CONVERT(CASE WHEN dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END USING utf8mb4) COLLATE utf8mb4_general_ci, 1
                  FROM vitamin_a_records WHERE year = ?
                  UNION ALL
-                 SELECT 'MNP (Micronutrient Powder)', 1 FROM mnp_records WHERE YEAR(date_given) = ?
+                 SELECT 'MNP (Micronutrient Powder)' COLLATE utf8mb4_general_ci, 1 FROM mnp_records WHERE YEAR(date_given) = ?
                  UNION ALL
-                 SELECT 'LNS-SQ (Lipid-based Nutrient Supplement)', 1 FROM lns_sq_records WHERE YEAR(date_given) = ?
+                 SELECT 'LNS-SQ (Lipid-based Nutrient Supplement)' COLLATE utf8mb4_general_ci, 1 FROM lns_sq_records WHERE YEAR(date_given) = ?
              ) AS combined
              GROUP BY supplement_type
              ORDER BY cnt DESC",
