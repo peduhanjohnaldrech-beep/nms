@@ -41,10 +41,17 @@ class DispensingRecord extends Model
         if ($barangay)      { $drWhere .= " AND b.barangay = ?";              $drParams[] = $barangay; }
         if ($beneficiaryId) { $drWhere .= " AND dr.beneficiary_id = ?";       $drParams[] = $beneficiaryId; }
 
-        $sql = "SELECT dr.id, dr.beneficiary_id, dr.date_dispensed, dr.program,
-                       dr.supplement_type, dr.quantity, dr.unit, dr.notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       u.full_name AS dispensed_by_name
+        $sql = "SELECT dr.id, dr.beneficiary_id, dr.date_dispensed,
+                       CONVERT(dr.program        USING utf8mb4) COLLATE utf8mb4_general_ci AS program,
+                       CONVERT(dr.supplement_type USING utf8mb4) COLLATE utf8mb4_general_ci AS supplement_type,
+                       dr.quantity,
+                       CONVERT(dr.unit  USING utf8mb4) COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(dr.notes USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       CONVERT(u.full_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM dispensing_records dr
                 JOIN beneficiaries b ON b.id = dr.beneficiary_id
                 LEFT JOIN users u ON u.id = dr.dispensed_by
@@ -61,12 +68,16 @@ class DispensingRecord extends Model
 
             $sql .= "
                 UNION ALL
-                SELECT v.id, v.beneficiary_id, v.distribution_date AS date_dispensed, 'MNS' AS program,
-                       CASE WHEN v.dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END AS supplement_type,
-                       1 AS quantity, 'capsule' AS unit,
-                       CONCAT(v.round, ' ', v.year, ' round') AS notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       v.administered_by AS dispensed_by_name
+                SELECT v.id, v.beneficiary_id, v.distribution_date AS date_dispensed,
+                       'MNS' COLLATE utf8mb4_general_ci AS program,
+                       CONVERT(CASE WHEN v.dosage_iu = 100000 THEN '100,000 IU Vitamin A (Blue)' ELSE '200,000 IU Vitamin A (Red)' END USING utf8mb4) COLLATE utf8mb4_general_ci AS supplement_type,
+                       1 AS quantity, 'capsule' COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(CONCAT(v.round, ' ', v.year, ' round') USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       CONVERT(v.administered_by USING utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM vitamin_a_records v
                 JOIN beneficiaries b ON b.id = v.beneficiary_id
                 WHERE $vitaWhere";
@@ -81,11 +92,16 @@ class DispensingRecord extends Model
 
             $sql .= "
                 UNION ALL
-                SELECT m.id, m.beneficiary_id, m.date_given AS date_dispensed, 'MNS' AS program,
-                       'MNP (Micronutrient Powder)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
-                       m.age_group AS notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       u.full_name AS dispensed_by_name
+                SELECT m.id, m.beneficiary_id, m.date_given AS date_dispensed,
+                       'MNS' COLLATE utf8mb4_general_ci AS program,
+                       'MNP (Micronutrient Powder)' COLLATE utf8mb4_general_ci AS supplement_type,
+                       1 AS quantity, 'sachet' COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(m.age_group  USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       CONVERT(u.full_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM mnp_records m
                 JOIN beneficiaries b ON b.id = m.beneficiary_id
                 LEFT JOIN users u ON u.id = m.given_by
@@ -101,11 +117,16 @@ class DispensingRecord extends Model
 
             $sql .= "
                 UNION ALL
-                SELECT l.id, l.beneficiary_id, l.date_given AS date_dispensed, 'MNS' AS program,
-                       'LNS-SQ (Lipid-based Nutrient Supplement)' AS supplement_type, 1 AS quantity, 'sachet' AS unit,
-                       l.age_group AS notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       u.full_name AS dispensed_by_name
+                SELECT l.id, l.beneficiary_id, l.date_given AS date_dispensed,
+                       'MNS' COLLATE utf8mb4_general_ci AS program,
+                       'LNS-SQ (Lipid-based Nutrient Supplement)' COLLATE utf8mb4_general_ci AS supplement_type,
+                       1 AS quantity, 'sachet' COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(l.age_group  USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       CONVERT(u.full_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM lns_sq_records l
                 JOIN beneficiaries b ON b.id = l.beneficiary_id
                 LEFT JOIN users u ON u.id = l.given_by
@@ -123,12 +144,16 @@ class DispensingRecord extends Model
 
             $sql .= "
                 UNION ALL
-                SELECT pe.id, pe.beneficiary_id, pe.enrollment_date AS date_dispensed, 'DSP' AS program,
-                       COALESCE(pe.intervention_type, 'Supplementary Food') AS supplement_type,
-                       1 AS quantity, 'enrollment' AS unit,
-                       pe.notes AS notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       u.full_name AS dispensed_by_name
+                SELECT pe.id, pe.beneficiary_id, pe.enrollment_date AS date_dispensed,
+                       'DSP' COLLATE utf8mb4_general_ci AS program,
+                       CONVERT(COALESCE(pe.intervention_type, 'Supplementary Food') USING utf8mb4) COLLATE utf8mb4_general_ci AS supplement_type,
+                       1 AS quantity, 'enrollment' COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(pe.notes USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       CONVERT(u.full_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM program_enrollments pe
                 JOIN beneficiaries b ON b.id = pe.beneficiary_id
                 LEFT JOIN users u ON u.id = pe.enrolled_by
@@ -144,12 +169,16 @@ class DispensingRecord extends Model
 
             $sql .= "
                 UNION ALL
-                SELECT dm.id, pe2.beneficiary_id, dm.monitoring_date AS date_dispensed, 'DSP' AS program,
-                       'DSP Monitoring Visit' AS supplement_type,
-                       1 AS quantity, 'visit' AS unit,
-                       CONCAT('Wt: ', dm.weight_kg, 'kg | Status: ', COALESCE(dm.nutritional_status,'—')) AS notes,
-                       b.last_name, b.first_name, b.barangay, b.date_of_birth,
-                       NULL AS dispensed_by_name
+                SELECT dm.id, pe2.beneficiary_id, dm.monitoring_date AS date_dispensed,
+                       'DSP' COLLATE utf8mb4_general_ci AS program,
+                       'DSP Monitoring Visit' COLLATE utf8mb4_general_ci AS supplement_type,
+                       1 AS quantity, 'visit' COLLATE utf8mb4_general_ci AS unit,
+                       CONVERT(CONCAT('Wt: ', dm.weight_kg, 'kg | Status: ', COALESCE(dm.nutritional_status,'—')) USING utf8mb4) COLLATE utf8mb4_general_ci AS notes,
+                       CONVERT(b.last_name  USING utf8mb4) COLLATE utf8mb4_general_ci AS last_name,
+                       CONVERT(b.first_name USING utf8mb4) COLLATE utf8mb4_general_ci AS first_name,
+                       CONVERT(b.barangay   USING utf8mb4) COLLATE utf8mb4_general_ci AS barangay,
+                       b.date_of_birth,
+                       NULL COLLATE utf8mb4_general_ci AS dispensed_by_name
                 FROM dsp_monitoring dm
                 JOIN program_enrollments pe2 ON pe2.id = dm.enrollment_id
                 JOIN beneficiaries b ON b.id = pe2.beneficiary_id
