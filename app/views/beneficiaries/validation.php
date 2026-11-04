@@ -1,7 +1,7 @@
 <?php $pageTitle = 'Validation Queue'; ?>
 <?php $totalPending = count($rows) + count($pendingAssessments ?? []); ?>
 
-<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2 page-title-row">
     <div>
         <h4 class="mb-0"><i class="bi bi-shield-check me-2 text-warning"></i>Validation Queue</h4>
         <p class="text-muted small mb-0 mt-1">Review and approve pending beneficiary registrations and assessments</p>
@@ -42,10 +42,10 @@
                     <tr>
                         <th>Name</th>
                         <th>DOB / Age</th>
-                        <th>Sex</th>
+                        <th class="d-none d-md-table-cell">Sex</th>
                         <th>Barangay</th>
-                        <th>Submitted By</th>
-                        <th>Submitted At</th>
+                        <th class="d-none d-md-table-cell">Submitted By</th>
+                        <th class="d-none d-md-table-cell">Submitted At</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -76,38 +76,38 @@
                             <?= DateHelper::formatDate($b['date_of_birth'], 'M j, Y') ?>
                             <div class="small text-muted"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></div>
                         </td>
-                        <td><?= htmlspecialchars($b['sex']) ?></td>
+                        <td class="d-none d-md-table-cell"><?= htmlspecialchars($b['sex']) ?></td>
                         <td>
                             <?= htmlspecialchars($b['barangay']) ?>
                             <?php if (!empty($b['purok_zone'])): ?>
                             <div class="small text-muted"><?= htmlspecialchars($b['purok_zone']) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             <?php if (!empty($b['created_by_name'])): ?>
                             <span class="small"><?= htmlspecialchars($b['created_by_name']) ?></span>
                             <?php else: ?>
                             <span class="text-muted small">—</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-nowrap small text-muted">
+                        <td class="text-nowrap small text-muted d-none d-md-table-cell">
                             <?= DateHelper::formatDate($b['created_at'] ?? '', 'M j, Y g:i a') ?>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end text-nowrap">
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="btn btn-sm btn-outline-secondary me-1" title="View profile">
                                 <i class="bi bi-eye"></i>
                             </a>
                             <form action="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/validate" method="post" class="d-inline">
                                 <?= \Core\Session::csrfField() ?>
                                 <button class="btn btn-sm btn-success me-1" title="Approve">
-                                    <i class="bi bi-check-lg"></i> Approve
+                                    <i class="bi bi-check-lg"></i><span class="d-none d-sm-inline"> Approve</span>
                                 </button>
                             </form>
                             <button class="btn btn-sm btn-outline-warning"
                                     data-bs-toggle="modal"
                                     data-bs-target="#returnModal<?= $b['id'] ?>"
                                     title="Return for Correction">
-                                <i class="bi bi-reply me-1"></i>Return
+                                <i class="bi bi-reply"></i><span class="d-none d-sm-inline"> Return</span>
                             </button>
 
                             <!-- Return modal for this row -->

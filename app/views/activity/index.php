@@ -8,7 +8,7 @@
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form class="row g-2 align-items-end" method="get">
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small mb-1">Action</label>
                 <select name="action" class="form-select form-select-sm">
                     <option value="">All Actions</option>
@@ -19,12 +19,12 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small mb-1">User</label>
                 <input type="text" name="user" class="form-control form-control-sm"
                        value="<?= htmlspecialchars($filterUser) ?>" placeholder="Search user...">
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small mb-1">Source</label>
                 <select name="source" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -46,11 +46,11 @@
             <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:160px">Date/Time</th>
-                        <th>User</th>
+                        <th>Date/Time</th>
+                        <th class="d-none d-md-table-cell">User</th>
                         <th>Action</th>
                         <th>Description</th>
-                        <th>IP Address</th>
+                        <th class="d-none d-md-table-cell">IP Address</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,7 +60,7 @@
                     <?php foreach ($logs as $log): ?>
                     <tr>
                         <td class="text-muted small"><?= date('M j, Y H:i', strtotime($log['created_at'])) ?></td>
-                        <td><?= htmlspecialchars($log['user_name'] ?? '—') ?></td>
+                        <td class="d-none d-md-table-cell"><?= htmlspecialchars($log['user_name'] ?? '—') ?></td>
                         <td>
                             <?php
                             $isMobile = str_starts_with($log['action'], 'mobile_');
@@ -83,7 +83,7 @@
                             <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($action) ?></span>
                         </td>
                         <td class="small"><?= htmlspecialchars($log['description'] ?? '') ?></td>
-                        <td class="text-muted small"><?= htmlspecialchars($log['ip_address'] ?? '') ?></td>
+                        <td class="text-muted small d-none d-md-table-cell"><?= htmlspecialchars($log['ip_address'] ?? '') ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

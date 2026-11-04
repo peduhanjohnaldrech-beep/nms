@@ -779,6 +779,20 @@ canvas { max-width: 100%; }
     color: #00C6FF !important;
 }
 
+/* ── Extra-small screen improvements ───────────────────── */
+@media (max-width: 575.98px) {
+    /* Tighter table padding */
+    .table > :not(caption) > * > * { padding: 0.35rem 0.4rem; }
+    /* Smaller action buttons in tables */
+    .table .btn.btn-sm { padding: 0.2rem 0.35rem; font-size: 0.75rem; }
+    /* Page title rows: allow wrap */
+    .page-title-row { flex-wrap: wrap !important; gap: 0.5rem !important; }
+    /* Condensed breadcrumb */
+    .breadcrumb { font-size: 0.75rem; }
+    /* Full-width filter form submit button on xs */
+    .filter-btn-xs { width: 100% !important; }
+}
+
 /* ── Print ──────────────────────────────────────────────── */
 @media print {
     .no-print, nav, .sidebar, footer, .btn, .alert:not(.print-show) { display: none !important; }

@@ -10,7 +10,7 @@ if (!function_exists('_tc')) {
 }
 ?>
 
-<div class="d-flex justify-content-between align-items-center my-3">
+<div class="d-flex justify-content-between align-items-center my-3 page-title-row">
     <h4 class="mb-0">
         <i class="bi bi-people-fill me-2"></i>Beneficiaries
     </h4>
@@ -31,11 +31,11 @@ if (!function_exists('_tc')) {
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <input type="text" name="search" class="form-control" placeholder="Search by name..."
                        value="<?= htmlspecialchars($search ?? '') ?>">
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <select name="barangay" id="filterBarangay" class="form-select">
                     <option value="">All Barangays</option>
                     <?php foreach ($barangays as $b): ?>
@@ -46,7 +46,7 @@ if (!function_exists('_tc')) {
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <select name="purok" id="filterPurok" class="form-select">
                     <option value="">All Puroks</option>
                     <?php foreach ($puroks ?? [] as $p): ?>
@@ -57,7 +57,7 @@ if (!function_exists('_tc')) {
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <select name="age_status" class="form-select">
                     <option value="">All Ages</option>
                     <option value="active"    <?= ($ageStatus ?? 'active') === 'active'    ? 'selected' : '' ?>>Active (0–59 mo)</option>
@@ -67,7 +67,7 @@ if (!function_exists('_tc')) {
                     <option value="recovered" <?= ($ageStatus ?? '') === 'recovered' ? 'selected' : '' ?>>Recovered</option>
                 </select>
             </div>
-            <div class="col-md-2 d-flex gap-1">
+            <div class="col-6 col-md-2 d-flex gap-1">
                 <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-search me-1"></i>Search</button>
                 <?php if (!empty($search) || !empty($filterBar) || !empty($filterPurok) || !empty($ageStatus)): ?>
                 <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
@@ -103,7 +103,7 @@ if (!function_exists('_tc')) {
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th><th>Name</th><th>Age</th><th>Sex</th><th>Barangay</th><th>Status</th><th>Last Assessed</th>
+                        <th class="d-none d-md-table-cell">#</th><th>Name</th><th>Age</th><th class="d-none d-md-table-cell">Sex</th><th>Barangay</th><th>Status</th><th class="d-none d-md-table-cell">Last Assessed</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -114,7 +114,7 @@ if (!function_exists('_tc')) {
                     <?php $rowNum = (($page ?? 1) - 1) * 25 + 1; ?>
                     <?php foreach ($rows as $b): ?>
                     <tr>
-                        <td class="text-muted small"><?= $rowNum++ ?></td>
+                        <td class="text-muted small d-none d-md-table-cell"><?= $rowNum++ ?></td>
                         <td>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="fw-semibold text-decoration-none">
                                 <?= htmlspecialchars(_tc($b['last_name']) . ', ' . _tc($b['first_name'])) ?>
@@ -131,7 +131,7 @@ if (!function_exists('_tc')) {
                             <?php endif; ?>
                         </td>
                         <td class="text-nowrap"><?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?></td>
-                        <td><?= htmlspecialchars($b['sex']) ?></td>
+                        <td class="d-none d-md-table-cell"><?= htmlspecialchars($b['sex']) ?></td>
                         <td><?= htmlspecialchars($b['barangay']) ?></td>
                         <td>
                             <?php if (!empty($b['latest_status'])): ?>
@@ -140,7 +140,7 @@ if (!function_exists('_tc')) {
                             <span class="text-muted small">—</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-nowrap small">
+                        <td class="text-nowrap small d-none d-md-table-cell">
                             <?php if (!empty($b['last_assessed'])): ?>
                             <?php $daysAgo = (int)((time() - strtotime($b['last_assessed'])) / 86400); ?>
                             <span title="<?= DateHelper::formatDate($b['last_assessed'], 'M j, Y') ?>"
@@ -151,7 +151,7 @@ if (!function_exists('_tc')) {
                             <span class="text-muted fst-italic">Never</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end text-nowrap">
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-eye"></i>
                             </a>

@@ -1,6 +1,6 @@
 <?php $pageTitle = 'User Management'; ?>
 
-<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2 page-title-row">
     <h4 class="mb-0"><i class="bi bi-person-gear me-2"></i>User Management</h4>
     <a href="<?= APP_URL ?>/users/create" class="btn btn-primary">
         <i class="bi bi-person-plus me-1"></i>Add User
@@ -13,8 +13,8 @@
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th><th>Username</th><th>Full Name</th><th>Role</th>
-                        <th>Barangay</th><th>Status</th><th>Created</th><th class="text-end">Actions</th>
+                        <th class="d-none d-md-table-cell">#</th><th>Username</th><th>Full Name</th><th>Role</th>
+                        <th class="d-none d-md-table-cell">Barangay</th><th>Status</th><th class="d-none d-md-table-cell">Created</th><th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -24,21 +24,21 @@
                     <?php $rowNum = 1; ?>
                     <?php foreach ($users as $u): ?>
                     <tr>
-                        <td class="text-muted small"><?= $rowNum++ ?></td>
+                        <td class="text-muted small d-none d-md-table-cell"><?= $rowNum++ ?></td>
                         <td class="fw-semibold"><?= htmlspecialchars($u['username']) ?></td>
                         <td><?= htmlspecialchars($u['full_name'] ?? '—') ?></td>
                         <td>
                             <?php $badgeColor = strtolower($u['role']) === 'admin' ? 'danger' : 'secondary'; ?>
                             <span class="badge bg-<?= $badgeColor ?>"><?= htmlspecialchars($u['role']) ?></span>
                         </td>
-                        <td><?= htmlspecialchars($u['barangay'] ?? '—') ?></td>
+                        <td class="d-none d-md-table-cell"><?= htmlspecialchars($u['barangay'] ?? '—') ?></td>
                         <td>
                             <span class="badge bg-<?= $u['is_active'] ? 'success' : 'secondary' ?>">
                                 <?= $u['is_active'] ? 'Active' : 'Inactive' ?>
                             </span>
                         </td>
-                        <td><?= DateHelper::formatDate($u['created_at'], 'M j, Y') ?></td>
-                        <td class="text-end">
+                        <td class="d-none d-md-table-cell"><?= DateHelper::formatDate($u['created_at'], 'M j, Y') ?></td>
+                        <td class="text-end text-nowrap">
                             <a href="<?= APP_URL ?>/users/<?= $u['id'] ?>/edit" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>

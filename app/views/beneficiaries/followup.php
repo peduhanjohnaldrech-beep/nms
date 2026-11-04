@@ -1,6 +1,6 @@
 <?php $pageTitle = 'For Follow-up'; ?>
 
-<div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2 page-title-row">
     <div class="d-flex align-items-center gap-2">
         <a href="<?= APP_URL ?>/beneficiaries" class="btn btn-sm btn-outline-secondary" title="Back to Beneficiaries">
             <i class="bi bi-arrow-left"></i>
@@ -24,10 +24,10 @@
                     <tr>
                         <th>Name</th>
                         <th>Barangay</th>
-                        <th>Age</th>
-                        <th>Previous Status</th>
-                        <th>Current Status</th>
-                        <th>Last Assessment</th>
+                        <th class="d-none d-md-table-cell">Age</th>
+                        <th>Previous</th>
+                        <th>Current</th>
+                        <th class="d-none d-md-table-cell">Last Assessment</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -51,22 +51,22 @@
                             </a>
                         </td>
                         <td><?= htmlspecialchars($r['barangay']) ?></td>
-                        <td><?= DateHelper::formatAge(DateHelper::ageInMonths($r['date_of_birth'])) ?></td>
+                        <td class="d-none d-md-table-cell"><?= DateHelper::formatAge(DateHelper::ageInMonths($r['date_of_birth'])) ?></td>
                         <td><span class="badge bg-<?= $prevColor ?>"><?= htmlspecialchars($r['prev_status']) ?></span></td>
                         <td>
                             <span class="badge bg-<?= $currColor ?>">
                                 <i class="bi bi-arrow-down-circle me-1"></i><?= htmlspecialchars($r['curr_status']) ?>
                             </span>
                         </td>
-                        <td class="text-muted small"><?= DateHelper::formatDate($r['last_assessment_date'], 'M j, Y') ?></td>
+                        <td class="text-muted small d-none d-md-table-cell"><?= DateHelper::formatDate($r['last_assessment_date'], 'M j, Y') ?></td>
                         <td class="text-nowrap">
                             <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
-                            <a href="<?= APP_URL ?>/assessments/create?bid=<?= $r['id'] ?>" class="btn btn-sm btn-primary me-1" title="Record a new assessment for this child">
-                                <i class="bi bi-clipboard2-plus me-1"></i>New Assessment
+                            <a href="<?= APP_URL ?>/assessments/create?bid=<?= $r['id'] ?>" class="btn btn-sm btn-primary me-1" title="New Assessment">
+                                <i class="bi bi-clipboard2-plus"></i><span class="d-none d-sm-inline"> New Assessment</span>
                             </a>
                             <?php endif; ?>
                             <a href="<?= APP_URL ?>/beneficiaries/<?= $r['id'] ?>" class="btn btn-sm btn-outline-secondary" title="View profile">
-                                <i class="bi bi-person me-1"></i>View
+                                <i class="bi bi-person"></i><span class="d-none d-sm-inline"> View</span>
                             </a>
                         </td>
                     </tr>
