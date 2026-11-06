@@ -113,23 +113,47 @@ class AuthController extends Controller
 
         $this->clearFailedAttempts($username);
 
-        // Trusted device check — admin accounts are restricted to one registered PC
+        // Trusted device check — unrecognized device triggers email OTP
         if (strtolower($user['role']) === 'admin') {
             $storedToken = $user['device_token'] ?? null;
             $cookieToken = $_COOKIE['nms_device_token'] ?? null;
             $db          = \Core\Database::getInstance();
 
             if ($storedToken === null) {
-                // No device registered yet — register this one
+                // First login ever — register this device automatically
                 $token = bin2hex(random_bytes(32));
                 $db->prepare("UPDATE users SET device_token = ? WHERE id = ?")->execute([$token, $user['id']]);
                 setcookie('nms_device_token', $token, time() + 365 * 24 * 3600, '/', '', false, true);
             } elseif (!$cookieToken || !hash_equals($storedToken, $cookieToken)) {
-                // Device not recognized
-                $attempts = $this->recordFailedAttempt($username);
-                \ActivityLog::log('login_failed', "Admin login blocked — unrecognized device for: $username");
-                Session::flash('error', 'Access denied. This device is not authorized for this admin account.');
-                $this->view('auth/login', ['username' => $this->clean($username)], false);
+                // Unrecognized device — send OTP to admin's email
+                $email = $user['email'] ?? null;
+                if (empty($email)) {
+                    \ActivityLog::log('login_failed', "Admin login from unrecognized device, no email on file: $username");
+                    Session::flash('error', 'Unrecognized device. No email is set for this account — ask your administrator to add one in User Management.');
+                    $this->view('auth/login', ['username' => $this->clean($username)], false);
+                    return;
+                }
+
+                $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                Session::set('otp_code',    $otp);
+                Session::set('otp_user_id', $user['id']);
+                Session::set('otp_email',   $email);
+                Session::set('otp_expires', time() + 600);
+
+                $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
+                $sent = \Mailer::send($email, $user['full_name'], "{$appName} — Login Verification Code", \Mailer::otpEmail($otp, $appName));
+
+                if (!$sent) {
+                    Session::flash('error', 'Could not send verification email. Check SMTP settings or contact your administrator.');
+                    $this->view('auth/login', ['username' => $this->clean($username)], false);
+                    return;
+                }
+
+                \ActivityLog::log('login_otp_sent', "OTP sent to {$email} for admin login: $username");
+                $at      = strpos($email, '@');
+                $masked  = substr($email, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($email, $at);
+                Session::flash('info', "A verification code was sent to <strong>{$masked}</strong>.");
+                $this->redirect('/otp-verify');
                 return;
             }
         }
@@ -143,6 +167,111 @@ class AuthController extends Controller
         }
 
         $this->completeLogin($user);
+    }
+
+    // ----------------------------------------------------------------
+    // Email OTP challenge (unrecognized device)
+    // ----------------------------------------------------------------
+
+    public function showOtpVerify(): void
+    {
+        if (!Session::has('otp_user_id')) {
+            $this->redirect('/login');
+        }
+        $email     = Session::get('otp_email', '');
+        $at        = strpos($email, '@');
+        $masked    = $at !== false
+            ? substr($email, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($email, $at)
+            : '';
+        $this->view('auth/otp_verify', ['maskedEmail' => $masked], false);
+    }
+
+    public function verifyOtp(): void
+    {
+        if (!Session::has('otp_user_id')) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!\Core\Session::validateCsrf($csrfToken)) {
+            Session::flash('error', 'Page expired. Please try again.');
+            $this->redirect('/otp-verify');
+            return;
+        }
+
+        $storedOtp = Session::get('otp_code');
+        $expires   = (int)Session::get('otp_expires');
+        $userId    = (int)Session::get('otp_user_id');
+
+        if (time() > $expires) {
+            Session::remove('otp_code'); Session::remove('otp_user_id');
+            Session::remove('otp_expires'); Session::remove('otp_email');
+            Session::flash('error', 'Verification code expired. Please log in again.');
+            $this->redirect('/login');
+            return;
+        }
+
+        $code = trim($_POST['otp_code'] ?? '');
+        if (!hash_equals($storedOtp, $code)) {
+            Session::flash('error', 'Incorrect verification code. Please try again.');
+            $this->redirect('/otp-verify');
+            return;
+        }
+
+        // OTP passed — register this device as the new trusted device
+        $db    = \Core\Database::getInstance();
+        $token = bin2hex(random_bytes(32));
+        $db->prepare("UPDATE users SET device_token = ? WHERE id = ?")->execute([$token, $userId]);
+        setcookie('nms_device_token', $token, time() + 365 * 24 * 3600, '/', '', false, true);
+
+        Session::remove('otp_code'); Session::remove('otp_user_id');
+        Session::remove('otp_expires'); Session::remove('otp_email');
+
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ? AND is_active = 1");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            Session::flash('error', 'Account not found or deactivated.');
+            $this->redirect('/login');
+            return;
+        }
+
+        \ActivityLog::log('login_device_verified', "New device registered via OTP for user ID: {$userId}");
+        $this->completeLogin($user);
+    }
+
+    public function resendOtp(): void
+    {
+        if (!Session::has('otp_user_id')) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!\Core\Session::validateCsrf($csrfToken)) {
+            Session::flash('error', 'Page expired.');
+            $this->redirect('/otp-verify');
+            return;
+        }
+
+        $userId = (int)Session::get('otp_user_id');
+        $email  = Session::get('otp_email', '');
+        $db     = \Core\Database::getInstance();
+        $stmt   = $db->prepare("SELECT full_name FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $row    = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        Session::set('otp_code',    $otp);
+        Session::set('otp_expires', time() + 600);
+
+        $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
+        \Mailer::send($email, $row['full_name'] ?? '', "{$appName} — Login Verification Code", \Mailer::otpEmail($otp, $appName));
+
+        Session::flash('info', 'A new verification code has been sent.');
+        $this->redirect('/otp-verify');
     }
 
     // ----------------------------------------------------------------

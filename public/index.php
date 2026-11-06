@@ -11,6 +11,7 @@ require BASE_PATH . '/core/Router.php';
 require BASE_PATH . '/app/helpers/DateHelper.php';
 require BASE_PATH . '/app/helpers/ZScoreHelper.php';
 require BASE_PATH . '/app/helpers/ActivityLog.php';
+require BASE_PATH . '/app/helpers/Mailer.php';
 require BASE_PATH . '/app/helpers/BackupScheduler.php';
 require BASE_PATH . '/app/helpers/ReportCache.php';
 
@@ -60,6 +61,9 @@ $router->post('/login', 'AuthController@login');
 $router->get('/logout', 'AuthController@logout');
 $router->get('/2fa',    'AuthController@show2fa');
 $router->post('/2fa',   'AuthController@verify2fa');
+$router->get('/otp-verify',          'AuthController@showOtpVerify');
+$router->post('/otp-verify',         'AuthController@verifyOtp');
+$router->post('/otp-verify/resend',  'AuthController@resendOtp');
 
 // Dashboard
 $router->get('/',          'DashboardController@index');

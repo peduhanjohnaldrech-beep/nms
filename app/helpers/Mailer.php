@@ -1,0 +1,62 @@
+<?php
+
+class Mailer
+{
+    /**
+     * Send an HTML email. Uses PHPMailer+SMTP if SMTP_HOST is set,
+     * otherwise falls back to PHP mail().
+     */
+    public static function send(string $to, string $toName, string $subject, string $body): bool
+    {
+        $smtpHost = getenv('SMTP_HOST');
+        $smtpUser = getenv('SMTP_USER');
+        $smtpPass = getenv('SMTP_PASS');
+        $from     = getenv('SMTP_FROM')      ?: 'noreply@localhost';
+        $fromName = getenv('SMTP_FROM_NAME') ?: (defined('APP_NAME') ? APP_NAME : 'NMS');
+        $port     = (int)(getenv('SMTP_PORT') ?: 587);
+
+        if ($smtpHost && $smtpUser && class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            try {
+                $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host       = $smtpHost;
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $smtpUser;
+                $mail->Password   = $smtpPass;
+                $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = $port;
+                $mail->CharSet    = 'UTF-8';
+                $mail->setFrom($from, $fromName);
+                $mail->addAddress($to, $toName);
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $body;
+                $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</h2>', '</h3>'], "\n", $body));
+                $mail->send();
+                return true;
+            } catch (\Throwable $e) {
+                error_log('Mailer (SMTP) error: ' . $e->getMessage());
+                return false;
+            }
+        }
+
+        // Fallback: PHP mail()
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: {$fromName} <{$from}>\r\n";
+        return mail($to, $subject, $body, $headers);
+    }
+
+    public static function otpEmail(string $otp, string $appName = 'NMS'): string
+    {
+        return "
+        <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:8px;'>
+            <h3 style='color:#1e293b;margin-bottom:8px;'>{$appName} Login Verification</h3>
+            <p style='color:#64748b;margin-bottom:24px;'>Use the code below to complete your sign-in. It expires in <strong>10 minutes</strong>.</p>
+            <div style='text-align:center;background:#f1f5f9;border-radius:8px;padding:20px 0;margin-bottom:24px;'>
+                <span style='font-size:2.5rem;font-weight:700;letter-spacing:0.4em;color:#2563eb;'>{$otp}</span>
+            </div>
+            <p style='color:#94a3b8;font-size:0.85rem;'>If you did not attempt to log in, you can safely ignore this email. Do not share this code with anyone.</p>
+        </div>";
+    }
+}

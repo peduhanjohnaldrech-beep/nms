@@ -24,7 +24,7 @@ class User extends Model
     public function getAllUsers(): array
     {
         return $this->fetchAll(
-            "SELECT id, username, full_name, role, barangay, is_active, created_at, device_token FROM users ORDER BY full_name"
+            "SELECT id, username, full_name, email, role, barangay, is_active, created_at, device_token FROM users ORDER BY full_name"
         );
     }
 
@@ -34,6 +34,7 @@ class User extends Model
             'username'      => $data['username'],
             'password_hash' => password_hash($data['password'], PASSWORD_BCRYPT),
             'full_name'     => $data['full_name'],
+            'email'         => $data['email'] ?: null,
             'role'          => $data['role'],
             'barangay'      => $data['barangay'] ?? null,
             'permissions'   => json_encode($data['permissions'] ?? []),
@@ -45,6 +46,7 @@ class User extends Model
     {
         $fields = [
             'full_name'   => $data['full_name'],
+            'email'       => $data['email'] ?: null,
             'role'        => $data['role'],
             'barangay'    => $data['barangay'] ?? null,
             'permissions' => json_encode($data['permissions'] ?? []),
