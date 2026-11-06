@@ -793,6 +793,40 @@ canvas { max-width: 100%; }
     .filter-btn-xs { width: 100% !important; }
 }
 
+/* ── Mobile quick-action grid ───────────────────────────── */
+.quick-action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.4rem;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    min-height: 76px;
+    color: var(--text-main);
+}
+.quick-action-card:hover,
+.quick-action-card:active { transform: translateY(-2px); box-shadow: var(--shadow-md); color: var(--text-main); }
+.quick-action-card .qa-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.quick-action-card .qa-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-muted);
+}
+[data-theme="dark"] .quick-action-card { background: var(--bs-card-bg); }
+
 /* ── Print ──────────────────────────────────────────────── */
 @media print {
     .no-print, nav, .sidebar, footer, .btn, .alert:not(.print-show) { display: none !important; }

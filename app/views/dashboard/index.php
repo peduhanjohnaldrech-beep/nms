@@ -27,7 +27,7 @@
 
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-2">
+    <div class="col-6 col-xl-2">
         <a href="<?= APP_URL ?>/beneficiaries" class="text-decoration-none" aria-label="<?= number_format($totalBeneficiaries) ?> Total Beneficiaries">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
@@ -42,7 +42,7 @@
         </div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-2">
+    <div class="col-6 col-xl-2">
         <a href="<?= APP_URL ?>/programs/opt" class="text-decoration-none" aria-label="<?= number_format($activeOpt) ?> OPT Assessed">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
@@ -57,7 +57,7 @@
         </div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-2">
+    <div class="col-6 col-xl-2">
         <a href="<?= APP_URL ?>/programs/dsp" class="text-decoration-none" aria-label="<?= number_format($activeDsp) ?> Active DSP">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
@@ -72,7 +72,7 @@
         </div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-2">
+    <div class="col-6 col-xl-2">
         <a href="<?= APP_URL ?>/programs/mns" class="text-decoration-none" aria-label="<?= number_format($mnsCoverage) ?> MNS Coverage">
         <div class="card border-0 shadow-sm h-100 card-hover">
             <div class="card-body d-flex align-items-center gap-3 py-3">
@@ -87,7 +87,7 @@
         </div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-2">
+    <div class="col-6 col-xl-2">
         <a href="<?= APP_URL ?>/beneficiaries?age_status=active" class="text-decoration-none" aria-label="<?= number_format($notAssessedCount) ?> Not Yet Assessed this <?= $periodLabel ?> <?= $currentYear ?> period">
         <div class="card border-0 shadow-sm h-100 card-hover <?= $notAssessedCount > 0 ? 'border-warning border-2' : '' ?>">
             <div class="card-body d-flex align-items-center gap-3 py-3">
@@ -105,8 +105,82 @@
     </div>
 </div>
 
+<!-- Mobile: Pending Validation alert -->
+<?php if ($__pendingValidation > 0 && hasPerm('validation')): ?>
+<div class="d-md-none mb-3"><div class="alert alert-warning border-0 shadow-sm py-2 px-3 mb-0 d-flex align-items-center gap-2">
+    <i class="bi bi-shield-exclamation fs-5 text-warning"></i>
+    <div class="flex-grow-1 small">
+        <strong><?= $__pendingValidation ?></strong> pending validation<?= $__pendingValidation > 1 ? 's' : '' ?> awaiting review
+    </div>
+    <a href="<?= APP_URL ?>/beneficiaries/validation" class="btn btn-sm btn-warning flex-shrink-0">Review</a>
+</div></div>
+<?php endif; ?>
 
+<!-- Mobile: Quick Actions -->
+<div class="d-md-none mb-4">
+    <p class="text-muted small fw-semibold text-uppercase mb-2 ps-1"><i class="bi bi-lightning-fill me-1"></i>Quick Actions</p>
+    <div class="row g-2">
+        <?php if (hasPerm('beneficiaries')): ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/beneficiaries/create" class="quick-action-card">
+                <div class="qa-icon bg-primary bg-opacity-10"><i class="bi bi-person-plus-fill text-primary"></i></div>
+                <span class="qa-label">Add Beneficiary</span>
+            </a>
+        </div>
+        <?php endif; ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/beneficiaries" class="quick-action-card">
+                <div class="qa-icon bg-secondary bg-opacity-10"><i class="bi bi-people-fill text-secondary"></i></div>
+                <span class="qa-label">Beneficiaries</span>
+            </a>
+        </div>
+        <?php if (hasPerm('assessments')): ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/assessments" class="quick-action-card">
+                <div class="qa-icon bg-success bg-opacity-10"><i class="bi bi-clipboard-heart text-success"></i></div>
+                <span class="qa-label">OPT Weighing</span>
+            </a>
+        </div>
+        <?php endif; ?>
+        <?php if (hasPerm('validation')): ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/beneficiaries/validation" class="quick-action-card">
+                <div class="qa-icon bg-warning bg-opacity-10 position-relative">
+                    <i class="bi bi-shield-check text-warning"></i>
+                    <?php if ($__pendingValidation > 0): ?>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;padding:0.2em 0.4em"><?= $__pendingValidation ?></span>
+                    <?php endif; ?>
+                </div>
+                <span class="qa-label">Validation</span>
+            </a>
+        </div>
+        <?php endif; ?>
+        <?php if (hasPerm('reports')): ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/reports" class="quick-action-card">
+                <div class="qa-icon bg-info bg-opacity-10"><i class="bi bi-file-earmark-bar-graph text-info"></i></div>
+                <span class="qa-label">Reports</span>
+            </a>
+        </div>
+        <?php endif; ?>
+        <?php if ($isAdmin): ?>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/users" class="quick-action-card">
+                <div class="qa-icon bg-danger bg-opacity-10"><i class="bi bi-person-gear text-danger"></i></div>
+                <span class="qa-label">Manage Users</span>
+            </a>
+        </div>
+        <div class="col-4">
+            <a href="<?= APP_URL ?>/activity" class="quick-action-card">
+                <div class="qa-icon bg-purple bg-opacity-10"><i class="bi bi-journal-text" style="color:var(--status-ob)"></i></div>
+                <span class="qa-label">Activity Log</span>
+            </a>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
 
+<div class="d-none d-md-block">
 <!-- Charts Row 1 -->
 <div class="row g-3 mb-4">
     <div class="col-lg-8">
@@ -157,6 +231,7 @@
         </div>
     </div>
 </div>
+</div><!-- /d-none d-md-block charts -->
 
 <script>
 window.__dashboardData = {

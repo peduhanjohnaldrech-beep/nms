@@ -93,6 +93,103 @@ if (!function_exists('_tc')) {
 </div>
 <?php endif; ?>
 
+<?php
+// Pre-compute pagination so both mobile and desktop views can use it
+$qBase = http_build_query(array_filter(['search' => $search ?? '', 'barangay' => $filterBar ?? '', 'purok' => $filterPurok ?? '', 'age_status' => $ageStatus ?? '']));
+$pageUrl = fn($p) => '?' . $qBase . ($qBase ? '&' : '') . 'page=' . $p;
+$_pages = []; $_delta = 2;
+for ($i = 1; $i <= ($totalPages ?? 1); $i++) {
+    if ($i === 1 || $i === ($totalPages ?? 1) || abs($i - ($page ?? 1)) <= $_delta) $_pages[] = $i;
+}
+$rendered = []; $_prev = null;
+foreach ($_pages as $_p) {
+    if ($_prev !== null && $_p - $_prev > 1) $rendered[] = '...';
+    $rendered[] = $_p;
+    $_prev = $_p;
+}
+?>
+
+<!-- Mobile card list (xs/sm only) -->
+<div class="d-md-none mb-2">
+    <?php if (empty($rows)): ?>
+    <div class="card border-0 shadow-sm text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-3 d-block mb-1"></i>No beneficiaries found.
+    </div>
+    <?php else: ?>
+    <?php foreach ($rows as $b): ?>
+    <div class="card border-0 shadow-sm mb-2">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <div class="flex-grow-1 min-w-0">
+                    <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="fw-semibold text-decoration-none d-block text-truncate">
+                        <?= htmlspecialchars(_tc($b['last_name']) . ', ' . _tc($b['first_name'])) ?>
+                    </a>
+                    <div class="text-muted mt-1" style="font-size:0.78rem">
+                        <?= DateHelper::formatAge(DateHelper::ageInMonths($b['date_of_birth'])) ?>
+                        &middot; <?= htmlspecialchars($b['sex']) ?>
+                        &middot; <?= htmlspecialchars($b['barangay']) ?>
+                    </div>
+                </div>
+                <div class="text-end flex-shrink-0">
+                    <?php if (!empty($b['latest_status'])): ?>
+                    <span class="badge status-<?= strtolower($b['latest_status']) ?>"><?= htmlspecialchars($b['latest_status']) ?></span>
+                    <?php else: ?>
+                    <span class="text-muted small">—</span>
+                    <?php endif; ?>
+                    <?php if (($b['validation_status'] ?? 'validated') === 'pending'): ?>
+                    <div class="mt-1"><span class="badge status-pending" style="font-size:0.65rem"><i class="bi bi-hourglass-split me-1"></i>Pending</span></div>
+                    <?php elseif (($b['validation_status'] ?? '') === 'rejected'): ?>
+                    <div class="mt-1"><span class="badge status-rejected" style="font-size:0.65rem"><i class="bi bi-x-circle me-1"></i>Rejected</span></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div style="font-size:0.7rem">
+                    <?php if (!empty($b['last_assessed'])): ?>
+                    <?php $daysAgo = (int)((time() - strtotime($b['last_assessed'])) / 86400); ?>
+                    <span class="<?= $daysAgo > 180 ? 'text-danger' : ($daysAgo > 90 ? 'text-warning' : 'text-success') ?>">
+                        <i class="bi bi-calendar-check me-1"></i><?= DateHelper::formatDate($b['last_assessed'], 'M j, Y') ?>
+                    </span>
+                    <?php else: ?>
+                    <span class="text-muted fst-italic"><i class="bi bi-calendar-x me-1"></i>Never assessed</span>
+                    <?php endif; ?>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>" class="btn btn-sm btn-outline-secondary" style="padding:0.15rem 0.4rem"><i class="bi bi-eye"></i></a>
+                    <?php if (hasPerm('beneficiaries')): ?>
+                    <a href="<?= APP_URL ?>/beneficiaries/<?= $b['id'] ?>/edit" class="btn btn-sm btn-outline-primary" style="padding:0.15rem 0.4rem"><i class="bi bi-pencil"></i></a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    <?php endif; ?>
+    <?php if (($totalPages ?? 1) > 1): ?>
+    <nav class="mt-2 mb-3">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item <?= ($page ?? 1) <= 1 ? 'disabled' : '' ?>">
+                <a class="page-link" href="<?= $pageUrl(($page ?? 1) - 1) ?>"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            <?php foreach ($rendered as $_rp): ?>
+            <?php if ($_rp === '...'): ?>
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            <?php else: ?>
+            <li class="page-item <?= $_rp === ($page ?? 1) ? 'active' : '' ?>">
+                <a class="page-link" href="<?= $pageUrl($_rp) ?>"><?= $_rp ?></a>
+            </li>
+            <?php endif; ?>
+            <?php endforeach; ?>
+            <li class="page-item <?= ($page ?? 1) >= ($totalPages ?? 1) ? 'disabled' : '' ?>">
+                <a class="page-link" href="<?= $pageUrl(($page ?? 1) + 1) ?>"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+    <?php endif; ?>
+</div>
+
+<!-- Desktop table (md+) -->
+<div class="d-none d-md-block">
 <div class="card border-0 shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center py-2">
         <span class="fw-semibold small"><i class="bi bi-people-fill me-1 text-primary"></i>Beneficiaries</span>
@@ -218,3 +315,4 @@ if (!function_exists('_tc')) {
     </div>
     <?php endif; ?>
 </div>
+</div><!-- /d-none d-md-block desktop table -->
