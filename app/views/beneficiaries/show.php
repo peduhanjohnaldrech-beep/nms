@@ -19,7 +19,7 @@ $__canValidate = in_array($role, ['midwife','admin','nutritionist']);
 <div class="alert border-0 shadow-sm mt-3 d-flex align-items-center gap-3 no-print" style="background:rgba(217,119,6,.12);border-left:4px solid #d97706 !important;">
     <i class="bi bi-hourglass-split fs-5" style="color:#d97706"></i>
     <div class="flex-grow-1">
-        <strong>Pending Validation</strong> — This registration was submitted via mobile and is awaiting midwife approval. Assessments are locked until validated.
+        <strong>Pending Validation</strong> — This registration is awaiting approval. You can still add an assessment below — it will be validated once this registration is approved.
         <?php if (!empty($beneficiary['rejection_note'])): ?>
         <div class="small mt-1 text-muted">Previous note: <?= htmlspecialchars($beneficiary['rejection_note']) ?></div>
         <?php endif; ?>

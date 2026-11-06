@@ -15,6 +15,7 @@ A web-based system for the City Health Office Nutrition Department to monitor an
 | Excel Import | PhpSpreadsheet 1.29+ |
 | eOPT Excel Export | Direct ZIP + XML manipulation (no external library) |
 | PDF Export | Dompdf 2.0+ |
+| Email | PHPMailer 6.9+ (SMTP) with PHP `mail()` fallback |
 | Server | PHP built-in server via `start.bat` (port 3000) or XAMPP Apache |
 
 ---
@@ -81,7 +82,17 @@ Edit `.env` in the project root:
 APP_NAME=NMS
 APP_URL=http://127.0.0.1:3000
 APP_ENV=development
+
+# SMTP — required for admin email OTP login (optional: falls back to PHP mail())
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=youremail@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=youremail@gmail.com
+SMTP_FROM_NAME=NMS
 ```
+
+> **Admin login OTP:** Admin accounts with an email address set will receive a 6-digit verification code via email on every login. Set the email in **Users → Edit**. If no SMTP is configured, it falls back to PHP `mail()`. If no email is set for the admin account, login proceeds without OTP.
 
 ### 5. Add logo and background images
 
@@ -123,12 +134,12 @@ http://127.0.0.1:3000
 
 | Role | Description |
 |------|-------------|
-| **admin** | Full access — user management, all modules, reports, demo seeder, database backup |
+| **admin** | Full access — user management, all modules, reports, database backup; email OTP required on login if email is set |
 | **nutritionist** | Access to all modules except user management; validates mobile submissions |
 | **encoder** | Can add/edit beneficiaries and record assessments; no deletions |
-| **bns** | Barangay Nutrition Scholar — scoped to assigned barangay; can add, record assessments, and delete own-barangay beneficiaries |
-| **bhw** | Barangay Health Worker — scoped to assigned barangay; can add, record assessments, and delete own-barangay beneficiaries |
-| **midwife** | Barangay-scoped; can record assessments; can access Validation Queue when permission is granted |
+| **bns** | Barangay Nutrition Scholar — scoped to assigned barangay; beneficiaries, assessments, and reports; mobile app only for data entry |
+| **bhw** | Barangay Health Worker — scoped to assigned barangay; mobile app only; cannot log in to web |
+| **midwife** | Barangay-scoped; can record assessments (including on pending-validation beneficiaries); accesses Validation Queue |
 
 ---
 
@@ -200,12 +211,19 @@ http://127.0.0.1:3000
 - **eOPT Export** — generates a fully-populated eOPT Plus Community Level Tool `.xlsx` workbook; fills Summary, OPT_Form1A, OPT_Form1B, List sheets (UW/SUW/St/SSt/MW/SW), BNS_Printout, Nut_StatusTool, Clean&Update, and Data-Export sheets. Template file required at `storage/templates/eopt_slim.xlsx`.
 
 ### Dashboard
-- 6 stat cards: Total Beneficiaries, OPT Assessed, DSP Active, MNS Coverage, For Follow-up, Not Yet Assessed this period
+- Stat cards: Total Beneficiaries, OPT Assessed, DSP Active, MNS Coverage, Not Yet Assessed this period
 - Charts: Nutritional status by barangay (stacked bar), Program enrollment (donut), OPT trend (line), Malnutrition rate by barangay (bar)
+- **Mobile layout**: charts hidden on small screens; Quick Actions grid (role-based) for fast navigation; pending validation alert
+
+### Mobile Web Support
+- Fully usable on mobile browsers (same URL, no app install needed)
+- Beneficiaries page shows card-style list on mobile; switches to full table on desktop
+- Dashboard Quick Actions grid with role-based shortcuts (Add Beneficiary, OPT Weighing, Validation, Reports, etc.)
+- Stat cards display 2-per-row on mobile
 
 ### Admin Tools
-- User management
-- Activity log viewer
+- User management (with primary + secondary email for OTP)
+- Activity log viewer (includes mobile app actions)
 - Program Manager
 - Database backup (auto daily via sync + manual "Create Backup Now"; download live dump or saved backups)
 - **Demo data seeder** (`/admin/seed`) — seeds ~30 realistic beneficiaries with assessments/enrollments; clear button removes all demo data safely
@@ -282,3 +300,4 @@ nms/
 - BHW data isolation by assigned barangay
 - File upload validation (extension + MIME type)
 - Soft deletes to preserve audit trail
+- **Email OTP** — Admin accounts with a registered email receive a 6-digit one-time code on every login (primary + secondary email supported)

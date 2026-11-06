@@ -1,152 +1,100 @@
 <?php $pageTitle = 'Reports'; ?>
 
-<div class="d-flex align-items-center mt-3 mb-4 gap-3">
-    <div class="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px">
-        <i class="bi bi-bar-chart-fill fs-5 text-primary" aria-hidden="true"></i>
-    </div>
-    <div>
-        <h5 class="mb-0 fw-bold">Reports</h5>
-        <p class="text-muted small mb-0">Generate, view, and export program data for monitoring and reporting</p>
-    </div>
+<div class="d-flex align-items-center justify-content-between mt-3 mb-4">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Reports</h5>
 </div>
 
-<!-- Quick Guide -->
-<div class="alert alert-light border mb-4 py-3 px-4">
-    <div class="fw-semibold mb-1"><i class="bi bi-lightbulb me-1 text-warning" aria-hidden="true"></i>Which report do I need?</div>
-    <ul class="mb-0 small ps-3">
-        <li><strong>Monthly weighing results?</strong> → <a href="<?= APP_URL ?>/reports/opt" class="alert-link">OPT Report</a></li>
-        <li><strong>Who is enrolled in the feeding program?</strong> → <a href="<?= APP_URL ?>/reports/dsp" class="alert-link">DSP Report</a></li>
-        <li><strong>Overall malnutrition rate per barangay?</strong> → <a href="<?= APP_URL ?>/reports/summary" class="alert-link">Summary Report</a></li>
-        <li><strong>Vitamin A or MNP/LNS coverage?</strong> → <a href="<?= APP_URL ?>/reports/mns" class="alert-link">MNS Report</a></li>
-        <li><strong>Has malnutrition improved over time?</strong> → <a href="<?= APP_URL ?>/reports/comparison" class="alert-link">Period Comparison</a></li>
-        <li><strong>How many supplements were dispensed?</strong> → <a href="<?= APP_URL ?>/reports/dispensing" class="alert-link">Dispensing Report</a></li>
-    </ul>
-</div>
+<div class="card border-0 shadow-sm">
+    <div class="list-group list-group-flush">
 
-<!-- Core Programs -->
-<p class="text-muted small fw-semibold text-uppercase mb-2 ps-1 letter-spacing-1">
-    <i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>Core Programs
-</p>
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-clipboard-heart fs-4 text-success" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">OPT Report</h6>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">Operation Timbang Plus</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Weight and height measurements per child. Filter by barangay, period (Jan/Jul), and year. Export to Excel.</p>
-                <a href="<?= APP_URL ?>/reports/opt" class="btn btn-success btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View OPT Report</a>
-            </div>
+        <div class="list-group-item px-4 py-2 bg-light border-bottom">
+            <span class="text-muted small fw-semibold text-uppercase">Core Programs</span>
         </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-egg-fried fs-4 text-warning" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">DSP Report</h6>
-                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 small">Dietary Supplementation</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Enrollment list for the feeding program — wasted and severely wasted children receiving RUTF/RUSF intervention.</p>
-                <a href="<?= APP_URL ?>/reports/dsp" class="btn btn-warning btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View DSP Report</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-secondary bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-graph-up-arrow fs-4 text-secondary" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">Program Outcome</h6>
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 small">DSP Pre vs Post</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Weight gain tracking for DSP graduates — shows improvement from pre-enrollment weight to discharge weight.</p>
-                <a href="<?= APP_URL ?>/reports/outcome" class="btn btn-secondary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Outcome Report</a>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Micronutrient Supplementation -->
-<p class="text-muted small fw-semibold text-uppercase mb-2 ps-1">
-    <i class="bi bi-capsule me-1" aria-hidden="true"></i>Micronutrient Supplementation (MNS)
-</p>
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-capsule fs-4 text-primary" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">MNS Report</h6>
-                        <span class="badge bg-primary small">Micronutrient Supplementation</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Vitamin A (April &amp; October rounds), MNP (ages 6–59 mo), and LNS-SQ (ages 6–23 mo) — distribution records and coverage by barangay.</p>
-                <a href="<?= APP_URL ?>/reports/mns" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View MNS Report</a>
+        <a href="<?= APP_URL ?>/reports/opt" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-clipboard-heart text-success"></i>
             </div>
-        </div>
-    </div>
-</div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">OPT Report</div>
+                <div class="text-muted small">Weight &amp; height per child — filter by barangay, period, year</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
 
-<!-- Analytics -->
-<p class="text-muted small fw-semibold text-uppercase mb-2 ps-1">
-    <i class="bi bi-graph-up me-1" aria-hidden="true"></i>Analytics
-</p>
-<div class="row g-3">
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-file-earmark-bar-graph fs-4 text-success" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">Summary Report</h6>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">All Barangays</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">One-page overview: coverage %, malnutrition rate, DSP active, and Vitamin A coverage — broken down per barangay.</p>
-                <a href="<?= APP_URL ?>/reports/summary" class="btn btn-success btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Summary Report</a>
+        <a href="<?= APP_URL ?>/reports/dsp" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-egg-fried text-warning"></i>
             </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 border-0 shadow-sm report-card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:48px;height:48px">
-                        <i class="bi bi-arrow-left-right fs-4 text-primary" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0">Year-over-Year Comparison</h6>
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 small">Year A vs Year B</span>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">Compare OPT malnutrition rates between two years and periods — shows whether malnutrition improved or worsened over time.</p>
-                <a href="<?= APP_URL ?>/reports/comparison" class="btn btn-primary btn-sm w-100"><i class="bi bi-eye me-1" aria-hidden="true"></i>View Year Comparison</a>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">DSP Report</div>
+                <div class="text-muted small">Feeding program enrollments — RUTF/RUSF interventions</div>
             </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
+        <a href="<?= APP_URL ?>/reports/outcome" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-graph-up-arrow text-secondary"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">Program Outcome</div>
+                <div class="text-muted small">Pre vs post weight for DSP graduates</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
+        <div class="list-group-item px-4 py-2 bg-light border-bottom border-top">
+            <span class="text-muted small fw-semibold text-uppercase">Micronutrient Supplementation</span>
         </div>
+
+        <a href="<?= APP_URL ?>/reports/mns" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-capsule text-primary"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">MNS Report</div>
+                <div class="text-muted small">Vitamin A, MNP, and LNS-SQ distribution coverage</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
+        <a href="<?= APP_URL ?>/reports/dispensing" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-box-seam text-info"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">Dispensing Report</div>
+                <div class="text-muted small">Summary of all supplements and medicines dispensed</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
+        <div class="list-group-item px-4 py-2 bg-light border-bottom border-top">
+            <span class="text-muted small fw-semibold text-uppercase">Analytics</span>
+        </div>
+
+        <a href="<?= APP_URL ?>/reports/summary" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-file-earmark-bar-graph text-success"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">Summary Report</div>
+                <div class="text-muted small">Coverage %, malnutrition rate, DSP &amp; Vitamin A — per barangay</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
+        <a href="<?= APP_URL ?>/reports/comparison" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-4 py-3">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                <i class="bi bi-arrow-left-right text-primary"></i>
+            </div>
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold">Year Comparison</div>
+                <div class="text-muted small">Compare OPT malnutrition rates between two years</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+
     </div>
 </div>
-
-<style>
-.report-card { transition: transform .15s ease, box-shadow .15s ease; cursor: pointer; }
-.report-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important; }
-</style>
