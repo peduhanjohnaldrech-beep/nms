@@ -112,7 +112,48 @@ class AuthController extends Controller
 
         $this->clearFailedAttempts($username);
 
-        // No device restriction — admin can log in from any device
+        // Admin always requires email OTP (if email is configured)
+        if (strtolower($user['role']) === 'admin') {
+            $email1 = $user['email'] ?? null;
+            $email2 = $user['email_secondary'] ?? null;
+
+            if (!empty($email1) || !empty($email2)) {
+                $otp     = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
+                $body    = \Mailer::otpEmail($otp, $appName);
+                $subject = "{$appName} — Login Verification Code";
+                $sent    = false;
+                $sentTo  = [];
+
+                if (!empty($email1) && \Mailer::send($email1, $user['full_name'], $subject, $body)) {
+                    $sent = true; $sentTo[] = $email1;
+                }
+                if (!empty($email2) && \Mailer::send($email2, $user['full_name'], $subject, $body)) {
+                    $sent = true; $sentTo[] = $email2;
+                }
+
+                if (!$sent) {
+                    Session::flash('error', 'Could not send verification email. Check SMTP settings or contact your administrator.');
+                    $this->view('auth/login', ['username' => $this->clean($username)], false);
+                    return;
+                }
+
+                Session::set('otp_code',    $otp);
+                Session::set('otp_user_id', $user['id']);
+                Session::set('otp_emails',  $sentTo);
+                Session::set('otp_expires', time() + 600);
+
+                $maskedList = array_map(function($e) {
+                    $at = strpos($e, '@');
+                    return substr($e, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($e, $at);
+                }, $sentTo);
+                \ActivityLog::log('login_otp_sent', "OTP sent to " . implode(', ', $sentTo) . " for admin: $username");
+                Session::flash('info', "A verification code was sent to <strong>" . implode('</strong> and <strong>', $maskedList) . "</strong>.");
+                $this->redirect('/otp-verify');
+                return;
+            }
+            // No email set — log in directly (admin should add email in User Management)
+        }
 
         $this->completeLogin($user);
     }
