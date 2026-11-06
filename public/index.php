@@ -59,8 +59,6 @@ $router = new Core\Router();
 $router->get('/login',  'AuthController@showLogin');
 $router->post('/login', 'AuthController@login');
 $router->get('/logout', 'AuthController@logout');
-$router->get('/2fa',    'AuthController@show2fa');
-$router->post('/2fa',   'AuthController@verify2fa');
 $router->get('/otp-verify',          'AuthController@showOtpVerify');
 $router->post('/otp-verify',         'AuthController@verifyOtp');
 $router->post('/otp-verify/resend',  'AuthController@resendOtp');
@@ -196,9 +194,6 @@ $router->post('/users/{id}/delete',   'UserController@delete');
 $router->post('/users/{id}/activate',      'UserController@activate');
 $router->post('/users/{id}/reset-device',  'UserController@resetDevice');
 $router->post('/users/{id}/destroy',  'UserController@destroy');
-$router->get('/settings/2fa',           'UserController@setup2fa');
-$router->post('/settings/2fa/enable',   'UserController@enable2fa');
-$router->post('/settings/2fa/disable',  'UserController@disable2fa');
 
 // ============================================================
 // REST API — Mobile App

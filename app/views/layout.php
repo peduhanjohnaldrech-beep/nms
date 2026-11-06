@@ -297,9 +297,6 @@ foreach ($__crumbSegs as $seg) {
                 <a class="nav-link ps-4 <?= __navActive('/backup') ?>" href="<?= APP_URL ?>/backup">
                     <i class="bi bi-database-fill-down me-2"></i>Database Backup
                 </a>
-                <a class="nav-link ps-4 <?= __navActive('/settings/2fa') ?>" href="<?= APP_URL ?>/settings/2fa">
-                    <i class="bi bi-shield-lock me-2"></i>2FA Security
-                </a>
                 <?php endif; ?>
             </div>
             <?php endif; ?>

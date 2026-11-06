@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use Core\Controller;
 use Core\Session;
-use Core\Totp;
 use App\Models\User;
 use App\Models\Beneficiary;
 
@@ -189,81 +188,6 @@ class UserController extends Controller
             Session::flash('error', 'Only admin accounts have a trusted device.');
         }
         $this->redirect('/users');
-    }
-
-    public function setup2fa(): void
-    {
-        $this->requireAdmin();
-
-        $userId = (int)Session::get('user_id');
-        $db     = \Core\Database::getInstance();
-        $stmt   = $db->prepare("SELECT totp_secret, totp_enabled FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $row    = $stmt->fetch(\PDO::FETCH_ASSOC);
-        $enabled = !empty($row['totp_enabled']);
-
-        if (!$enabled) {
-            // Re-use pending secret stored in session so the QR does not change on reload
-            if (!Session::has('totp_pending_secret')) {
-                Session::set('totp_pending_secret', Totp::generateSecret());
-            }
-            $secret = Session::get('totp_pending_secret');
-            $issuer = defined('APP_NAME') ? APP_NAME : 'NMS';
-            $stmt2  = $db->prepare("SELECT username FROM users WHERE id = ?");
-            $stmt2->execute([$userId]);
-            $account = $stmt2->fetchColumn() ?: 'admin';
-            $uri = Totp::getUri($secret, $account, $issuer);
-            $this->view('auth/2fa_setup', ['enabled' => false, 'secret' => $secret, 'uri' => $uri]);
-        } else {
-            $this->view('auth/2fa_setup', ['enabled' => true]);
-        }
-    }
-
-    public function enable2fa(): void
-    {
-        $this->requireAdmin();
-        if (!$this->isPost()) { $this->redirect('/settings/2fa'); }
-        $this->validateCsrf();
-
-        $secret = Session::get('totp_pending_secret');
-        if (!$secret) {
-            Session::flash('error', 'Session expired. Please start over.');
-            $this->redirect('/settings/2fa');
-            return;
-        }
-
-        $code = trim($_POST['totp_code'] ?? '');
-        if (!Totp::verify($secret, $code)) {
-            Session::flash('error', 'The code is incorrect or expired. Please try again.');
-            $this->redirect('/settings/2fa');
-            return;
-        }
-
-        $userId = (int)Session::get('user_id');
-        $db     = \Core\Database::getInstance();
-        $db->prepare("UPDATE users SET totp_secret = ?, totp_enabled = 1 WHERE id = ?")
-           ->execute([$secret, $userId]);
-        Session::remove('totp_pending_secret');
-
-        \ActivityLog::log('security', 'Admin enabled two-factor authentication');
-        Session::flash('success', 'Two-factor authentication has been enabled.');
-        $this->redirect('/settings/2fa');
-    }
-
-    public function disable2fa(): void
-    {
-        $this->requireAdmin();
-        if (!$this->isPost()) { $this->redirect('/settings/2fa'); }
-        $this->validateCsrf();
-
-        $userId = (int)Session::get('user_id');
-        $db     = \Core\Database::getInstance();
-        $db->prepare("UPDATE users SET totp_secret = NULL, totp_enabled = 0 WHERE id = ?")
-           ->execute([$userId]);
-
-        \ActivityLog::log('security', 'Admin disabled two-factor authentication');
-        Session::flash('success', 'Two-factor authentication has been disabled.');
-        $this->redirect('/settings/2fa');
     }
 
     public function activate(string $id): void
