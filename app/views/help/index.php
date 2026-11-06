@@ -52,11 +52,11 @@
         <div class="card border-0 shadow-sm mb-4" id="login">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-box-arrow-in-right me-2"></i>Logging In</h5>
-                <p class="mb-2"><strong>Web System:</strong></p>
+                <p class="mb-2"><strong>Web System</strong> — works on any browser including mobile browsers:</p>
                 <ol>
-                    <li>Open a browser and go to <a href="https://kabnms.duckdns.org" target="_blank">https://kabnms.duckdns.org</a>.</li>
+                    <li>Go to <a href="https://kabnms.duckdns.org" target="_blank">https://kabnms.duckdns.org</a>.</li>
                     <li>Enter your <strong>Username</strong> and <strong>Password</strong>, then click <strong>Sign In</strong>.</li>
-                    <li>Your session will automatically expire after <strong>1 hour of inactivity</strong> for security.</li>
+                    <li><strong>Admin accounts</strong> will receive a 6-digit verification code via email after entering the correct password. Enter the code to complete login.</li>
                 </ol>
                 <p class="mb-2"><strong>Mobile App:</strong></p>
                 <ol class="mb-0">
@@ -66,7 +66,7 @@
                 </ol>
                 <div class="alert alert-warning mt-3 mb-0 py-2">
                     <i class="bi bi-exclamation-triangle me-1"></i>
-                    Never share your password. The system logs all login activity. BNS, BHW, and Midwife accounts can only log in via the mobile app.
+                    Never share your password. All login activity is recorded. BHW accounts can only log in via the mobile app.
                 </div>
             </div>
         </div>
@@ -76,13 +76,15 @@
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h5>
                 <p>The dashboard shows a real-time summary of the current year's data:</p>
-                <ul class="mb-0">
+                <ul class="mb-2">
                     <li><strong>Total Beneficiaries</strong> — all registered children in the system.</li>
                     <li><strong>OPT Assessed</strong> — children with a weight/height assessment this year.</li>
-                    <li><strong>Malnourished</strong> — children flagged as SUW or UW.</li>
-                    <li><strong>For Follow-up</strong> — beneficiaries pending a follow-up assessment.</li>
-                    <li>Charts show nutritional status distribution and program enrollment counts.</li>
+                    <li><strong>Active DSP</strong> — children currently enrolled in the feeding program.</li>
+                    <li><strong>MNS Coverage</strong> — children who received micronutrient supplementation.</li>
+                    <li><strong>Not Yet Assessed</strong> — children not yet weighed for the current OPT period.</li>
+                    <li>Charts show nutritional status by barangay, program enrollment, OPT trend, and malnutrition rate. <em>(Charts are hidden on mobile screens for a cleaner view.)</em></li>
                 </ul>
+                <p class="mb-0"><strong>On mobile:</strong> the dashboard shows a <strong>Quick Actions</strong> grid for fast navigation — Add Beneficiary, OPT Weighing, Validation, Reports, and more based on your role.</p>
             </div>
         </div>
 
@@ -187,11 +189,15 @@
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-gear-fill me-2"></i>Admin Panel</h5>
                 <p>Accessible only to the <span class="badge bg-danger">Admin</span> account.</p>
-                <ul>
-                    <li><strong>User Management</strong> — add, edit, or deactivate user accounts. Assign a custom role label and select which modules each user can access.</li>
+                <ul class="mb-2">
+                    <li><strong>User Management</strong> — add, edit, or deactivate user accounts. Assign roles and select which modules each user can access. Each admin should have an <strong>email address</strong> set for login verification.</li>
                     <li><strong>Program Manager</strong> — add or deactivate nutrition programs shown in the sidebar.</li>
-                    <li><strong>Activity Log</strong> — a full audit trail of all actions performed in the system (logins, data changes, imports, backups).</li>
+                    <li><strong>Activity Log</strong> — a full audit trail of all actions performed in the system (logins, data changes, imports, backups). Includes mobile app activity.</li>
                 </ul>
+                <div class="alert alert-info mb-0 py-2">
+                    <i class="bi bi-shield-check me-1"></i>
+                    <strong>Login Security:</strong> Admin accounts with a registered email will receive a one-time verification code (OTP) each time they log in. Set your email in <em>Users → Edit</em> to enable this. A secondary/backup email can also be added.
+                </div>
             </div>
         </div>
 
@@ -217,17 +223,19 @@
         <div class="card border-0 shadow-sm mb-4" id="mobile">
             <div class="card-body">
                 <h5 class="fw-bold text-primary"><i class="bi bi-phone me-2"></i>Mobile App (NMS Mobile)</h5>
-                <p>The NMS Mobile app is for <strong>BNS, BHW, and Midwife</strong> field workers. It is not available on the web system.</p>
+                <p>The NMS Mobile app is for <strong>BNS, BHW, and Midwife</strong> field workers. Download the latest APK from the button at the top of this page.</p>
                 <ul>
-                    <li><strong>Beneficiary Registration</strong> — register new child beneficiaries in the field. Submissions are sent to the Nutritionist for validation.</li>
-                    <li><strong>OPT Batch Weighing</strong> — record weight, height, and MUAC for multiple children at once. Submitted records appear in the web system after validation.</li>
+                    <li><strong>Beneficiary Registration</strong> — register new children in the field. Submissions are queued for validation by the Midwife or Nutritionist.</li>
+                    <li><strong>OPT Weighing</strong> — record weight, height, and MUAC. Validated records sync to the web system automatically.</li>
                     <li><strong>DSP Follow-up</strong> — submit monitoring follow-up records for DSP-enrolled children.</li>
-                    <li><strong>My Submissions</strong> — view the status of all your submitted records (Pending, Validated, Returned).</li>
-                    <li><strong>Offline Mode</strong> — data can be entered without internet and will sync automatically when a connection is available.</li>
+                    <li><strong>My Submissions / Track Records</strong> — view the status of all your submitted records (Pending, Validated, Returned with notes).</li>
+                    <li><strong>Validation Queue</strong> <em>(Midwife)</em> — review and approve or return pending beneficiary registrations and assessments submitted by BNS/BHW.</li>
+                    <li><strong>Offline Mode</strong> — data entry works without internet and syncs automatically when connected.</li>
+                    <li><strong>Admin features</strong> — User Management, Program Manager, and Activity Log are accessible in the app for Admin accounts.</li>
                 </ul>
                 <div class="alert alert-info mb-0 py-2">
                     <i class="bi bi-info-circle me-1"></i>
-                    Mobile accounts are app-only — they cannot log in to the web system.
+                    BHW accounts are app-only and cannot log in to the web system. Midwife, BNS, Nutritionist, and Admin can use both web and mobile.
                 </div>
             </div>
         </div>
