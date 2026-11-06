@@ -43,10 +43,16 @@ $isAdmin   = strtolower($user['role']) === 'admin';
                                    placeholder="Leave blank to keep current">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Email <span class="text-muted small fw-normal">(required for admin login OTP)</span></label>
+                            <label class="form-label fw-semibold">Email <span class="text-muted small fw-normal">(primary — for admin OTP)</span></label>
                             <input type="email" name="email" class="form-control"
                                    value="<?= htmlspecialchars($user['email'] ?? '') ?>"
                                    placeholder="user@example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Secondary Email <span class="text-muted small fw-normal">(backup)</span></label>
+                            <input type="email" name="email_secondary" class="form-control"
+                                   value="<?= htmlspecialchars($user['email_secondary'] ?? '') ?>"
+                                   placeholder="backup@example.com">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>

@@ -41,10 +41,10 @@
                         </div>
                         <h5 class="fw-bold mt-2">Verify Your Identity</h5>
                         <p class="text-muted small mb-0">
-                            A 6-digit code was sent to your email.<br>
-                            <?php if (!empty($maskedEmail)): ?>
-                            <span class="fw-semibold"><?= htmlspecialchars($maskedEmail) ?></span>
-                            <?php endif; ?>
+                            A 6-digit code was sent to:<br>
+                            <?php foreach ($maskedEmails ?? [] as $m): ?>
+                            <span class="fw-semibold d-block"><?= htmlspecialchars($m) ?></span>
+                            <?php endforeach; ?>
                         </p>
                     </div>
 

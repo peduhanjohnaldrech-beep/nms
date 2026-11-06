@@ -36,8 +36,9 @@ class UserController extends Controller
             $username    = trim($_POST['username'] ?? '');
             $password    = $_POST['password'] ?? '';
             $fullName    = trim($_POST['full_name'] ?? '');
-            $email       = trim($_POST['email'] ?? '');
-            $role        = trim($_POST['role'] ?? '');
+            $email          = trim($_POST['email'] ?? '');
+            $emailSecondary = trim($_POST['email_secondary'] ?? '');
+            $role           = trim($_POST['role'] ?? '');
             $barangay    = trim($_POST['barangay'] ?? '');
             $permissions = array_keys(array_filter($_POST['permissions'] ?? [], fn($v) => $v == '1'));
             $errors      = [];
@@ -70,10 +71,11 @@ class UserController extends Controller
                 'username'    => $username,
                 'password'    => $password,
                 'full_name'   => $fullName,
-                'email'       => $email,
-                'role'        => $role,
-                'barangay'    => $barangay ?: null,
-                'permissions' => $permissions,
+                'email'           => $email,
+                'email_secondary' => $emailSecondary,
+                'role'            => $role,
+                'barangay'        => $barangay ?: null,
+                'permissions'     => $permissions,
             ]);
 
             Session::flash('success', "User '{$username}' created successfully.");
@@ -114,9 +116,10 @@ class UserController extends Controller
 
             $permissions = array_keys(array_filter($_POST['permissions'] ?? [], fn($v) => $v == '1'));
             $this->model->updateUser($id, [
-                'full_name'   => trim($_POST['full_name'] ?? ''),
-                'email'       => trim($_POST['email'] ?? ''),
-                'role'        => $role,
+                'full_name'       => trim($_POST['full_name'] ?? ''),
+                'email'           => trim($_POST['email'] ?? ''),
+                'email_secondary' => trim($_POST['email_secondary'] ?? ''),
+                'role'            => $role,
                 'barangay'    => $barangay ?: null,
                 'password'    => $_POST['password'] ?? '',
                 'permissions' => $permissions,

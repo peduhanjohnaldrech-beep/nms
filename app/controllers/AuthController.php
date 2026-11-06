@@ -126,22 +126,32 @@ class AuthController extends Controller
                 setcookie('nms_device_token', $token, time() + 365 * 24 * 3600, '/', '', false, true);
             } elseif (!$cookieToken || !hash_equals($storedToken, $cookieToken)) {
                 // Unrecognized device — send OTP to admin's email
-                $email = $user['email'] ?? null;
-                if (empty($email)) {
+                $email1 = $user['email'] ?? null;
+                $email2 = $user['email_secondary'] ?? null;
+                if (empty($email1) && empty($email2)) {
                     \ActivityLog::log('login_failed', "Admin login from unrecognized device, no email on file: $username");
                     Session::flash('error', 'Unrecognized device. No email is set for this account — ask your administrator to add one in User Management.');
                     $this->view('auth/login', ['username' => $this->clean($username)], false);
                     return;
                 }
 
-                $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                Session::set('otp_code',    $otp);
-                Session::set('otp_user_id', $user['id']);
-                Session::set('otp_email',   $email);
-                Session::set('otp_expires', time() + 600);
-
+                $otp     = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
                 $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
-                $sent = \Mailer::send($email, $user['full_name'], "{$appName} — Login Verification Code", \Mailer::otpEmail($otp, $appName));
+                $body    = \Mailer::otpEmail($otp, $appName);
+                $subject = "{$appName} — Login Verification Code";
+                $sent    = false;
+                $sentTo  = [];
+
+                if (!empty($email1)) {
+                    if (\Mailer::send($email1, $user['full_name'], $subject, $body)) {
+                        $sent = true; $sentTo[] = $email1;
+                    }
+                }
+                if (!empty($email2)) {
+                    if (\Mailer::send($email2, $user['full_name'], $subject, $body)) {
+                        $sent = true; $sentTo[] = $email2;
+                    }
+                }
 
                 if (!$sent) {
                     Session::flash('error', 'Could not send verification email. Check SMTP settings or contact your administrator.');
@@ -149,10 +159,18 @@ class AuthController extends Controller
                     return;
                 }
 
-                \ActivityLog::log('login_otp_sent', "OTP sent to {$email} for admin login: $username");
-                $at      = strpos($email, '@');
-                $masked  = substr($email, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($email, $at);
-                Session::flash('info', "A verification code was sent to <strong>{$masked}</strong>.");
+                Session::set('otp_code',    $otp);
+                Session::set('otp_user_id', $user['id']);
+                Session::set('otp_emails',  $sentTo);
+                Session::set('otp_expires', time() + 600);
+
+                \ActivityLog::log('login_otp_sent', "OTP sent to " . implode(', ', $sentTo) . " for admin login: $username");
+
+                $maskedList = array_map(function($e) {
+                    $at = strpos($e, '@');
+                    return substr($e, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($e, $at);
+                }, $sentTo);
+                Session::flash('info', "A verification code was sent to <strong>" . implode('</strong> and <strong>', $maskedList) . "</strong>.");
                 $this->redirect('/otp-verify');
                 return;
             }
@@ -178,12 +196,12 @@ class AuthController extends Controller
         if (!Session::has('otp_user_id')) {
             $this->redirect('/login');
         }
-        $email     = Session::get('otp_email', '');
-        $at        = strpos($email, '@');
-        $masked    = $at !== false
-            ? substr($email, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($email, $at)
-            : '';
-        $this->view('auth/otp_verify', ['maskedEmail' => $masked], false);
+        $emails  = Session::get('otp_emails', []);
+        $masked  = array_map(function($e) {
+            $at = strpos($e, '@');
+            return $at !== false ? substr($e, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($e, $at) : $e;
+        }, $emails);
+        $this->view('auth/otp_verify', ['maskedEmails' => $masked], false);
     }
 
     public function verifyOtp(): void
@@ -226,7 +244,7 @@ class AuthController extends Controller
         setcookie('nms_device_token', $token, time() + 365 * 24 * 3600, '/', '', false, true);
 
         Session::remove('otp_code'); Session::remove('otp_user_id');
-        Session::remove('otp_expires'); Session::remove('otp_email');
+        Session::remove('otp_expires'); Session::remove('otp_emails');
 
         $stmt = $db->prepare("SELECT * FROM users WHERE id = ? AND is_active = 1");
         $stmt->execute([$userId]);
@@ -257,18 +275,20 @@ class AuthController extends Controller
         }
 
         $userId = (int)Session::get('otp_user_id');
-        $email  = Session::get('otp_email', '');
+        $emails = Session::get('otp_emails', []);
         $db     = \Core\Database::getInstance();
         $stmt   = $db->prepare("SELECT full_name FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         $row    = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp     = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
+        $body    = \Mailer::otpEmail($otp, $appName);
+        foreach ($emails as $email) {
+            \Mailer::send($email, $row['full_name'] ?? '', "{$appName} — Login Verification Code", $body);
+        }
         Session::set('otp_code',    $otp);
         Session::set('otp_expires', time() + 600);
-
-        $appName = defined('APP_NAME') ? APP_NAME : 'NMS';
-        \Mailer::send($email, $row['full_name'] ?? '', "{$appName} — Login Verification Code", \Mailer::otpEmail($otp, $appName));
 
         Session::flash('info', 'A new verification code has been sent.');
         $this->redirect('/otp-verify');
