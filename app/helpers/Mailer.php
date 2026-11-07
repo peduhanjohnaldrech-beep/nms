@@ -6,8 +6,11 @@ class Mailer
      * Send an HTML email. Uses PHPMailer+SMTP if SMTP_HOST is set,
      * otherwise falls back to PHP mail().
      */
+    public static string $lastError = '';
+
     public static function send(string $to, string $toName, string $subject, string $body): bool
     {
+        self::$lastError = '';
         $smtpHost = getenv('SMTP_HOST') ?: ($_ENV['SMTP_HOST'] ?? '');
         $smtpUser = getenv('SMTP_USER') ?: ($_ENV['SMTP_USER'] ?? '');
         $smtpPass = getenv('SMTP_PASS') ?: ($_ENV['SMTP_PASS'] ?? '');
@@ -15,29 +18,40 @@ class Mailer
         $fromName = getenv('SMTP_FROM_NAME') ?: ($_ENV['SMTP_FROM_NAME'] ?? (defined('APP_NAME') ? APP_NAME : 'NMS'));
         $port     = (int)(getenv('SMTP_PORT') ?: ($_ENV['SMTP_PORT'] ?? 587));
 
-        if ($smtpHost && $smtpUser && class_exists('PHPMailer\PHPMailer\PHPMailer')) {
-            try {
-                $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host       = $smtpHost;
-                $mail->SMTPAuth   = true;
-                $mail->Username   = $smtpUser;
-                $mail->Password   = $smtpPass;
-                $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = $port;
-                $mail->CharSet    = 'UTF-8';
-                $mail->setFrom($from, $fromName);
-                $mail->addAddress($to, $toName);
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $body;
-                $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</h2>', '</h3>'], "\n", $body));
-                $mail->send();
-                return true;
-            } catch (\Throwable $e) {
-                error_log('Mailer (SMTP) error: ' . $e->getMessage());
-                return false;
-            }
+        if (!$smtpHost || !$smtpUser) {
+            self::$lastError = 'SMTP not configured (SMTP_HOST or SMTP_USER missing in .env)';
+            error_log('Mailer: ' . self::$lastError);
+            return false;
+        }
+
+        if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+            self::$lastError = 'PHPMailer not found — run: composer install --no-dev';
+            error_log('Mailer: ' . self::$lastError);
+            return false;
+        }
+
+        try {
+            $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host       = $smtpHost;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $smtpUser;
+            $mail->Password   = $smtpPass;
+            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = $port;
+            $mail->CharSet    = 'UTF-8';
+            $mail->setFrom($from, $fromName);
+            $mail->addAddress($to, $toName);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+            $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</h2>', '</h3>'], "\n", $body));
+            $mail->send();
+            return true;
+        } catch (\Throwable $e) {
+            self::$lastError = $e->getMessage();
+            error_log('Mailer (SMTP) error: ' . $e->getMessage());
+            return false;
         }
 
         // Fallback: PHP mail()

@@ -133,7 +133,8 @@ class AuthController extends Controller
                 }
 
                 if (!$sent) {
-                    Session::flash('error', 'Could not send verification email. Check SMTP settings or contact your administrator.');
+                    $smtpErr = \Mailer::$lastError ? ' — ' . \Mailer::$lastError : '';
+                    Session::flash('error', 'Could not send verification email' . $smtpErr);
                     $this->view('auth/login', ['username' => $this->clean($username)], false);
                     return;
                 }
