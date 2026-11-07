@@ -8,12 +8,12 @@ class Mailer
      */
     public static function send(string $to, string $toName, string $subject, string $body): bool
     {
-        $smtpHost = getenv('SMTP_HOST');
-        $smtpUser = getenv('SMTP_USER');
-        $smtpPass = getenv('SMTP_PASS');
-        $from     = getenv('SMTP_FROM')      ?: 'noreply@localhost';
-        $fromName = getenv('SMTP_FROM_NAME') ?: (defined('APP_NAME') ? APP_NAME : 'NMS');
-        $port     = (int)(getenv('SMTP_PORT') ?: 587);
+        $smtpHost = getenv('SMTP_HOST') ?: ($_ENV['SMTP_HOST'] ?? '');
+        $smtpUser = getenv('SMTP_USER') ?: ($_ENV['SMTP_USER'] ?? '');
+        $smtpPass = getenv('SMTP_PASS') ?: ($_ENV['SMTP_PASS'] ?? '');
+        $from     = getenv('SMTP_FROM')      ?: ($_ENV['SMTP_FROM']      ?? 'noreply@localhost');
+        $fromName = getenv('SMTP_FROM_NAME') ?: ($_ENV['SMTP_FROM_NAME'] ?? (defined('APP_NAME') ? APP_NAME : 'NMS'));
+        $port     = (int)(getenv('SMTP_PORT') ?: ($_ENV['SMTP_PORT'] ?? 587));
 
         if ($smtpHost && $smtpUser && class_exists('PHPMailer\PHPMailer\PHPMailer')) {
             try {
