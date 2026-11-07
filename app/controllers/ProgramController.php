@@ -32,6 +32,7 @@ class ProgramController extends Controller
     public function opt(): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
 
         $year     = (int)($_GET['year']     ?? date('Y'));
         $period   = $_GET['period']         ?? '';
@@ -128,6 +129,7 @@ class ProgramController extends Controller
     public function dsp(): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
 
         $beneModel   = new Beneficiary();
         $barangay    = trim($_GET['barangay']    ?? '');
@@ -181,6 +183,7 @@ class ProgramController extends Controller
     public function dspMasterlist(): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
         $db       = Database::getInstance();
         $role     = \Core\Session::get('user_role');
         $barangay = trim($_GET['barangay'] ?? '');
@@ -487,6 +490,7 @@ class ProgramController extends Controller
     public function mns(): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
 
         $round    = $_GET['round']    ?? (date('n') >= 7 ? 'October' : 'April');
         $year     = (int)($_GET['year'] ?? date('Y'));
@@ -977,6 +981,7 @@ class ProgramController extends Controller
     public function generic(string $code): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
 
         $code    = strtoupper($code);
         $program = (new Program())->findByCode($code);
@@ -1074,6 +1079,7 @@ class ProgramController extends Controller
     public function genericExport(string $code): void
     {
         $this->requireAuth();
+        $this->requirePermission('programs');
 
         $code    = strtoupper($code);
         $program = (new Program())->findByCode($code);

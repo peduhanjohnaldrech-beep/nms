@@ -53,7 +53,14 @@ class Controller
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return;
         if ($role === 'midwife') {
-            if ($module !== 'validation') {
+            if (!in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports'])) {
+                Session::flash('error', 'You do not have permission to access this page.');
+                $this->redirect('/dashboard');
+            }
+            return;
+        }
+        if ($role === 'bns') {
+            if (!in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs'])) {
                 Session::flash('error', 'You do not have permission to access this page.');
                 $this->redirect('/dashboard');
             }
@@ -70,8 +77,8 @@ class Controller
     {
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return true;
-        if ($role === 'midwife') return $module === 'validation';
-        if (in_array($role, ['bns', 'bhw']) && $module === 'programs') return true;
+        if ($role === 'midwife') return in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports']);
+        if ($role === 'bns') return in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs']);
         return in_array($module, (array)Session::get('user_permissions', []));
     }
 

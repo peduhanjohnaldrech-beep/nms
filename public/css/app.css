@@ -194,15 +194,71 @@ body::before {
 .sidebar .collapse .nav-link { font-size: .88em; }
 
 .sidebar-header {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(0,198,255,.08);
+    padding: 0.85rem 1rem 0.75rem;
+    border-bottom: 1px solid rgba(0,198,255,.12);
+    flex-shrink: 0;
 }
-.sidebar-header small {
+
+/* ── Sidebar section labels (matches mobile drawer section headers) */
+.sidebar-section-label {
+    padding: 0.85rem 1rem 0.3rem;
     color: #00C6FF;
-    font-size: 0.68rem;
+    font-size: 0.65rem;
+    font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.6;
+    opacity: 0.55;
+}
+[data-theme="dark"] .sidebar-section-label { opacity: 1; }
+
+/* ── Sidebar user avatar circle */
+.sidebar-avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0,198,255,.15);
+    border: 1px solid rgba(0,198,255,.3);
+    color: #00C6FF;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar role pill badge */
+.sidebar-role-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    background: rgba(0,198,255,.1);
+    border: 1px solid rgba(0,198,255,.3);
+    color: #00C6FF;
+    font-size: 0.63rem;
+    border-radius: 4px;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+/* ── Sidebar logout section at bottom */
+.sidebar-logout {
+    padding: 0.65rem 0.75rem;
+    border-top: 1px solid #2D3F55;
+    flex-shrink: 0;
+}
+.sidebar-logout-link {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    color: rgba(255,255,255,.45) !important;
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-radius: 0.4rem;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sidebar-logout-link:hover {
+    background-color: rgba(239,68,68,.1);
+    color: #fca5a5 !important;
 }
 
 /* Sidebar badge (pending count) */

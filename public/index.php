@@ -26,7 +26,7 @@ function hasPerm(string $m): bool {
     }
     if ($isAdm) return true;
     if ($isMid) return in_array($m, ['beneficiaries', 'validation', 'assessments', 'reports']);
-    if ($isBns) return in_array($m, ['beneficiaries', 'assessments', 'reports']);
+    if ($isBns) return in_array($m, ['beneficiaries', 'assessments', 'reports', 'programs']);
     return in_array($m, $perms);
 }
 

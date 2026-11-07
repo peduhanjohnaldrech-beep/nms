@@ -15,6 +15,7 @@ class DispensingController extends Controller
     public function index(): void
     {
         $this->requireAuth();
+        $this->requirePermission('dispensing');
 
         $year          = (int)($_GET['year']           ?? date('Y'));
         $program       = $_GET['program']              ?? '';
@@ -187,6 +188,7 @@ class DispensingController extends Controller
     public function export(): void
     {
         $this->requireAuth();
+        $this->requirePermission('dispensing');
 
         $year          = (int)($_GET['year']           ?? date('Y'));
         $program       = $_GET['program']              ?? '';
