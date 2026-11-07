@@ -39,6 +39,7 @@ class Mailer
             $mail->Password   = $smtpPass;
             $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = $port;
+            $mail->Timeout    = 10;
             $mail->CharSet    = 'UTF-8';
             $mail->setFrom($from, $fromName);
             $mail->addAddress($to, $toName);
