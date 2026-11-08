@@ -30,6 +30,15 @@ class Mailer
             return false;
         }
 
+        // Quick 3-second reachability check — avoids long hangs on blocked ports
+        $sock = @fsockopen($smtpHost, $port, $errno, $errstr, 3);
+        if (!$sock) {
+            self::$lastError = "SMTP unreachable ({$smtpHost}:{$port}) — {$errstr}";
+            error_log('Mailer: ' . self::$lastError);
+            return false;
+        }
+        fclose($sock);
+
         try {
             $mail = new PHPMailer\PHPMailer\PHPMailer(true);
             $mail->isSMTP();
