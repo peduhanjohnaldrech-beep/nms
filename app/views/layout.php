@@ -164,40 +164,42 @@ foreach ($__crumbSegs as $seg) {
 
 <div class="d-flex" id="wrapper">
     <div class="sidebar" id="sidebar">
-        <!-- Sidebar header: logo + app name + user info (matches mobile drawer) -->
         <div class="sidebar-header">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <img src="<?= APP_URL ?>/img/logo.jpg" alt="Logo"
-                     style="height:36px;width:36px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,198,255,.4);flex-shrink:0;">
-                <div style="min-width:0;">
-                    <div style="color:#00C6FF;font-size:0.78rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;line-height:1.2;"><?= APP_NAME ?></div>
-                    <div style="color:var(--text-sidebar);font-size:0.65rem;line-height:1.3;">Nutrition Monitoring System</div>
+            <!-- Desktop: simple label -->
+            <small class="d-none d-lg-block">Navigation</small>
+            <!-- Mobile only: user info matching Flutter drawer -->
+            <div class="d-lg-none">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <img src="<?= APP_URL ?>/img/logo.jpg" alt="Logo" style="height:34px;width:34px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,198,255,.35);flex-shrink:0;">
+                    <div>
+                        <div style="color:#00C6FF;font-size:0.75rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;line-height:1.2;"><?= APP_NAME ?></div>
+                        <div style="color:var(--text-sidebar);font-size:0.62rem;">Nutrition Monitoring System</div>
+                    </div>
                 </div>
-            </div>
-            <hr style="border-color:rgba(0,198,255,.15);margin:0.5rem 0 0.6rem;">
-            <div class="d-flex align-items-center gap-2">
-                <div class="sidebar-avatar-circle"><?= strtoupper(substr($userName, 0, 1)) ?></div>
-                <div style="min-width:0;flex:1;">
-                    <div style="color:var(--text-main);font-size:0.8rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($userName) ?></div>
-                    <span class="sidebar-role-pill"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
+                <hr style="border-color:rgba(0,198,255,.12);margin:0.4rem 0 0.5rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:30px;height:30px;border-radius:50%;background:rgba(0,198,255,.15);border:1px solid rgba(0,198,255,.3);color:#00C6FF;font-size:0.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><?= strtoupper(substr($userName, 0, 1)) ?></div>
+                    <div style="min-width:0;">
+                        <div style="color:var(--text-main);font-size:0.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($userName) ?></div>
+                        <span style="display:inline-block;padding:1px 5px;background:rgba(0,198,255,.1);border:1px solid rgba(0,198,255,.25);color:#00C6FF;font-size:0.6rem;border-radius:3px;"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Nav items (sectioned to match mobile drawer) -->
-        <nav class="nav flex-column p-2" style="flex:1;overflow-y:auto;">
+        <nav class="nav flex-column p-2 sidebar-nav-scroll">
             <a class="nav-link <?= __navActive('/dashboard') ?>" href="<?= APP_URL ?>/dashboard">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
             </a>
 
             <?php if (hasPerm('beneficiaries')): ?>
-            <div class="sidebar-section-label">BENEFICIARIES</div>
+            <div class="mob-section-label d-lg-none">BENEFICIARIES</div>
             <a class="nav-link <?= __navActive('/barangays') ?>" href="<?= APP_URL ?>/barangays">
                 <i class="bi bi-geo-alt-fill me-2"></i>Barangay Directory
             </a>
             <a class="nav-link <?= __navActive('/beneficiaries') ?>" href="<?= APP_URL ?>/beneficiaries">
                 <i class="bi bi-people-fill me-2"></i>Beneficiaries
             </a>
+
             <?php if (in_array($userRole, ['midwife','admin','nutritionist'])): ?>
             <?php $__totalPending = $__pendingValidation + $__pendingAssessments; ?>
             <a class="nav-link d-flex align-items-center <?= __navActive('/beneficiaries/validation') ?>" href="<?= APP_URL ?>/beneficiaries/validation">
@@ -207,29 +209,20 @@ foreach ($__crumbSegs as $seg) {
                 <?php endif; ?>
             </a>
             <?php endif; ?>
-            <a class="nav-link <?= __navActive('/beneficiaries/followup') ?>" href="<?= APP_URL ?>/beneficiaries/followup">
-                <i class="bi bi-exclamation-triangle me-2"></i>Follow-up List
-            </a>
-            <a class="nav-link <?= __navActive('/beneficiaries/trash') ?>" href="<?= APP_URL ?>/beneficiaries/trash">
-                <i class="bi bi-trash me-2"></i>Trash
-            </a>
-            <?php endif; /* beneficiaries */ ?>
+
 
             <?php if (hasPerm('assessments')): ?>
-            <div class="sidebar-section-label">ASSESSMENTS</div>
-            <a class="nav-link <?= __navActive('/assessments') ?>" href="<?= APP_URL ?>/assessments">
-                <i class="bi bi-clipboard-check me-2"></i>Assessments
-            </a>
-            <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
-            <a class="nav-link <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
-                <i class="bi bi-plus-circle me-2"></i>New Assessment
-            </a>
-            <?php endif; ?>
+            <div class="mob-section-label d-lg-none">ASSESSMENTS</div>
+                <?php if (!in_array(strtolower(\Core\Session::get('user_role', '')), ['admin', 'nutritionist'])): ?>
+                <a class="nav-link <?= __navActive('/assessments/create') ?>" href="<?= APP_URL ?>/assessments/create">
+                    <i class="bi bi-plus-circle me-2"></i>New Assessment
+                </a>
+                <?php endif; ?>
             <?php endif; /* assessments */ ?>
 
-            <?php if (hasPerm('programs') || hasPerm('dispensing') || $isAdmin): ?>
-            <div class="sidebar-section-label">PROGRAMS</div>
             <?php if (hasPerm('programs')): ?>
+            <div class="mob-section-label d-lg-none">PROGRAMS</div>
+            <?php /* Programs dropdown */ ?>
             <?php
             $__sidebarPrograms = [];
             try {
@@ -272,59 +265,70 @@ foreach ($__crumbSegs as $seg) {
                 <?php endforeach; ?>
                 <?php endif; ?>
             </div>
+
             <?php endif; /* programs */ ?>
-            <?php if (hasPerm('dispensing')): ?>
-            <a class="nav-link <?= __navActive('/dispensing') ?>" href="<?= APP_URL ?>/dispensing">
-                <i class="bi bi-prescription2 me-2"></i>Dispensing Tracker
-            </a>
-            <?php endif; ?>
-            <?php if ($isAdmin): ?>
-            <a class="nav-link <?= __navActive('/import') ?>" href="<?= APP_URL ?>/import">
-                <i class="bi bi-file-earmark-excel me-2"></i>Import
-            </a>
-            <?php endif; ?>
-            <?php endif; /* programs / dispensing / admin */ ?>
 
             <?php if (hasPerm('reports')): ?>
-            <div class="sidebar-section-label">REPORTS</div>
+            <div class="mob-section-label d-lg-none">REPORTS</div>
             <a class="nav-link <?= __navActive('/reports') ?>" href="<?= APP_URL ?>/reports">
                 <i class="bi bi-bar-chart-fill me-2"></i>Reports
             </a>
             <?php endif; /* reports */ ?>
 
-            <?php if (hasPerm('activity_log') || $isAdmin): ?>
-            <div class="sidebar-section-label">ADMIN</div>
-            <?php if (hasPerm('activity_log')): ?>
-            <a class="nav-link <?= __navActive('/activity') ?>" href="<?= APP_URL ?>/activity">
-                <i class="bi bi-journal-text me-2"></i>Activity Log
+            <?php if (hasPerm('dispensing')): ?>
+            <a class="nav-link <?= __navActive('/dispensing') ?>" href="<?= APP_URL ?>/dispensing">
+                <i class="bi bi-prescription2 me-2"></i>Dispensing Tracker
             </a>
             <?php endif; ?>
-            <?php if ($isAdmin): ?>
-            <a class="nav-link <?= __navActive('/users') ?>" href="<?= APP_URL ?>/users">
-                <i class="bi bi-person-gear me-2"></i>User Management
-            </a>
-            <?php endif; ?>
-            <?php if (hasPerm('programs_admin') || $isAdmin): ?>
-            <a class="nav-link <?= __navActive('/programs-admin') ?>" href="<?= APP_URL ?>/programs-admin">
-                <i class="bi bi-grid me-2"></i>Program Manager
-            </a>
-            <?php endif; ?>
-            <?php if ($isAdmin): ?>
-            <a class="nav-link <?= __navActive('/backup') ?>" href="<?= APP_URL ?>/backup">
-                <i class="bi bi-database-fill-down me-2"></i>Database Backup
-            </a>
-            <?php endif; ?>
-            <?php endif; /* admin */ ?>
 
-            <div class="sidebar-section-label">ACCOUNT</div>
+            <?php if ($isAdmin): ?>
+            <a class="nav-link <?= __navActive('/import') ?>" href="<?= APP_URL ?>/import">
+                <i class="bi bi-file-earmark-excel me-2"></i>Import
+            </a>
+            <?php endif; ?>
+            <?php endif; /* beneficiaries */ ?>
+
+            <div class="mob-section-label d-lg-none">ACCOUNT</div>
             <a class="nav-link <?= __navActive('/help') ?>" href="<?= APP_URL ?>/help">
                 <i class="bi bi-question-circle me-2"></i>Help
             </a>
-        </nav>
 
-        <!-- Logout at bottom (matches mobile drawer) -->
-        <div class="sidebar-logout">
-            <a href="<?= APP_URL ?>/logout" class="sidebar-logout-link">
+            <?php if (hasPerm('activity_log') || $isAdmin): ?>
+            <div class="mob-section-label d-lg-none">ADMIN</div>
+            <?php /* Admin dropdown */ ?>
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__adminOpen ? '' : 'collapsed' ?>"
+               data-bs-toggle="collapse" href="#sidebarAdmin" role="button"
+               aria-expanded="<?= $__adminOpen ? 'true' : 'false' ?>" aria-controls="sidebarAdmin">
+                <span><i class="bi bi-gear-fill me-2" aria-hidden="true"></i>Admin</span>
+                <i class="bi bi-chevron-down small sidebar-chevron" aria-hidden="true"></i>
+            </a>
+            <div class="collapse <?= $__adminOpen ? 'show' : '' ?>" id="sidebarAdmin">
+                <?php if (hasPerm('activity_log')): ?>
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/activity">
+                    <i class="bi bi-journal-text me-2"></i>Activity Log
+                </a>
+                <?php endif; ?>
+                <?php if ($isAdmin): ?>
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/users">
+                    <i class="bi bi-person-gear me-2"></i>User Management
+                </a>
+                <?php endif; ?>
+                <?php if (hasPerm('programs_admin') || $isAdmin): ?>
+                <a class="nav-link ps-4" href="<?= APP_URL ?>/programs-admin">
+                    <i class="bi bi-grid me-2"></i>Program Manager
+                </a>
+                <?php endif; ?>
+                <?php if ($isAdmin): ?>
+                <a class="nav-link ps-4 <?= __navActive('/backup') ?>" href="<?= APP_URL ?>/backup">
+                    <i class="bi bi-database-fill-down me-2"></i>Database Backup
+                </a>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+        </nav>
+        <!-- Mobile only: logout pinned to sidebar bottom -->
+        <div class="d-lg-none mob-sidebar-logout">
+            <a href="<?= APP_URL ?>/logout" class="mob-sidebar-logout-link">
                 <i class="bi bi-box-arrow-right me-2"></i>Log Out
             </a>
         </div>
