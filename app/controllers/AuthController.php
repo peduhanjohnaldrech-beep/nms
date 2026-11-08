@@ -133,10 +133,8 @@ class AuthController extends Controller
                 }
 
                 if (!$sent) {
-                    $smtpErr = \Mailer::$lastError ? ' — ' . \Mailer::$lastError : '';
-                    Session::flash('error', 'Could not send verification email' . $smtpErr);
-                    $this->view('auth/login', ['username' => $this->clean($username)], false);
-                    return;
+                    // SMTP unavailable — write OTP to server log so admin can retrieve it from console
+                    error_log("[NMS OTP] Admin login OTP for '{$username}': {$otp} (SMTP failed: " . \Mailer::$lastError . ")");
                 }
 
                 Session::set('otp_code',    $otp);
@@ -144,12 +142,17 @@ class AuthController extends Controller
                 Session::set('otp_emails',  $sentTo);
                 Session::set('otp_expires', time() + 600);
 
-                $maskedList = array_map(function($e) {
-                    $at = strpos($e, '@');
-                    return substr($e, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($e, $at);
-                }, $sentTo);
-                \ActivityLog::log('login_otp_sent', "OTP sent to " . implode(', ', $sentTo) . " for admin: $username");
-                Session::flash('info', "A verification code was sent to <strong>" . implode('</strong> and <strong>', $maskedList) . "</strong>.");
+                if ($sent) {
+                    $maskedList = array_map(function($e) {
+                        $at = strpos($e, '@');
+                        return substr($e, 0, 2) . str_repeat('*', max(1, $at - 2)) . substr($e, $at);
+                    }, $sentTo);
+                    \ActivityLog::log('login_otp_sent', "OTP sent to " . implode(', ', $sentTo) . " for admin: $username");
+                    Session::flash('info', "A verification code was sent to <strong>" . implode('</strong> and <strong>', $maskedList) . "</strong>.");
+                } else {
+                    \ActivityLog::log('login_otp_log', "OTP for admin '{$username}' written to server log (SMTP unavailable)");
+                    Session::flash('warning', 'Email delivery unavailable. Your OTP has been written to the server log. Check with: <code>grep "NMS OTP" /var/log/php*.log /var/log/nginx/error.log 2>/dev/null | tail -1</code>');
+                }
                 $this->redirect('/otp-verify');
                 return;
             }
