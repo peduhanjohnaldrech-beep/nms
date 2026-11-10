@@ -5,16 +5,19 @@ namespace App\Helpers;
 use Core\Database;
 
 /**
- * Fills the Region6 eOPT Plus Community Level Tool (.xltx) template.
+ * Fills the OPT Plus community-level tool (.xltx template).
  *
- * Strategy: only write to the Nut_StatusTool sheet (the primary data-entry
- * sheet). Every other sheet (Summary, Form1A/1B, Lists, BNS_Printout, etc.)
- * is formula-driven and auto-populates when Excel opens the file.
+ * Template: storage/templates/eopt_region6.xltx (OPT PLUS YANOG format)
  *
- * Column layout for Nut_StatusTool data rows (row 10+):
- *   A=seq#  E=purok  F=mother  G=DOB  H=child_name  I=sex
- *   J=assessed_date  K=age_months  L=weight_kg  M=height_cm
- *   N=ip_status  P=WFA_status  Q=HFA_status  R=WFLH_status
+ * Nut_StatusTool data-entry columns (rows 10–1009):
+ *   A = seq#              B = purok/address      C = mother name
+ *   D = child full name   E = IP group (YES/NO)  F = sex (M/F)
+ *   G = DOB (date serial) H = date measured (date serial)
+ *   I = weight kg         J = height cm
+ *   K+ = auto-computed by Excel formulas — do NOT overwrite
+ *
+ * Header cells (Nut_StatusTool):
+ *   E6 = Barangay   I6 = City/Municipality   M6 = Province   M1 = Year
  */
 class EoptRegion6Export
 {
@@ -27,6 +30,9 @@ class EoptRegion6Export
     private string $province     = '';
     private string $region       = '';
 
+    /** Style index for date cells (G/H) in the YANOG template */
+    private const DATE_STYLE = '335';
+
     public function __construct(int $year, string $period, string $barangay)
     {
         $this->year     = $year;
@@ -34,6 +40,8 @@ class EoptRegion6Export
         $this->barangay = $barangay;
         $this->db       = Database::getInstance();
     }
+
+    // ─── Public entry point ───────────────────────────────────────────────────
 
     /**
      * Build the filled workbook and return a path to a temp .xlsx file.
@@ -47,7 +55,7 @@ class EoptRegion6Export
         $zip = new \ZipArchive();
         $zip->open($tmp);
 
-        // Fix content type: xltx -> xlsx so Excel opens it as a workbook
+        // Convert xltx → xlsx so Excel opens it as a workbook, not a template
         $ct = $zip->getFromName('[Content_Types].xml');
         $ct = str_replace(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml',
@@ -56,11 +64,10 @@ class EoptRegion6Export
         );
         $zip->addFromString('[Content_Types].xml', $ct, \ZipArchive::FL_OVERWRITE);
 
-        // Delete calcChain so Excel recalculates all formulas on open
+        // Remove calcChain so Excel recalculates every formula on open
         $zip->deleteName('xl/calcChain.xml');
 
         $sheetMap = $this->getSheetFileMap($zip);
-
         $children = $this->fetchChildren();
 
         $this->writeNutStatusTool($zip, $sheetMap, $children);
@@ -107,7 +114,8 @@ class EoptRegion6Export
     {
         $params = [$this->year];
         $where  = 'a.assessment_year = ?';
-        if ($this->barangay) { $where .= ' AND b.barangay = ?'; $params[] = $this->barangay; }
+        if ($this->period)   { $where .= ' AND a.period = ?';    $params[] = $this->period; }
+        if ($this->barangay) { $where .= ' AND b.barangay = ?';  $params[] = $this->barangay; }
 
         $stmt = $this->db->prepare(
             "SELECT b.last_name, b.first_name, b.mother_name, b.purok_zone,
@@ -133,8 +141,11 @@ class EoptRegion6Export
 
         if (empty($rows)) {
             $detail = "Year={$this->year}";
+            if ($this->period)   $detail .= ", Period={$this->period}";
             if ($this->barangay) $detail .= ", Barangay={$this->barangay}";
-            throw new \RuntimeException("No validated records found ({$detail}). Please check your filters.");
+            throw new \RuntimeException(
+                "No validated records found ({$detail}). Please check your filters."
+            );
         }
 
         foreach ($rows as $r) {
@@ -150,10 +161,9 @@ class EoptRegion6Export
     // ─── Sheet writers ────────────────────────────────────────────────────────
 
     /**
-     * Fill the BNS_Printout sheet header with location/year data.
-     * K1  = Barangay (after J1='Barangay:')
-     * BH6 = Year    (after BG6='Year:')
-     * Population/PSGC fields are NOT filled — not tracked in NMS.
+     * Fill BNS_Printout header:
+     *   K1  = Barangay name
+     *   BH6 = Year
      */
     private function writeBnsPrintoutHeader(\ZipArchive $zip, array $map): void
     {
@@ -161,7 +171,7 @@ class EoptRegion6Export
         $xml = $zip->getFromName($map['BNS_Printout']);
 
         $xml = $this->injectRowCells($xml, 1, [
-            'K' => ['s', $this->barangay],
+            'K'  => ['s', $this->barangay],
         ]);
         $xml = $this->injectRowCells($xml, 6, [
             'BH' => ['s', (string)$this->year],
@@ -171,25 +181,21 @@ class EoptRegion6Export
     }
 
     /**
-     * Fill OPT_Form1A header fields we can derive from our data.
-     * E10  = Year of Last OPT Plus
-     * AE11 = Date printed (today)
-     * BE11 = Date printed (today, 3rd section copy)
-     * Total/Estimated Population fields are NOT filled — not tracked in NMS.
+     * Fill OPT_Form1A header:
+     *   E10 / AG10 / BI10 = Year (3 side-by-side copies)
+     *   AE11 / BE11       = Date printed
      */
     private function writeForm1AHeader(\ZipArchive $zip, array $map): void
     {
         if (!isset($map['OPT_Form1A'])) return;
-        $xml  = $zip->getFromName($map['OPT_Form1A']);
+        $xml   = $zip->getFromName($map['OPT_Form1A']);
         $today = date('m/d/Y');
 
-        // Row 10: Year of Last OPT Plus (E10), appears 3× across the 3 side-by-side sections
         $xml = $this->injectRowCells($xml, 10, [
             'E'  => ['s', (string)$this->year],
             'AG' => ['s', (string)$this->year],
             'BI' => ['s', (string)$this->year],
         ]);
-        // Row 11: Date printed
         $xml = $this->injectRowCells($xml, 11, [
             'AE' => ['s', $today],
             'BE' => ['s', $today],
@@ -198,6 +204,15 @@ class EoptRegion6Export
         $zip->addFromString($map['OPT_Form1A'], $xml, \ZipArchive::FL_OVERWRITE);
     }
 
+    /**
+     * Fill Nut_StatusTool:
+     *  - Header rows (location + year)
+     *  - Data rows 10–1009: columns A–J only (K+ are formula cells)
+     *
+     * Writing G/H as Excel date serials (numeric, style 335) lets the tool's
+     * built-in VLOOKUP formulas auto-compute age, WFA, HFA, and WFLH status,
+     * which then cascade into Summary → Data-Export automatically.
+     */
     private function writeNutStatusTool(\ZipArchive $zip, array $map, array $children): void
     {
         $key = null;
@@ -208,27 +223,23 @@ class EoptRegion6Export
 
         $xml = $zip->getFromName($map[$key]);
 
-        // Fill header cells (inject into header rows)
-        $today = date('m/d/Y');
+        // ── Header cells ────────────────────────────────────────────────────────
+        // M1 = Year (K1 is =TODAY() — leave the formula intact)
+        $xml = $this->injectRowCells($xml, 1, [
+            'M' => ['n', $this->year],
+        ]);
+
+        // Row 6: E6 = Barangay, I6 = City/Municipality, M6 = Province
         $xml = $this->injectRowCells($xml, 6, [
-            'C' => ['s', $this->barangay],
-            'F' => ['s', $this->municipality],
-            'N' => ['s', $this->province],
-        ]);
-        $xml = $this->injectRowCells($xml, 7, [
-            'I' => ['s', $today],
-            'M' => ['s', (string)$this->year],
-        ]);
-        $xml = $this->injectRowCells($xml, 8, [
-            'E' => ['s', $this->barangay],
-            'J' => ['s', $this->region],
+            'E' => ['s', strtoupper($this->barangay)],
+            'I' => ['s', strtoupper($this->municipality)],
+            'M' => ['s', $this->province],
         ]);
 
-        // Nut_StatusTool XML is large (~19 MB); increase PCRE limits to prevent silent failure
-        $prevBacktrack  = ini_set('pcre.backtrack_limit', 10000000);
-        $prevRecursion  = ini_set('pcre.recursion_limit',   500000);
+        // ── Data rows ───────────────────────────────────────────────────────────
+        $prevBacktrack = ini_set('pcre.backtrack_limit', 10000000);
+        $prevRecursion = ini_set('pcre.recursion_limit',   500000);
 
-        // Fill data rows (10 to 1009) — preserve existing formula cells (AI+)
         $xml = preg_replace_callback(
             '/<row r="(\d+)"([^>]*)>(.*?)<\/row>/s',
             function ($m) use ($children) {
@@ -242,34 +253,30 @@ class EoptRegion6Export
 
                 $childIdx = $rowNum - 10;
 
-                // Remove existing cells in data-input columns A-R (single-letter refs)
-                $rowBody = preg_replace('/<c r="[A-R]\d+"[^>]*>.*?<\/c>/s', '', $rowBody);
-                $rowBody = preg_replace('/<c r="[A-R]\d+"[^>]*\/>/s',        '', $rowBody);
+                // Clear only user-input columns A–J; preserve K+ formula cells
+                $rowBody = preg_replace('/<c r="[A-J]\d+"[^>]*>.*?<\/c>/s', '', $rowBody);
+                $rowBody = preg_replace('/<c r="[A-J]\d+"[^>]*\/>/s',        '', $rowBody);
 
                 if (!isset($children[$childIdx])) {
-                    // No child for this slot — blank row, keep formula cols
                     return '<row r="' . $rowNum . '"' . $rowAttrs . '>' . $rowBody . '</row>';
                 }
 
-                $c   = $children[$childIdx];
-                $dob = $c['date_of_birth']   ? \DateTime::createFromFormat('Y-m-d', $c['date_of_birth'])   : null;
-                $adm = $c['assessment_date'] ? \DateTime::createFromFormat('Y-m-d', $c['assessment_date']) : null;
+                $c = $children[$childIdx];
+
+                $dobSerial  = $c['date_of_birth']   ? $this->dateSerial($c['date_of_birth'])   : null;
+                $dateSerial = $c['assessment_date'] ? $this->dateSerial($c['assessment_date']) : null;
 
                 $cells = $this->buildRowCells($rowNum, [
                     'A' => ['n', $childIdx + 1],
-                    'E' => ['s', $c['purok_zone'] ?? ''],
-                    'F' => ['s', $this->motherName($c['mother_name'])],
-                    'G' => ['s', $dob ? $dob->format('m/d/Y') : ''],
-                    'H' => ['s', $this->childName($c)],
-                    'I' => ['s', strtolower($c['sex']) === 'female' ? 'F' : 'M'],
-                    'J' => ['s', $adm ? $adm->format('m/d/Y') : ''],
-                    'K' => ['n', (int)$c['age_in_months']],
-                    'L' => ['n', $c['weight_kg'] !== null ? (float)$c['weight_kg'] : 0],
-                    'M' => ['n', $c['height_cm'] !== null ? (float)$c['height_cm'] : 0],
-                    'N' => ['s', (!empty($c['is_indigenous_people'])) ? 'YES' : 'NO'],
-                    'P' => ['s', $this->wfaCode($c['nutritional_status'] ?? '')],
-                    'Q' => ['s', $this->hfaCode($c['hfa_status'] ?? '')],
-                    'R' => ['s', $this->wflhCode($c['wflh_status'] ?? '')],
+                    'B' => ['s', $c['purok_zone'] ?? ''],
+                    'C' => ['s', $this->motherName($c['mother_name'])],
+                    'D' => ['s', $this->childName($c)],
+                    'E' => ['s', !empty($c['is_indigenous_people']) ? 'YES' : 'NO'],
+                    'F' => ['s', strtolower($c['sex']) === 'female' ? 'F' : 'M'],
+                    'G' => ['d', $dobSerial],
+                    'H' => ['d', $dateSerial],
+                    'I' => ['n', $c['weight_kg'] !== null ? (float)$c['weight_kg'] : null],
+                    'J' => ['n', $c['height_cm'] !== null ? (float)$c['height_cm'] : null],
                 ]);
 
                 $fullBody = $this->sortRowCells($cells . $rowBody);
@@ -278,7 +285,6 @@ class EoptRegion6Export
             $xml
         );
 
-        // Restore previous PCRE limits
         ini_set('pcre.backtrack_limit', $prevBacktrack);
         ini_set('pcre.recursion_limit',  $prevRecursion);
 
@@ -295,8 +301,8 @@ class EoptRegion6Export
     // ─── XML helpers ──────────────────────────────────────────────────────────
 
     /**
-     * Inject/replace specific cells in an existing row.
-     * Works for both existing cells and cells that don't yet exist in the row.
+     * Inject / replace specific cells in an existing row by reference.
+     * Works for both existing cells and cells not yet present in the row.
      */
     private function injectRowCells(string $xml, int $rowNum, array $cells): string
     {
@@ -322,11 +328,7 @@ class EoptRegion6Export
                     }
                 }
 
-                // XLSX requires cells to be in ascending column order within a row.
-                // Re-sort all cells after appending new ones.
-                $rowBody = $this->sortRowCells($rowBody);
-
-                return '<row r="' . $rowNum . '"' . $attrs . '>' . $rowBody . '</row>';
+                return '<row r="' . $rowNum . '"' . $attrs . '>' . $this->sortRowCells($rowBody) . '</row>';
             },
             $xml
         );
@@ -334,20 +336,18 @@ class EoptRegion6Export
 
     /**
      * Re-order all <c> elements within a row body by column reference.
-     * XLSX is invalid if cells are out of column order.
+     * XLSX requires cells to be in ascending column order.
      */
     private function sortRowCells(string $rowBody): string
     {
         $cellMap = [];
 
-        // Full cells: <c r="X"> ... </c>
         preg_match_all('/(<c r="([^"]+)"[^>\/]*>.*?<\/c>)/s', $rowBody, $m1, PREG_SET_ORDER);
         foreach ($m1 as $m) {
             $col = preg_replace('/\d+/', '', $m[2]);
             $cellMap[$col] = $m[1];
         }
 
-        // Self-closing: <c r="X" ... />
         preg_match_all('/(<c r="([^"]+)"[^>]*\/>)/s', $rowBody, $m2, PREG_SET_ORDER);
         foreach ($m2 as $m) {
             $col = preg_replace('/\d+/', '', $m[2]);
@@ -366,12 +366,17 @@ class EoptRegion6Export
     }
 
     /**
-     * Build cell XML string for a set of column→value pairs in a given row.
+     * Build cell XML for a column→[type,value] map in a given row.
+     *
+     * Types:
+     *   's' = inline string   'n' = number   'd' = Excel date serial (style 335)
      */
     private function buildRowCells(int $rowNum, array $cells): string
     {
         $out = '';
         foreach ($cells as $col => [$type, $val]) {
+            if ($val === null) continue;
+
             $ref = $col . $rowNum;
             if ($type === 's') {
                 $str = (string)$val;
@@ -381,6 +386,9 @@ class EoptRegion6Export
                     $escaped = htmlspecialchars($str, ENT_XML1 | ENT_QUOTES, 'UTF-8');
                     $out    .= '<c r="' . $ref . '" t="inlineStr"><is><t>' . $escaped . '</t></is></c>';
                 }
+            } elseif ($type === 'd') {
+                // Date serial: numeric cell with the template's date-format style
+                $out .= '<c r="' . $ref . '" s="' . self::DATE_STYLE . '"><v>' . (int)$val . '</v></c>';
             } else {
                 $out .= '<c r="' . $ref . '"><v>' . $val . '</v></c>';
             }
@@ -390,19 +398,15 @@ class EoptRegion6Export
 
     // ─── Formatters ───────────────────────────────────────────────────────────
 
-    private function wfaCode(string $s): string
+    /**
+     * Convert a Y-m-d date string to an Excel serial date number.
+     * Excel epoch = Dec 30 1899 (accounts for the 1900 leap-year bug).
+     */
+    private function dateSerial(string $dateStr): int
     {
-        return match ($s) { 'Normal' => 'N', 'UW' => 'UW', 'SUW' => 'SUW', 'OW', 'OB' => 'OW', default => '' };
-    }
-
-    private function hfaCode(string $s): string
-    {
-        return match ($s) { 'Normal' => 'N', 'St' => 'St', 'SSt' => 'SSt', default => '' };
-    }
-
-    private function wflhCode(string $s): string
-    {
-        return match ($s) { 'Normal' => 'N', 'MW' => 'MW', 'SW' => 'SW', 'OW' => 'OW', 'OB' => 'Ob', default => '' };
+        $d = \DateTime::createFromFormat('Y-m-d', $dateStr);
+        if (!$d) return 0;
+        return (int)(new \DateTime('1899-12-30'))->diff($d)->days;
     }
 
     private function motherName(?string $name): string
