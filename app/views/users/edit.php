@@ -57,7 +57,7 @@ $isAdmin   = strtolower($user['role']) === 'admin';
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" id="roleSelect" class="form-select" required>
-                                <?php foreach (['admin','nutritionist','bhw','bns','midwife'] as $r): ?>
+                                <?php foreach (['admin','bhw','bns','midwife'] as $r): ?>
                                 <option value="<?= $r ?>" <?= strtolower($user['role'] ?? '') === $r ? 'selected' : '' ?>><?= ucfirst($r) ?></option>
                                 <?php endforeach; ?>
                             </select>
