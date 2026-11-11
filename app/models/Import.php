@@ -132,11 +132,11 @@ class Import extends Model
                 if ($row['existing']) {
                     $beneficiaryId = $row['existing']['id'];
                     $beneficiaryModel->update($beneficiaryId, array_merge($this->toBeneficiaryFields($data), [
-                        'source' => $source,
+                        'source' => $source, 'validation_status' => 'validated',
                     ]));
                 } else {
                     $beneficiaryId = $beneficiaryModel->insert(array_merge($this->toBeneficiaryFields($data), [
-                        'created_by' => $importedBy, 'source' => $source,
+                        'created_by' => $importedBy, 'source' => $source, 'validation_status' => 'validated',
                     ]));
                 }
 
