@@ -52,22 +52,24 @@ class Controller
         $this->requireAuth();
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return;
+        $permissions = (array)Session::get('user_permissions', []);
         if ($role === 'midwife') {
-            if (!in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports', 'import'])) {
+            $base = ['beneficiaries', 'validation', 'assessments', 'reports'];
+            if (!in_array($module, $base) && !in_array($module, $permissions)) {
                 Session::flash('error', 'You do not have permission to access this page.');
                 $this->redirect('/dashboard');
             }
             return;
         }
         if ($role === 'bns') {
-            if (!in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs'])) {
+            $base = ['beneficiaries', 'assessments', 'reports', 'programs'];
+            if (!in_array($module, $base) && !in_array($module, $permissions)) {
                 Session::flash('error', 'You do not have permission to access this page.');
                 $this->redirect('/dashboard');
             }
             return;
         }
-        $permissions = Session::get('user_permissions', []);
-        if (!in_array($module, (array)$permissions)) {
+        if (!in_array($module, $permissions)) {
             Session::flash('error', 'You do not have permission to access this page.');
             $this->redirect('/dashboard');
         }
@@ -75,11 +77,18 @@ class Controller
 
     protected function hasPermission(string $module): bool
     {
-        $role = strtolower(Session::get('user_role', ''));
+        $role        = strtolower(Session::get('user_role', ''));
+        $permissions = (array)Session::get('user_permissions', []);
         if ($role === 'admin' || $role === 'nutritionist') return true;
-        if ($role === 'midwife') return in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports', 'import']);
-        if ($role === 'bns') return in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs']);
-        return in_array($module, (array)Session::get('user_permissions', []));
+        if ($role === 'midwife') {
+            return in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports'])
+                || in_array($module, $permissions);
+        }
+        if ($role === 'bns') {
+            return in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs'])
+                || in_array($module, $permissions);
+        }
+        return in_array($module, $permissions);
     }
 
     protected function validateCsrf(): void

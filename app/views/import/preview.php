@@ -78,6 +78,8 @@ $errorCount  = count(array_filter($rows, fn($r) => $r['status'] === 'error'));
                         <th>Sex</th>
                         <th>Barangay</th>
                         <th>Weight</th>
+                        <th>Height</th>
+                        <th>MUAC</th>
                         <th>Error</th>
                         <th style="width:80px;" class="text-center">Skip</th>
                     </tr>
@@ -102,6 +104,8 @@ $errorCount  = count(array_filter($rows, fn($r) => $r['status'] === 'error'));
                         <td><?= htmlspecialchars($data['sex']) ?></td>
                         <td><?= htmlspecialchars($data['barangay']) ?></td>
                         <td><?= $data['weight_kg'] ?? '—' ?></td>
+                        <td><?= $data['height_cm'] ?? '—' ?></td>
+                        <td><?= $data['muac_cm'] ?? '—' ?></td>
                         <td><?= $isError ? '<span class="text-danger small">' . htmlspecialchars($r['error']) . '</span>' : '' ?></td>
                         <td class="text-center">
                             <?php if (!$isError): ?>

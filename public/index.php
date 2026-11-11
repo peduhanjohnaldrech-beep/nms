@@ -25,8 +25,8 @@ function hasPerm(string $m): bool {
         $perms = (array)(\Core\Session::get('user_permissions') ?? []);
     }
     if ($isAdm) return true;
-    if ($isMid) return in_array($m, ['beneficiaries', 'validation', 'assessments', 'reports', 'import']);
-    if ($isBns) return in_array($m, ['beneficiaries', 'assessments', 'reports', 'programs']);
+    if ($isMid) return in_array($m, ['beneficiaries', 'validation', 'assessments', 'reports']) || in_array($m, $perms);
+    if ($isBns) return in_array($m, ['beneficiaries', 'assessments', 'reports', 'programs'])   || in_array($m, $perms);
     return in_array($m, $perms);
 }
 
