@@ -31,6 +31,15 @@
 $userRole  = \Core\Session::get('user_role', '');
 $userName  = \Core\Session::get('user_name', '');
 $isAdmin   = strtolower($userRole) === 'admin';
+$roleDisplayName = match(strtolower($userRole)) {
+    'admin'        => 'Nutrition Coordinator',
+    'nutritionist' => 'Nutritionist',
+    'midwife'      => 'Midwife',
+    'bns'          => 'BNS',
+    'bhw'          => 'BHW',
+    'encoder'      => 'Encoder',
+    default        => ucfirst($userRole),
+};
 // hasPerm() is defined globally in public/index.php
 // Pending validation count (midwife / admin / nutritionist)
 $__pendingValidation = 0;
@@ -143,7 +152,7 @@ foreach ($__crumbSegs as $seg) {
                     <span class="nav-link" style="color:rgba(255,255,255,.65)">
                         <i class="bi bi-person-circle me-1"></i>
                         <?= htmlspecialchars($userName) ?>
-                        <span class="badge ms-1" style="background:rgba(255,255,255,.15);color:#fff"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
+                        <span class="badge ms-1" style="background:rgba(255,255,255,.15);color:#fff"><?= htmlspecialchars($roleDisplayName) ?></span>
                     </span>
                 </li>
                 <li class="nav-item d-flex align-items-center ms-1">
@@ -181,7 +190,7 @@ foreach ($__crumbSegs as $seg) {
                     <div style="width:30px;height:30px;border-radius:50%;background:rgba(0,198,255,.15);border:1px solid rgba(0,198,255,.3);color:#00C6FF;font-size:0.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><?= strtoupper(substr($userName, 0, 1)) ?></div>
                     <div style="min-width:0;">
                         <div style="color:var(--text-main);font-size:0.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars($userName) ?></div>
-                        <span style="display:inline-block;padding:1px 5px;background:rgba(0,198,255,.1);border:1px solid rgba(0,198,255,.25);color:#00C6FF;font-size:0.6rem;border-radius:3px;"><?= htmlspecialchars(ucfirst($userRole)) ?></span>
+                        <span style="display:inline-block;padding:1px 5px;background:rgba(0,198,255,.1);border:1px solid rgba(0,198,255,.25);color:#00C6FF;font-size:0.6rem;border-radius:3px;"><?= htmlspecialchars($roleDisplayName) ?></span>
                     </div>
                 </div>
             </div>
@@ -281,7 +290,7 @@ foreach ($__crumbSegs as $seg) {
             </a>
             <?php endif; ?>
 
-            <?php if ($isAdmin): ?>
+            <?php if (hasPerm('import')): ?>
             <a class="nav-link <?= __navActive('/import') ?>" href="<?= APP_URL ?>/import">
                 <i class="bi bi-file-earmark-excel me-2"></i>Import
             </a>

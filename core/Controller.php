@@ -53,7 +53,7 @@ class Controller
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return;
         if ($role === 'midwife') {
-            if (!in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports'])) {
+            if (!in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports', 'import'])) {
                 Session::flash('error', 'You do not have permission to access this page.');
                 $this->redirect('/dashboard');
             }
@@ -77,7 +77,7 @@ class Controller
     {
         $role = strtolower(Session::get('user_role', ''));
         if ($role === 'admin' || $role === 'nutritionist') return true;
-        if ($role === 'midwife') return in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports']);
+        if ($role === 'midwife') return in_array($module, ['beneficiaries', 'validation', 'assessments', 'reports', 'import']);
         if ($role === 'bns') return in_array($module, ['beneficiaries', 'assessments', 'reports', 'programs']);
         return in_array($module, (array)Session::get('user_permissions', []));
     }
