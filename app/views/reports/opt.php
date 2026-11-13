@@ -103,6 +103,12 @@ $malnourished = $statusCounts['SUW'] + $statusCounts['UW'];
                 </a>
             </div>
         </form>
+        <script>
+        document.getElementById('f_barangay').addEventListener('change', function () {
+            document.getElementById('f_purok').value = '';
+            this.closest('form').submit();
+        });
+        </script>
     </div>
 </div>
 
