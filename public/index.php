@@ -203,7 +203,8 @@ $router->post('/users/{id}/destroy',  'UserController@destroy');
 $router->get('/api/health', 'HealthController@check');
 
 // Auth
-$router->post('/api/auth/login',  'AuthApiController@login');
+$router->post('/api/auth/login',       'AuthApiController@login');
+$router->post('/api/auth/verify-otp', 'AuthApiController@verifyOtp');
 $router->post('/api/auth/logout', 'AuthApiController@logout');
 $router->get('/api/auth/me',      'AuthApiController@me');
 
