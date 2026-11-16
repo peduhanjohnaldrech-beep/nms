@@ -47,9 +47,13 @@ class EoptExport
         $zip = new \ZipArchive();
         $zip->open($tmp);
 
-        // Remove calcChain — it references formula cells we're overwriting with values.
-        // Excel will silently regenerate it on open.
+        // Remove calcChain and force full recalculation on open.
         $zip->deleteName('xl/calcChain.xml');
+        $wbXml = $zip->getFromName('xl/workbook.xml');
+        if ($wbXml !== false) {
+            $wbXml = preg_replace('/<calcPr\b/', '<calcPr fullCalcOnLoad="1"', $wbXml, 1);
+            $zip->addFromString('xl/workbook.xml', $wbXml, \ZipArchive::FL_OVERWRITE);
+        }
 
         $sheetMap = $this->getSheetFileMap($zip);
 

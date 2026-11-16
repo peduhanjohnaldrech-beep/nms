@@ -64,8 +64,12 @@ class EoptRegion6Export
         );
         $zip->addFromString('[Content_Types].xml', $ct, \ZipArchive::FL_OVERWRITE);
 
-        // Remove calcChain so Excel recalculates every formula on open
+        // Remove calcChain and force full recalculation so Excel recomputes
+        // every formula (including aggregate row-6 cells) in dependency order on open.
         $zip->deleteName('xl/calcChain.xml');
+        $wbXml = $zip->getFromName('xl/workbook.xml');
+        $wbXml = preg_replace('/<calcPr\b/', '<calcPr fullCalcOnLoad="1"', $wbXml, 1);
+        $zip->addFromString('xl/workbook.xml', $wbXml, \ZipArchive::FL_OVERWRITE);
 
         $sheetMap = $this->getSheetFileMap($zip);
         $children = $this->fetchChildren();
