@@ -419,7 +419,9 @@ class EoptRegion6Export
             $ssXml    = substr($ssXml, 0, $pos) . $newEntry . substr($ssXml, $end);
         }
 
-        $zip->addFromString($ssPath, $ssXml, \ZipArchive::FL_OVERWRITE);
+        // delete + add is compatible with all PHP/libzip versions
+        $zip->deleteName($ssPath);
+        $zip->addFromString($ssPath, $ssXml);
     }
 
     /**
