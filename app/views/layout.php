@@ -238,7 +238,7 @@ foreach ($__crumbSegs as $seg) {
                 $__sidebarPrograms = (new App\Models\Program())->getActive();
             } catch (\Throwable $e) {}
             ?>
-            <a class="nav-link d-flex justify-content-between align-items-center <?= $__programsOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__programsOpen ? 'active' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarPrograms" role="button"
                aria-expanded="<?= $__programsOpen ? 'true' : 'false' ?>" aria-controls="sidebarPrograms">
                 <span><i class="bi bi-grid me-2" aria-hidden="true"></i>Programs</span>
@@ -268,7 +268,7 @@ foreach ($__crumbSegs as $seg) {
                         default => htmlspecialchars($__prog['code'] . ' — ' . $__prog['name']),
                     };
                     ?>
-                <a class="nav-link ps-4" href="<?= $__progUrl ?>">
+                <a class="nav-link ps-4 <?= __navActive('/programs/' . strtolower($__prog['code'])) ?>" href="<?= $__progUrl ?>">
                     <i class="bi <?= htmlspecialchars($__prog['icon']) ?> me-2"></i><?= $__shortName ?>
                 </a>
                 <?php endforeach; ?>
@@ -305,7 +305,7 @@ foreach ($__crumbSegs as $seg) {
             <?php if (hasPerm('activity_log') || $isAdmin): ?>
             <div class="mob-section-label d-lg-none">ADMIN</div>
             <?php /* Admin dropdown */ ?>
-            <a class="nav-link d-flex justify-content-between align-items-center <?= $__adminOpen ? '' : 'collapsed' ?>"
+            <a class="nav-link d-flex justify-content-between align-items-center <?= $__adminOpen ? 'active' : 'collapsed' ?>"
                data-bs-toggle="collapse" href="#sidebarAdmin" role="button"
                aria-expanded="<?= $__adminOpen ? 'true' : 'false' ?>" aria-controls="sidebarAdmin">
                 <span><i class="bi bi-gear-fill me-2" aria-hidden="true"></i>Admin</span>
@@ -313,17 +313,17 @@ foreach ($__crumbSegs as $seg) {
             </a>
             <div class="collapse <?= $__adminOpen ? 'show' : '' ?>" id="sidebarAdmin">
                 <?php if (hasPerm('activity_log')): ?>
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/activity">
+                <a class="nav-link ps-4 <?= __navActive('/activity') ?>" href="<?= APP_URL ?>/activity">
                     <i class="bi bi-journal-text me-2"></i>Activity Log
                 </a>
                 <?php endif; ?>
                 <?php if ($isAdmin): ?>
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/users">
+                <a class="nav-link ps-4 <?= __navActive('/users') ?>" href="<?= APP_URL ?>/users">
                     <i class="bi bi-person-gear me-2"></i>User Management
                 </a>
                 <?php endif; ?>
                 <?php if (hasPerm('programs_admin') || $isAdmin): ?>
-                <a class="nav-link ps-4" href="<?= APP_URL ?>/programs-admin">
+                <a class="nav-link ps-4 <?= __navActive('/programs-admin') ?>" href="<?= APP_URL ?>/programs-admin">
                     <i class="bi bi-grid me-2"></i>Program Manager
                 </a>
                 <?php endif; ?>
@@ -386,6 +386,10 @@ foreach ($__crumbSegs as $seg) {
 // Init Bootstrap tooltips
 document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
     new bootstrap.Tooltip(el, { trigger: 'hover' });
+});
+// Reload if restored from bfcache so stale data never shows
+window.addEventListener('pageshow', function(e) {
+    if (e.persisted) location.reload();
 });
 </script>
 
