@@ -48,9 +48,6 @@ class EoptRegion6Export
      */
     public function generate(): string
     {
-        file_put_contents('/var/www/nms/storage/eopt_debug.txt',
-            date('H:i:s') . " generate() called brgy={$this->barangay}\n", FILE_APPEND);
-        $dbg = function(string $msg) { file_put_contents('/var/www/nms/storage/eopt_debug.txt', $msg . "\n", FILE_APPEND); };
         $src = BASE_PATH . '/storage/templates/eopt_region6.xltx';
         $tmp = tempnam(sys_get_temp_dir(), 'eopt_r6_') . '.xlsx';
         copy($src, $tmp);
@@ -69,18 +66,18 @@ class EoptRegion6Export
 
         // Remove calcChain and force full recalculation so Excel recomputes
         // every formula (including aggregate row-6 cells) in dependency order on open.
+        // Build sheet map BEFORE modifying workbook.xml — getFromName returns
+        // stale/empty data if called after addFromString on the same entry.
+        $sheetMap = $this->getSheetFileMap($zip);
+
         $zip->deleteName('xl/calcChain.xml');
         $wbXml = $zip->getFromName('xl/workbook.xml');
         $wbXml = preg_replace('/<calcPr\b/', '<calcPr fullCalcOnLoad="1"', $wbXml, 1);
         $zip->addFromString('xl/workbook.xml', $wbXml, \ZipArchive::FL_OVERWRITE);
 
-        $sheetMap = $this->getSheetFileMap($zip);
-        $dbg('sheetMap keys=' . implode(',', array_keys($sheetMap)));
         $children = $this->fetchChildren();
-        $dbg('fetchChildren count=' . count($children) . ' muni=' . $this->municipality);
 
         $this->writeNutStatusTool($zip, $sheetMap, $children);
-        $dbg('writeNutStatusTool done');
         $this->writeBnsPrintoutHeader($zip, $sheetMap);
         $this->writeForm1AHeader($zip, $sheetMap);
 
@@ -256,11 +253,6 @@ class EoptRegion6Export
             $idx = $this->getSharedStringIndex($xml, $ref);
                 if ($idx !== null) $ssUpdates[$idx] = $val;
         }
-        file_put_contents(BASE_PATH . '/storage/eopt_debug.txt',
-            "barangay={$this->barangay}\nmuni={$this->municipality}\nprov={$this->province}\n" .
-            "xml_len=" . strlen((string)$xml) . "\n" .
-            "ssUpdates=" . json_encode($ssUpdates) . "\n"
-        );
         if (!empty($ssUpdates)) {
             $this->updateSharedStrings($zip, $ssUpdates);
         }
