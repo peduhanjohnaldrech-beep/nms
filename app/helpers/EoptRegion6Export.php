@@ -248,13 +248,15 @@ class EoptRegion6Export
         ] as $ref => $val) {
             if ($val === '') continue;
             $idx = $this->getSharedStringIndex($xml, $ref);
-            error_log("[EoptR6] $ref val='$val' ssIdx=" . ($idx ?? 'NULL'));
-            if ($idx !== null) $ssUpdates[$idx] = $val;
+                if ($idx !== null) $ssUpdates[$idx] = $val;
         }
-        error_log("[EoptR6] ssUpdates=" . json_encode($ssUpdates) . " xml_len=" . strlen((string)$xml));
+        file_put_contents('/tmp/eopt_debug.txt',
+            "barangay={$this->barangay}\nmuni={$this->municipality}\nprov={$this->province}\n" .
+            "xml_len=" . strlen((string)$xml) . "\n" .
+            "ssUpdates=" . json_encode($ssUpdates) . "\n"
+        );
         if (!empty($ssUpdates)) {
             $this->updateSharedStrings($zip, $ssUpdates);
-            error_log("[EoptR6] updateSharedStrings done");
         }
 
         // ── Data rows ───────────────────────────────────────────────────────────
