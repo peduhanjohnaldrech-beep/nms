@@ -238,11 +238,11 @@ class EoptRegion6Export
         ]);
 
         // Row 6: E6 = Barangay, I6 = City/Municipality, M6 = Province
-        $xml = $this->injectRowCells($xml, 6, [
-            'E' => ['s', strtoupper($this->barangay)],
-            'I' => ['s', strtoupper($this->municipality)],
-            'M' => ['s', $this->province],
-        ]);
+        // Use direct cell-level replacement — row 6 has 239 aggregate formula
+        // cells making row-level regex unreliable even with raised PCRE limits.
+        $xml = $this->replaceCell($xml, 'E6', strtoupper($this->barangay));
+        $xml = $this->replaceCell($xml, 'I6', strtoupper($this->municipality));
+        $xml = $this->replaceCell($xml, 'M6', $this->province);
 
         // ── Data rows ───────────────────────────────────────────────────────────
 
@@ -305,6 +305,27 @@ class EoptRegion6Export
     }
 
     // ─── XML helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * Directly replace a single cell anywhere in the sheet XML by its reference
+     * (e.g. 'E6'). Swaps the existing cell element in-place with an inline-string
+     * cell — no row-level regex or re-sorting needed.
+     */
+    private function replaceCell(string $xml, string $ref, string $val): string
+    {
+        $rq      = preg_quote($ref, '/');
+        $escaped = htmlspecialchars($val, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $newCell = $val !== ''
+            ? '<c r="' . $ref . '" t="inlineStr"><is><t>' . $escaped . '</t></is></c>'
+            : '<c r="' . $ref . '"/>';
+
+        // Replace open+close form first, then self-closing form
+        $result = preg_replace('/<c r="' . $rq . '"[^>]*>.*?<\/c>/s', $newCell, $xml, 1);
+        if ($result !== null && $result !== $xml) return $result;
+
+        $result = preg_replace('/<c r="' . $rq . '"[^>]*\/>/s', $newCell, $xml, 1);
+        return $result ?? $xml;
+    }
 
     /**
      * Inject / replace specific cells in an existing row by reference.
