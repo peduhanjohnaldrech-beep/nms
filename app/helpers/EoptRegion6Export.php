@@ -238,11 +238,21 @@ class EoptRegion6Export
         ]);
 
         // Row 6: E6 = Barangay, I6 = City/Municipality, M6 = Province
-        // Use direct cell-level replacement — row 6 has 239 aggregate formula
-        // cells making row-level regex unreliable even with raised PCRE limits.
-        $xml = $this->replaceCell($xml, 'E6', strtoupper($this->barangay));
-        $xml = $this->replaceCell($xml, 'I6', strtoupper($this->municipality));
-        $xml = $this->replaceCell($xml, 'M6', $this->province);
+        // These cells use shared strings (t="s"). Collect all three indices then
+        // update sharedStrings.xml in a single read-modify-write pass.
+        $ssUpdates = [];
+        foreach ([
+            'E6' => strtoupper($this->barangay),
+            'I6' => strtoupper($this->municipality),
+            'M6' => $this->province,
+        ] as $ref => $val) {
+            if ($val === '') continue;
+            $idx = $this->getSharedStringIndex($xml, $ref);
+            if ($idx !== null) $ssUpdates[$idx] = $val;
+        }
+        if (!empty($ssUpdates)) {
+            $this->updateSharedStrings($zip, $ssUpdates);
+        }
 
         // ── Data rows ───────────────────────────────────────────────────────────
 
@@ -348,6 +358,68 @@ class EoptRegion6Export
         }
 
         return $xml;
+    }
+
+    /**
+     * Extract the shared-string index (<v>N</v>) from a t="s" cell by reference.
+     * Returns null if the cell is not found or is not a shared-string cell.
+     */
+    private function getSharedStringIndex(string $sheetXml, string $ref): ?int
+    {
+        $needle = '<c r="' . $ref . '"';
+        $start  = strpos($sheetXml, $needle);
+        if ($start === false) return null;
+
+        $after = $sheetXml[$start + strlen($needle)] ?? '';
+        if ($after !== ' ' && $after !== '>' && $after !== '/') return null;
+
+        $tagEnd = strpos($sheetXml, '>', $start);
+        if ($tagEnd === false) return null;
+
+        $openTag = substr($sheetXml, $start, $tagEnd - $start + 1);
+        if (strpos($openTag, 't="s"') === false) return null;
+
+        $vStart = strpos($sheetXml, '<v>', $tagEnd);
+        $vEnd   = strpos($sheetXml, '</v>', (int)$vStart);
+        if ($vStart === false || $vEnd === false) return null;
+
+        return (int)substr($sheetXml, $vStart + 3, $vEnd - $vStart - 3);
+    }
+
+    /**
+     * Update multiple shared-string entries in a single read-modify-write pass.
+     * $updates is [ssIndex => newValue, ...].
+     * Process highest index first so lower-index byte positions are unaffected.
+     */
+    private function updateSharedStrings(\ZipArchive $zip, array $updates): void
+    {
+        $ssPath = 'xl/sharedStrings.xml';
+        $ssXml  = $zip->getFromName($ssPath);
+        if ($ssXml === false) return;
+
+        // Highest index first: a replacement at index N doesn't shift positions
+        // of entries at index < N (they come earlier in the string).
+        krsort($updates);
+
+        foreach ($updates as $index => $value) {
+            // Walk to the nth <si (0-based)
+            $pos = 0;
+            for ($i = 0; $i <= $index; $i++) {
+                $found = strpos($ssXml, '<si', $pos);
+                if ($found === false) continue 2;
+                $pos = ($i === $index) ? $found : $found + 1;
+            }
+
+            $end = strpos($ssXml, '</si>', $pos);
+            if ($end === false) continue;
+            $end += 5;
+
+            $escaped  = htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $newEntry = '<si><t>' . $escaped . '</t></si>';
+            $ssXml    = substr($ssXml, 0, $pos) . $newEntry . substr($ssXml, $end);
+        }
+
+        $zip->addFromString($ssPath, $ssXml, \ZipArchive::FL_OVERWRITE);
     }
 
     /**
