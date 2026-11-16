@@ -250,7 +250,7 @@ class EoptRegion6Export
             $idx = $this->getSharedStringIndex($xml, $ref);
                 if ($idx !== null) $ssUpdates[$idx] = $val;
         }
-        file_put_contents('/tmp/eopt_debug.txt',
+        file_put_contents(BASE_PATH . '/storage/eopt_debug.txt',
             "barangay={$this->barangay}\nmuni={$this->municipality}\nprov={$this->province}\n" .
             "xml_len=" . strlen((string)$xml) . "\n" .
             "ssUpdates=" . json_encode($ssUpdates) . "\n"
