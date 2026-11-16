@@ -227,6 +227,10 @@ class EoptRegion6Export
 
         $xml = $zip->getFromName($map[$key]);
 
+        // Raise PCRE limits for the entire sheet (row 6 has 239 aggregate cells)
+        $prevBacktrack = ini_set('pcre.backtrack_limit', 10000000);
+        $prevRecursion = ini_set('pcre.recursion_limit',   500000);
+
         // ── Header cells ────────────────────────────────────────────────────────
         // M1 = Year (K1 is =TODAY() — leave the formula intact)
         $xml = $this->injectRowCells($xml, 1, [
@@ -241,8 +245,6 @@ class EoptRegion6Export
         ]);
 
         // ── Data rows ───────────────────────────────────────────────────────────
-        $prevBacktrack = ini_set('pcre.backtrack_limit', 10000000);
-        $prevRecursion = ini_set('pcre.recursion_limit',   500000);
 
         $xml = preg_replace_callback(
             '/<row r="(\d+)"([^>]*)>(.*?)<\/row>/s',
