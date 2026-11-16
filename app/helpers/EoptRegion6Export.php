@@ -48,6 +48,8 @@ class EoptRegion6Export
      */
     public function generate(): string
     {
+        file_put_contents('/var/www/nms/storage/eopt_debug.txt',
+            date('H:i:s') . " generate() called brgy={$this->barangay}\n", FILE_APPEND);
         $src = BASE_PATH . '/storage/templates/eopt_region6.xltx';
         $tmp = tempnam(sys_get_temp_dir(), 'eopt_r6_') . '.xlsx';
         copy($src, $tmp);
