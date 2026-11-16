@@ -308,23 +308,46 @@ class EoptRegion6Export
 
     /**
      * Directly replace a single cell anywhere in the sheet XML by its reference
-     * (e.g. 'E6'). Swaps the existing cell element in-place with an inline-string
-     * cell — no row-level regex or re-sorting needed.
+     * (e.g. 'E6'). Uses pure string operations — no regex — so it works even on
+     * very large sheet XML (the Nut_StatusTool sheet is ~20 MB).
      */
     private function replaceCell(string $xml, string $ref, string $val): string
     {
-        $rq      = preg_quote($ref, '/');
         $escaped = htmlspecialchars($val, ENT_XML1 | ENT_QUOTES, 'UTF-8');
         $newCell = $val !== ''
             ? '<c r="' . $ref . '" t="inlineStr"><is><t>' . $escaped . '</t></is></c>'
             : '<c r="' . $ref . '"/>';
 
-        // Replace open+close form first, then self-closing form
-        $result = preg_replace('/<c r="' . $rq . '"[^>]*>.*?<\/c>/s', $newCell, $xml, 1);
-        if ($result !== null && $result !== $xml) return $result;
+        $needle = '<c r="' . $ref . '"';
+        $pos    = 0;
 
-        $result = preg_replace('/<c r="' . $rq . '"[^>]*\/>/s', $newCell, $xml, 1);
-        return $result ?? $xml;
+        while (($start = strpos($xml, $needle, $pos)) !== false) {
+            // Confirm exact reference — next char must be space, '>', or '/'
+            $after = $xml[$start + strlen($needle)] ?? '';
+            if ($after !== ' ' && $after !== '>' && $after !== '/') {
+                $pos = $start + 1;
+                continue;
+            }
+
+            // Find where the opening tag ends
+            $tagEnd = strpos($xml, '>', $start);
+            if ($tagEnd === false) { $pos = $start + 1; continue; }
+
+            if ($xml[$tagEnd - 1] === '/') {
+                // Self-closing form: <c r="E6" ... />
+                return substr($xml, 0, $start) . $newCell . substr($xml, $tagEnd + 1);
+            }
+
+            // Open+close form: find </c>
+            $closePos = strpos($xml, '</c>', $tagEnd);
+            if ($closePos !== false) {
+                return substr($xml, 0, $start) . $newCell . substr($xml, $closePos + 4);
+            }
+
+            $pos = $start + 1;
+        }
+
+        return $xml;
     }
 
     /**
