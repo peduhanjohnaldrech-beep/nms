@@ -50,6 +50,7 @@ class EoptRegion6Export
     {
         file_put_contents('/var/www/nms/storage/eopt_debug.txt',
             date('H:i:s') . " generate() called brgy={$this->barangay}\n", FILE_APPEND);
+        $dbg = function(string $msg) { file_put_contents('/var/www/nms/storage/eopt_debug.txt', $msg . "\n", FILE_APPEND); };
         $src = BASE_PATH . '/storage/templates/eopt_region6.xltx';
         $tmp = tempnam(sys_get_temp_dir(), 'eopt_r6_') . '.xlsx';
         copy($src, $tmp);
@@ -74,9 +75,12 @@ class EoptRegion6Export
         $zip->addFromString('xl/workbook.xml', $wbXml, \ZipArchive::FL_OVERWRITE);
 
         $sheetMap = $this->getSheetFileMap($zip);
+        $dbg('sheetMap keys=' . implode(',', array_keys($sheetMap)));
         $children = $this->fetchChildren();
+        $dbg('fetchChildren count=' . count($children) . ' muni=' . $this->municipality);
 
         $this->writeNutStatusTool($zip, $sheetMap, $children);
+        $dbg('writeNutStatusTool done');
         $this->writeBnsPrintoutHeader($zip, $sheetMap);
         $this->writeForm1AHeader($zip, $sheetMap);
 
