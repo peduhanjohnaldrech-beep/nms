@@ -5,6 +5,12 @@ class View
 {
     public static function render(string $view, array $data = [], bool $withLayout = true): void
     {
+        // Prevent browsers from caching HTML pages so stale data never shows
+        // after navigating back or when new features are deployed.
+        if (!headers_sent()) {
+            header('Cache-Control: no-store');
+        }
+
         // Make data keys available as variables
         extract($data);
 
