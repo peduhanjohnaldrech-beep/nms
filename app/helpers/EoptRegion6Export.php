@@ -72,7 +72,19 @@ class EoptRegion6Export
 
         $zip->deleteName('xl/calcChain.xml');
         $wbXml = $zip->getFromName('xl/workbook.xml');
-        $wbXml = preg_replace('/<calcPr\b/', '<calcPr fullCalcOnLoad="1"', $wbXml, 1);
+        // Replace the entire <calcPr> element (self-closing or paired) so we don't
+        // end up with duplicate attributes if the template already has fullCalcOnLoad.
+        // calcId="0" signals Excel the workbook is uncalculated; fullCalcOnLoad="1"
+        // instructs it to run a full recalc on open — both are needed for formulas
+        // in K+ to auto-fill without the user pressing F9.
+        $calcPrNew = '<calcPr calcId="0" fullCalcOnLoad="1"/>';
+        if (preg_match('/<calcPr\b[^>]*\/>/', $wbXml)) {
+            $wbXml = preg_replace('/<calcPr\b[^>]*\/>/', $calcPrNew, $wbXml, 1);
+        } elseif (preg_match('/<calcPr\b/', $wbXml)) {
+            $wbXml = preg_replace('/<calcPr\b.*?<\/calcPr>/s', $calcPrNew, $wbXml, 1);
+        } else {
+            $wbXml = str_replace('</workbook>', $calcPrNew . '</workbook>', $wbXml);
+        }
         $zip->addFromString('xl/workbook.xml', $wbXml, \ZipArchive::FL_OVERWRITE);
 
         $children = $this->fetchChildren();
@@ -247,7 +259,7 @@ class EoptRegion6Export
         foreach ([
             'E6' => strtoupper($this->barangay),
             'I6' => strtoupper($this->municipality),
-            'M6' => $this->province,
+            'M6' => $this->province ?: 'Negros Occidental',
         ] as $ref => $val) {
             if ($val === '') continue;
             $idx = $this->getSharedStringIndex($xml, $ref);
