@@ -284,9 +284,12 @@ class EoptRegion6Export
 
                 $childIdx = $rowNum - 10;
 
-                // Clear only user-input columns A–J; preserve K+ formula cells
-                $rowBody = preg_replace('/<c r="[A-J]\d+"[^>]*>.*?<\/c>/s', '', $rowBody);
-                $rowBody = preg_replace('/<c r="[A-J]\d+"[^>]*\/>/s',        '', $rowBody);
+                // Clear user-input columns A–J AND visible status columns K–N.
+                // K–N are written as PHP-computed values (age, WFA, HFA, WFLH)
+                // so the file shows results immediately without Excel recalculation.
+                // Deeper helper columns (O+) remain as formula cells.
+                $rowBody = preg_replace('/<c r="[A-N]\d+"[^>]*>.*?<\/c>/s', '', $rowBody);
+                $rowBody = preg_replace('/<c r="[A-N]\d+"[^>]*\/>/s',        '', $rowBody);
 
                 if (!isset($children[$childIdx])) {
                     return '<row r="' . $rowNum . '"' . $rowAttrs . '>' . $rowBody . '</row>';
@@ -308,6 +311,15 @@ class EoptRegion6Export
                     'H' => ['d', $dateSerial],
                     'I' => ['n', $c['weight_kg'] !== null ? (float)$c['weight_kg'] : null],
                     'J' => ['n', $c['height_cm'] !== null ? (float)$c['height_cm'] : null],
+                    // K–N: write PHP-computed values directly so they appear
+                    // on open without depending on Excel formula recalculation.
+                    // Template column mapping (verified from template XML):
+                    //   K = Age in months   L = WFA status
+                    //   M = HFA status      N = WFLH status
+                    'K' => ['n', $c['age_in_months'] !== null ? (int)$c['age_in_months'] : null],
+                    'L' => ['s', $c['nutritional_status'] ?? ''],
+                    'M' => ['s', $c['hfa_status'] ?? ''],
+                    'N' => ['s', $c['wflh_status'] ?? ''],
                 ]);
 
                 $fullBody = $this->sortRowCells($cells . $rowBody);
