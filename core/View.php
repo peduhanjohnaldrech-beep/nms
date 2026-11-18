@@ -8,7 +8,9 @@ class View
         // Prevent browsers from caching HTML pages so stale data never shows
         // after navigating back or when new features are deployed.
         if (!headers_sent()) {
-            header('Cache-Control: no-store');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
         }
 
         // Make data keys available as variables
