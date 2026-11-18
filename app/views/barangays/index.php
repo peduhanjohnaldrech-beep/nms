@@ -88,10 +88,10 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                         <th class="text-center"><span class="badge status-normal">Normal</span></th>
                         <th class="text-center"><span class="badge status-ow">OW</span></th>
                         <th class="text-center border-end"><span class="badge status-ob">OB</span></th>
-                        <th class="text-center"><span class="badge status-suw">SSt</span></th>
-                        <th class="text-center border-end"><span class="badge status-uw">St</span></th>
-                        <th class="text-center"><span class="badge status-suw">SW</span></th>
-                        <th class="text-center border-end"><span class="badge status-uw">MW</span></th>
+                        <th class="text-center"><span class="badge status-sst">SSt</span></th>
+                        <th class="text-center border-end"><span class="badge status-st">St</span></th>
+                        <th class="text-center"><span class="badge status-sw">SW</span></th>
+                        <th class="text-center border-end"><span class="badge status-mw">MW</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -119,10 +119,10 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                         <td class="text-center"><?= $b['normal'] > 0 ? '<span class="badge status-normal">' . $b['normal'] . '</span>' : $dash ?></td>
                         <td class="text-center"><?= $b['ow']     > 0 ? '<span class="badge status-ow">'     . $b['ow']     . '</span>' : $dash ?></td>
                         <td class="text-center border-end"><?= $b['ob']     > 0 ? '<span class="badge status-ob">'     . $b['ob']     . '</span>' : $dash ?></td>
-                        <td class="text-center"><?= $b['sst']    > 0 ? '<span class="badge status-suw">'    . $b['sst']    . '</span>' : $dash ?></td>
-                        <td class="text-center border-end"><?= $b['st']     > 0 ? '<span class="badge status-uw">'     . $b['st']     . '</span>' : $dash ?></td>
-                        <td class="text-center"><?= $b['sw']     > 0 ? '<span class="badge status-suw">'    . $b['sw']     . '</span>' : $dash ?></td>
-                        <td class="text-center border-end"><?= $b['mw']     > 0 ? '<span class="badge status-uw">'     . $b['mw']     . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['sst'] > 0 ? '<span class="badge status-sst">' . $b['sst'] . '</span>' : $dash ?></td>
+                        <td class="text-center border-end"><?= $b['st']  > 0 ? '<span class="badge status-st">'  . $b['st']  . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['sw']  > 0 ? '<span class="badge status-sw">'  . $b['sw']  . '</span>' : $dash ?></td>
+                        <td class="text-center border-end"><?= $b['mw']  > 0 ? '<span class="badge status-mw">'  . $b['mw']  . '</span>' : $dash ?></td>
                         <td class="text-nowrap">
                             <a href="<?= APP_URL ?>/beneficiaries?barangay=<?= urlencode($b['name']) ?>"
                                class="btn btn-sm btn-outline-primary"
