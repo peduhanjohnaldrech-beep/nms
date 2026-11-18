@@ -1,4 +1,4 @@
-const CACHE = 'nms-v1';
+const CACHE = 'nms-v2';
 const STATIC = [
   '/css/bootstrap.min.css',
   '/css/bootstrap-icons.css',
