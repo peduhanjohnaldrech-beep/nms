@@ -77,11 +77,12 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                         <th class="text-center">Total</th>
                         <th class="text-center">Active<br><small class="fw-normal text-muted">0–59 mo</small></th>
                         <th class="text-center">Pending<br><small class="fw-normal text-muted">Validation</small></th>
+                        <th class="text-center">Weighed<br><small class="fw-normal text-muted">this year</small></th>
                         <th colspan="5" class="text-center">Nutritional Status <small class="fw-normal text-muted">(current year, latest assessment)</small></th>
                         <th></th>
                     </tr>
                     <tr class="table-light border-top-0">
-                        <th colspan="4"></th>
+                        <th colspan="5"></th>
                         <th class="text-center"><span class="badge status-suw">SUW</span></th>
                         <th class="text-center"><span class="badge status-uw">UW</span></th>
                         <th class="text-center"><span class="badge status-normal">Normal</span></th>
@@ -92,7 +93,7 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                 </thead>
                 <tbody>
                     <?php if (empty($barangays)): ?>
-                    <tr><td colspan="10" class="text-center text-muted py-4">No barangays found.</td></tr>
+                    <tr><td colspan="11" class="text-center text-muted py-4">No barangays found.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($barangays as $b): ?>
                     <?php
@@ -115,6 +116,13 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                         <td class="text-center">
                             <?php if ($b['pending'] > 0): ?>
                             <span class="badge bg-warning text-dark"><?= $b['pending'] ?></span>
+                            <?php else: ?>
+                            <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
+                            <?php if ($b['weighed'] > 0): ?>
+                            <span class="badge bg-info bg-opacity-75 text-dark"><?= $b['weighed'] ?></span>
                             <?php else: ?>
                             <span class="text-muted">—</span>
                             <?php endif; ?>

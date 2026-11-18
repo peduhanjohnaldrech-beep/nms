@@ -66,6 +66,23 @@ class BarangayController extends Controller
             $statusByBar[$r['barangay']][$r['nutritional_status']] = (int)$r['cnt'];
         }
 
+        // Count weighed (assessed) children this year per barangay
+        $stmt = $db->query(
+            "SELECT b.barangay, COUNT(DISTINCT a.beneficiary_id) AS cnt
+             FROM assessments a
+             JOIN beneficiaries b ON b.id = a.beneficiary_id
+             WHERE b.deleted_at IS NULL
+               AND b.validation_status = 'validated'
+               AND $bnsFilter
+               AND a.validation_status = 'validated'
+               AND a.assessment_year = YEAR(NOW())
+             GROUP BY b.barangay"
+        );
+        $weighedByBar = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $weighedByBar[$r['barangay']] = (int)$r['cnt'];
+        }
+
         // Fetch managed barangays with their IDs
         try {
             $managedRows = $db->query("SELECT id, name FROM barangays ORDER BY name")->fetchAll();
@@ -95,6 +112,7 @@ class BarangayController extends Controller
                 'total'   => (int)$c['total'],
                 'active'  => (int)$c['active'],
                 'pending' => (int)$c['pending'],
+                'weighed' => $weighedByBar[$bar] ?? 0,
                 'suw'     => $s['SUW']    ?? 0,
                 'uw'      => $s['UW']     ?? 0,
                 'normal'  => $s['Normal'] ?? 0,
