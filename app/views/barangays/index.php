@@ -73,47 +73,56 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Barangay</th>
-                        <th class="text-center">0–59 mo</th>
-                        <th class="text-center">Weighed<br><small class="fw-normal text-muted">this year</small></th>
-                        <th class="text-center">Pending</th>
-                        <th class="text-center"><span class="badge status-suw">SUW</span></th>
+                        <th rowspan="2" class="align-middle">Barangay</th>
+                        <th rowspan="2" class="text-center align-middle">0–59 mo</th>
+                        <th rowspan="2" class="text-center align-middle">Weighed<br><small class="fw-normal text-muted">this year</small></th>
+                        <th rowspan="2" class="text-center align-middle">Pending</th>
+                        <th colspan="5" class="text-center border-start border-end py-1"><small class="fw-semibold">Weight-for-Age</small></th>
+                        <th colspan="2" class="text-center border-end py-1"><small class="fw-semibold">Height-for-Age</small></th>
+                        <th colspan="2" class="text-center border-end py-1"><small class="fw-semibold">Wt-for-Lt/Ht</small></th>
+                        <th rowspan="2" class="align-middle"></th>
+                    </tr>
+                    <tr>
+                        <th class="text-center border-start"><span class="badge status-suw">SUW</span></th>
                         <th class="text-center"><span class="badge status-uw">UW</span></th>
                         <th class="text-center"><span class="badge status-normal">Normal</span></th>
                         <th class="text-center"><span class="badge status-ow">OW</span></th>
-                        <th class="text-center"><span class="badge status-ob">OB</span></th>
-                        <th></th>
+                        <th class="text-center border-end"><span class="badge status-ob">OB</span></th>
+                        <th class="text-center"><span class="badge status-suw">SSt</span></th>
+                        <th class="text-center border-end"><span class="badge status-uw">St</span></th>
+                        <th class="text-center"><span class="badge status-suw">SW</span></th>
+                        <th class="text-center border-end"><span class="badge status-uw">MW</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($barangays)): ?>
-                    <tr><td colspan="10" class="text-center text-muted py-4">No barangays found.</td></tr>
+                    <tr><td colspan="14" class="text-center text-muted py-4">No barangays found.</td></tr>
 
                     <?php endif; ?>
                     <?php foreach ($barangays as $b): ?>
-                    <?php
-                    $assessed   = $b['suw'] + $b['uw'] + $b['normal'] + $b['ow'] + $b['ob'];
-                    $malnut     = $b['suw'] + $b['uw'];
-                    $malnutRate = $assessed > 0 ? round($malnut / $assessed * 100) : 0;
-                    ?>
+                    <?php $dash = '<span class="text-muted">—</span>'; ?>
                     <tr style="cursor:pointer" onclick="location.href='<?= APP_URL ?>/beneficiaries?barangay=<?= urlencode($b['name']) ?>'">
                         <td class="fw-semibold">
                             <i class="bi bi-geo-alt me-1 text-muted"></i><?= htmlspecialchars($b['name']) ?>
                         </td>
-                        <td class="text-center fw-semibold"><?= $b['active'] ?: '—' ?></td>
-                        <td class="text-center"><?= $b['weighed'] ?: '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center fw-semibold"><?= $b['active'] ?: $dash ?></td>
+                        <td class="text-center"><?= $b['weighed'] ?: $dash ?></td>
                         <td class="text-center">
                             <?php if ($b['pending'] > 0): ?>
                             <span class="badge bg-warning text-dark"><?= $b['pending'] ?></span>
                             <?php else: ?>
-                            <span class="text-muted">—</span>
+                            <?= $dash ?>
                             <?php endif; ?>
                         </td>
-                        <td class="text-center"><?= $b['suw']    > 0 ? '<span class="badge status-suw">'    . $b['suw']    . '</span>' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $b['uw']     > 0 ? '<span class="badge status-uw">'     . $b['uw']     . '</span>' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $b['normal'] > 0 ? '<span class="badge status-normal">' . $b['normal'] . '</span>' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $b['ow']     > 0 ? '<span class="badge status-ow">'     . $b['ow']     . '</span>' : '<span class="text-muted">—</span>' ?></td>
-                        <td class="text-center"><?= $b['ob']     > 0 ? '<span class="badge status-ob">'     . $b['ob']     . '</span>' : '<span class="text-muted">—</span>' ?></td>
+                        <td class="text-center border-start"><?= $b['suw']    > 0 ? '<span class="badge status-suw">'    . $b['suw']    . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['uw']     > 0 ? '<span class="badge status-uw">'     . $b['uw']     . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['normal'] > 0 ? '<span class="badge status-normal">' . $b['normal'] . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['ow']     > 0 ? '<span class="badge status-ow">'     . $b['ow']     . '</span>' : $dash ?></td>
+                        <td class="text-center border-end"><?= $b['ob']     > 0 ? '<span class="badge status-ob">'     . $b['ob']     . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['sst']    > 0 ? '<span class="badge status-suw">'    . $b['sst']    . '</span>' : $dash ?></td>
+                        <td class="text-center border-end"><?= $b['st']     > 0 ? '<span class="badge status-uw">'     . $b['st']     . '</span>' : $dash ?></td>
+                        <td class="text-center"><?= $b['sw']     > 0 ? '<span class="badge status-suw">'    . $b['sw']     . '</span>' : $dash ?></td>
+                        <td class="text-center border-end"><?= $b['mw']     > 0 ? '<span class="badge status-uw">'     . $b['mw']     . '</span>' : $dash ?></td>
                         <td class="text-nowrap">
                             <a href="<?= APP_URL ?>/beneficiaries?barangay=<?= urlencode($b['name']) ?>"
                                class="btn btn-sm btn-outline-primary"

@@ -42,10 +42,20 @@ class BarangayController extends Controller
             $counts[$r['barangay']] = $r;
         }
 
-        // Latest nutritional status per beneficiary, grouped by barangay
+        // All nutritional status counts (WFA + HFA + WFLH) per barangay — one query
         $bnsFilter = Beneficiary::BNS_SUBMITTED_FILTER;
         $stmt = $db->query(
-            "SELECT b.barangay, a.nutritional_status, COUNT(*) AS cnt
+            "SELECT b.barangay,
+                    COUNT(*)                                                       AS weighed,
+                    SUM(CASE WHEN a.nutritional_status = 'SUW'    THEN 1 ELSE 0 END) AS suw,
+                    SUM(CASE WHEN a.nutritional_status = 'UW'     THEN 1 ELSE 0 END) AS uw,
+                    SUM(CASE WHEN a.nutritional_status = 'Normal' THEN 1 ELSE 0 END) AS normal_wfa,
+                    SUM(CASE WHEN a.nutritional_status = 'OW'     THEN 1 ELSE 0 END) AS ow,
+                    SUM(CASE WHEN a.nutritional_status = 'OB'     THEN 1 ELSE 0 END) AS ob,
+                    SUM(CASE WHEN a.hfa_status  = 'SSt' THEN 1 ELSE 0 END)           AS sst,
+                    SUM(CASE WHEN a.hfa_status  = 'St'  THEN 1 ELSE 0 END)           AS st,
+                    SUM(CASE WHEN a.wflh_status = 'SW'  THEN 1 ELSE 0 END)           AS sw,
+                    SUM(CASE WHEN a.wflh_status = 'MW'  THEN 1 ELSE 0 END)           AS mw
              FROM assessments a
              JOIN beneficiaries b ON b.id = a.beneficiary_id
              WHERE b.deleted_at IS NULL
@@ -59,28 +69,11 @@ class BarangayController extends Controller
                      AND a2.validation_status = 'validated'
                    ORDER BY a2.assessment_date DESC LIMIT 1
                )
-             GROUP BY b.barangay, a.nutritional_status"
-        );
-        $statusByBar = [];
-        foreach ($stmt->fetchAll() as $r) {
-            $statusByBar[$r['barangay']][$r['nutritional_status']] = (int)$r['cnt'];
-        }
-
-        // Count weighed (assessed) children this year per barangay
-        $stmt = $db->query(
-            "SELECT b.barangay, COUNT(DISTINCT a.beneficiary_id) AS cnt
-             FROM assessments a
-             JOIN beneficiaries b ON b.id = a.beneficiary_id
-             WHERE b.deleted_at IS NULL
-               AND b.validation_status = 'validated'
-               AND $bnsFilter
-               AND a.validation_status = 'validated'
-               AND a.assessment_year = YEAR(NOW())
              GROUP BY b.barangay"
         );
-        $weighedByBar = [];
+        $statsByBar = [];
         foreach ($stmt->fetchAll() as $r) {
-            $weighedByBar[$r['barangay']] = (int)$r['cnt'];
+            $statsByBar[$r['barangay']] = $r;
         }
 
         // Fetch managed barangays with their IDs
@@ -104,20 +97,23 @@ class BarangayController extends Controller
 
         $barangays = [];
         foreach ($allBars as $bar) {
-            $c = $counts[$bar] ?? ['total' => 0, 'active' => 0, 'pending' => 0];
-            $s = $statusByBar[$bar] ?? [];
+            $c = $counts[$bar]   ?? ['total' => 0, 'active' => 0, 'pending' => 0];
+            $s = $statsByBar[$bar] ?? [];
             $barangays[] = [
                 'id'      => $managedIds[$bar] ?? null,
                 'name'    => $bar,
-                'total'   => (int)$c['total'],
                 'active'  => (int)$c['active'],
                 'pending' => (int)$c['pending'],
-                'weighed' => $weighedByBar[$bar] ?? 0,
-                'suw'     => $s['SUW']    ?? 0,
-                'uw'      => $s['UW']     ?? 0,
-                'normal'  => $s['Normal'] ?? 0,
-                'ow'      => $s['OW']     ?? 0,
-                'ob'      => $s['OB']     ?? 0,
+                'weighed' => (int)($s['weighed'] ?? 0),
+                'suw'     => (int)($s['suw']      ?? 0),
+                'uw'      => (int)($s['uw']       ?? 0),
+                'normal'  => (int)($s['normal_wfa'] ?? 0),
+                'ow'      => (int)($s['ow']       ?? 0),
+                'ob'      => (int)($s['ob']        ?? 0),
+                'sst'     => (int)($s['sst']       ?? 0),
+                'st'      => (int)($s['st']        ?? 0),
+                'sw'      => (int)($s['sw']        ?? 0),
+                'mw'      => (int)($s['mw']        ?? 0),
             ];
         }
 
