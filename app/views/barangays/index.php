@@ -74,15 +74,14 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                 <thead class="table-light">
                     <tr>
                         <th>Barangay</th>
-                        <th class="text-center">Total</th>
-                        <th class="text-center">Active<br><small class="fw-normal text-muted">0–59 mo</small></th>
+                        <th class="text-center">Total<br><small class="fw-normal text-muted">validated</small></th>
+                        <th class="text-center">Weighed / Target<br><small class="fw-normal text-muted">this yr / 0–59 mo</small></th>
                         <th class="text-center">Pending<br><small class="fw-normal text-muted">Validation</small></th>
-                        <th class="text-center">Weighed<br><small class="fw-normal text-muted">this year</small></th>
                         <th colspan="5" class="text-center">Nutritional Status <small class="fw-normal text-muted">(current year, latest assessment)</small></th>
                         <th></th>
                     </tr>
                     <tr class="table-light border-top-0">
-                        <th colspan="5"></th>
+                        <th colspan="4"></th>
                         <th class="text-center"><span class="badge status-suw">SUW</span></th>
                         <th class="text-center"><span class="badge status-uw">UW</span></th>
                         <th class="text-center"><span class="badge status-normal">Normal</span></th>
@@ -93,7 +92,7 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                 </thead>
                 <tbody>
                     <?php if (empty($barangays)): ?>
-                    <tr><td colspan="11" class="text-center text-muted py-4">No barangays found.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4">No barangays found.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($barangays as $b): ?>
                     <?php
@@ -106,9 +105,9 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                             <i class="bi bi-geo-alt me-1 text-muted"></i><?= htmlspecialchars($b['name']) ?>
                         </td>
                         <td class="text-center fw-bold"><?= $b['total'] ?: '—' ?></td>
-                        <td class="text-center">
-                            <?php if ($b['active'] > 0): ?>
-                            <span class="badge bg-success bg-opacity-75"><?= $b['active'] ?></span>
+                        <td class="text-center text-nowrap">
+                            <?php if ($b['active'] > 0 || $b['weighed'] > 0): ?>
+                            <span class="fw-semibold"><?= $b['weighed'] ?></span><span class="text-muted"> / <?= $b['active'] ?></span>
                             <?php else: ?>
                             <span class="text-muted">—</span>
                             <?php endif; ?>
@@ -116,13 +115,6 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                         <td class="text-center">
                             <?php if ($b['pending'] > 0): ?>
                             <span class="badge bg-warning text-dark"><?= $b['pending'] ?></span>
-                            <?php else: ?>
-                            <span class="text-muted">—</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center">
-                            <?php if ($b['weighed'] > 0): ?>
-                            <span class="badge bg-info bg-opacity-75 text-dark"><?= $b['weighed'] ?></span>
                             <?php else: ?>
                             <span class="text-muted">—</span>
                             <?php endif; ?>
