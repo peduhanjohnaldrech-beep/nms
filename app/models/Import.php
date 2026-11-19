@@ -42,20 +42,12 @@ class Import extends Model
             }
             if (!$targetSheet) $targetSheet = $sheetNames[0];
 
-            // Also load Summary sheet to read barangay (stored at Summary!J3)
-            $summarySheet = in_array('Summary', $sheetNames) ? 'Summary' : null;
-            $sheetsToLoad = $summarySheet ? [$targetSheet, $summarySheet] : [$targetSheet];
-            $reader->setLoadSheetsOnly($sheetsToLoad);
+            $reader->setLoadSheetsOnly([$targetSheet]);
             $ts = $targetSheet;
-            $sm = $summarySheet;
-            $reader->setReadFilter(new class($ts, $sm) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
-                private $sheet, $summary;
-                public function __construct($sheet, $summary) { $this->sheet = $sheet; $this->summary = $summary; }
+            $reader->setReadFilter(new class($ts) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                private $sheet;
+                public function __construct($sheet) { $this->sheet = $sheet; }
                 public function readCell($columnAddress, $row, $worksheetName = '') {
-                    // Summary: only need row 3 for barangay
-                    if ($worksheetName === $this->summary) {
-                        return $row <= 5;
-                    }
                     if ($worksheetName !== $this->sheet) return false;
                     $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
                     return $col <= 10 && $row <= 1010;
@@ -67,38 +59,22 @@ class Import extends Model
             return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
         }
 
-        // Barangay is stored in Summary sheet at J3 (user enters it there via dropdown)
-        $barangay = '';
-        if ($summarySheet) {
-            $sumSheet = $spreadsheet->getSheetByName($summarySheet);
-            if ($sumSheet) {
-                // Scan row 3 for a non-empty non-label value near col J (10)
-                for ($c = 8; $c <= 15; $c++) {
-                    $v = trim((string)$sumSheet->getCellByColumnAndRow($c, 3)->getValue());
-                    if ($v && !preg_match('/^(barangay|city|municipality|region|province|choose|summary)/i', $v)) {
-                        $barangay = $v;
-                        break;
-                    }
-                }
-                // Also try row 2 and 4 if still empty
-                if (empty($barangay)) {
-                    foreach ([2, 4] as $r) {
-                        for ($c = 1; $c <= 15; $c++) {
-                            $v = trim((string)$sumSheet->getCellByColumnAndRow($c, $r)->getValue());
-                            if ($v && !preg_match('/^(barangay|city|municipality|region|province|choose|summary)/i', $v)) {
-                                $barangay = $v; break 2;
-                            }
-                        }
-                    }
+        // Barangay is user-entered at Nut_StatusTool!E6 (next to the "Barangay:" label in D6)
+        $barangay = trim((string)$sheet->getCellByColumnAndRow(5, 6)->getValue());
+        // Fallback: also check E3, F6, then scan rows 3-8 near "Barangay" label
+        if (empty($barangay)) {
+            foreach ([[5,3],[6,6],[4,3]] as [$c,$r]) {
+                $v = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
+                if ($v && !preg_match('/^(barangay|city|municipality|choose|weight|age)/i', $v)) {
+                    $barangay = $v; break;
                 }
             }
         }
-        // Fallback: scan Nut_StatusTool rows 1-9 for a value near "Barangay" label
         if (empty($barangay)) {
-            for ($r = 1; $r <= 9; $r++) {
+            for ($r = 3; $r <= 8; $r++) {
                 for ($c = 1; $c <= 10; $c++) {
                     $val = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
-                    if (strtolower($val) === 'barangay') {
+                    if (preg_match('/^barangay[:\s]*$/i', $val)) {
                         $next = trim((string)$sheet->getCellByColumnAndRow($c + 1, $r)->getValue());
                         if ($next && !preg_match('/^(barangay|city|municipality|choose)/i', $next)) {
                             $barangay = $next; break 2;
