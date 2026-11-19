@@ -517,6 +517,72 @@ class ImportController extends Controller
         ]);
     }
 
+    public function uploadOptPlus(): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('import');
+        if (!$this->isPost()) { $this->redirect('/import'); }
+        $this->validateCsrf();
+
+        if (empty($_FILES['opt_plus_file']['name'])) {
+            Session::flash('error', 'Please select an OPT Plus file to upload.');
+            $this->redirect('/import');
+            return;
+        }
+
+        $file = $_FILES['opt_plus_file'];
+        $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($ext, ['xlsx', 'xls'])) {
+            Session::flash('error', 'Only .xlsx and .xls files are accepted.');
+            $this->redirect('/import');
+            return;
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Session::flash('error', 'File upload failed. Code: ' . $file['error']);
+            $this->redirect('/import');
+            return;
+        }
+
+        $filename = 'import_optplus_' . time() . '_' . session_id() . '.' . $ext;
+        $filepath = UPLOAD_PATH . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            Session::flash('error', 'Failed to save uploaded file.');
+            $this->redirect('/import');
+            return;
+        }
+
+        $result = $this->model->processOptPlus($filepath);
+
+        if (!empty($result['errors'])) {
+            unlink($filepath);
+            Session::flash('error', implode('<br>', $result['errors']));
+            $this->redirect('/import');
+            return;
+        }
+
+        if (empty($result['rows'])) {
+            unlink($filepath);
+            Session::flash('error', 'No data rows found in the OPT Plus file. Make sure data starts at row 10.');
+            $this->redirect('/import');
+            return;
+        }
+
+        Session::set('import_rows',          $result['rows']);
+        Session::set('import_file',          $filepath);
+        Session::set('import_filename',      $file['name']);
+        Session::set('import_temp_filename', $filename);
+        Session::set('import_source',        'OPT Plus');
+
+        $this->view('import/preview', [
+            'rows'     => $result['rows'],
+            'filename' => $file['name'],
+            'folders'  => $this->model->getImportFolders(),
+        ]);
+    }
+
     public function confirm(): void
     {
         $this->requireAuth();

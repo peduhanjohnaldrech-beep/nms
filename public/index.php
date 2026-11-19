@@ -162,6 +162,7 @@ $router->post('/import/storage/files/folders/create','ImportController@createOth
 $router->post('/import/storage/files/folders/delete','ImportController@deleteOtherFolder');
 $router->get('/import/template',                   'ImportController@downloadTemplate');
 $router->post('/import/upload',                    'ImportController@upload');
+$router->post('/import/upload-opt-plus',           'ImportController@uploadOptPlus');
 $router->post('/import/gdrive',                    'ImportController@uploadFromGdrive');
 $router->post('/import/confirm',                   'ImportController@confirm');
 $router->post('/import/folders/create',            'ImportController@createFolder');

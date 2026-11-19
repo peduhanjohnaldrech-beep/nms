@@ -379,6 +379,27 @@
 
 </div>
 
+<!-- OPT Plus Import -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clipboard2-pulse me-2 text-success"></i>Import from OPT Plus Format</span>
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">eOPT / DOH Format</span>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Upload an OPT Plus Excel file (DOH/government format). The file must have the standard OPT Plus layout —
+            barangay name in the header, data starting at row 10, columns: Seq · Purok · Mother · Child Name · IP · Sex · DOB · Date Measured · Weight · Height.
+        </p>
+        <form action="<?= APP_URL ?>/import/upload-opt-plus" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+            <?= \Core\Session::csrfField() ?>
+            <input type="file" name="opt_plus_file" accept=".xlsx,.xls" required class="form-control form-control-sm" style="max-width:320px;">
+            <button type="submit" class="btn btn-success btn-sm text-nowrap">
+                <i class="bi bi-upload me-1"></i>Upload &amp; Preview
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Bottom: Import History (full width) -->
 <div class="card border-0 shadow-sm">
     <div class="card-header fw-semibold d-flex justify-content-between align-items-center">

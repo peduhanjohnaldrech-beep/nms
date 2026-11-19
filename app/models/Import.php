@@ -19,12 +19,153 @@ class Import extends Model
         'Assessment Date', 'Weight (kg)', 'Height (cm)', 'MUAC (cm)',
     ];
 
+    public function processOptPlus(string $filepath): array
+    {
+        ini_set('memory_limit', '256M');
+        $rows = [];
+        try {
+            $reader = IOFactory::createReaderForFile($filepath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filepath);
+            $sheet       = $spreadsheet->getActiveSheet();
+        } catch (\Exception $e) {
+            return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
+        }
+
+        // Extract barangay from header rows (scan first 10 rows for "Barangay" label)
+        $barangay = '';
+        for ($r = 1; $r <= 10; $r++) {
+            for ($c = 1; $c <= 15; $c++) {
+                $val = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
+                if (stripos($val, 'barangay') !== false) {
+                    // Check adjacent cells for the actual value
+                    for ($nc = $c + 1; $nc <= $c + 4; $nc++) {
+                        $next = trim((string)$sheet->getCellByColumnAndRow($nc, $r)->getValue());
+                        if ($next && stripos($next, 'barangay') === false && stripos($next, 'city') === false) {
+                            $barangay = $next;
+                            break 3;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Data starts at row 10 in OPT Plus template
+        $maxRow          = $sheet->getHighestRow();
+        $beneficiaryModel = new Beneficiary();
+
+        for ($i = 10; $i <= $maxRow; $i++) {
+            $seqNum = $sheet->getCellByColumnAndRow(1, $i)->getValue();
+            if (!is_numeric($seqNum) || (int)$seqNum < 1) continue;
+
+            $purok      = trim((string)$sheet->getCellByColumnAndRow(2, $i)->getValue());
+            $motherName = trim((string)$sheet->getCellByColumnAndRow(3, $i)->getValue());
+            $childName  = trim((string)$sheet->getCellByColumnAndRow(4, $i)->getValue());
+            $isIP       = strtolower(trim((string)$sheet->getCellByColumnAndRow(5, $i)->getValue())) === 'yes';
+            $sexRaw     = strtoupper(trim((string)$sheet->getCellByColumnAndRow(6, $i)->getValue()));
+            $sex        = $sexRaw === 'F' ? 'Female' : 'Male';
+            $dobRaw     = $sheet->getCellByColumnAndRow(7, $i)->getValue();
+            $dateRaw    = $sheet->getCellByColumnAndRow(8, $i)->getValue();
+            $weight     = $sheet->getCellByColumnAndRow(9, $i)->getValue();
+            $height     = $sheet->getCellByColumnAndRow(10, $i)->getValue();
+
+            if (empty($childName)) continue;
+
+            // Parse child name: "Surname, First Name"
+            if (str_contains($childName, ',')) {
+                [$lastName, $firstName] = explode(',', $childName, 2);
+            } else {
+                $parts     = explode(' ', $childName, 2);
+                $lastName  = $parts[0];
+                $firstName = $parts[1] ?? '';
+            }
+
+            $rowData = [
+                'last_name'                => trim($lastName),
+                'first_name'               => trim($firstName),
+                'middle_name'              => null,
+                'suffix'                   => null,
+                'date_of_birth'            => $this->parseOptPlusDate($dobRaw),
+                'sex'                      => $sex,
+                'barangay'                 => $barangay,
+                'purok_zone'               => $purok ?: null,
+                'household_no'             => null,
+                'incode'                   => null,
+                'mother_name'              => $motherName ?: null,
+                'father_name'              => null,
+                'contact_number'           => null,
+                'income_classification'    => null,
+                'household_monthly_income' => null,
+                'is_4ps_member'            => 0,
+                'nhts_pr_status'           => null,
+                'philhealth_status'        => null,
+                'assessment_date'          => $this->parseOptPlusDate($dateRaw),
+                'weight_kg'                => is_numeric($weight) ? (float)$weight : null,
+                'height_cm'                => is_numeric($height) ? (float)$height : null,
+                'muac_cm'                  => null,
+                'is_indigenous_people'     => $isIP ? 1 : 0,
+            ];
+
+            $rowError = $this->validateRow($rowData);
+            $existing = $beneficiaryModel->findDuplicates(
+                $rowData['last_name'], $rowData['first_name'],
+                $rowData['date_of_birth'], $rowData['barangay']
+            );
+            $rows[] = [
+                'data'     => $rowData,
+                'error'    => $rowError,
+                'status'   => $rowError ? 'error' : ($existing ? 'update' : 'new'),
+                'existing' => $existing[0] ?? null,
+                'rowNum'   => $i,
+            ];
+        }
+
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet);
+
+        return ['rows' => $rows, 'errors' => []];
+    }
+
+    private function parseOptPlusDate($value): string
+    {
+        if (empty($value) && $value !== 0) return '';
+
+        // Excel serial number
+        if (is_numeric($value)) {
+            try {
+                $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$value);
+                return $date->format('Y-m-d');
+            } catch (\Exception $e) {}
+        }
+
+        $value = trim((string)$value);
+        if (empty($value)) return '';
+
+        // "Mar-23-2021" format
+        $d = \DateTime::createFromFormat('M-d-Y', $value);
+        if ($d) return $d->format('Y-m-d');
+
+        // "Mar-23-21" short year
+        $d = \DateTime::createFromFormat('M-d-y', $value);
+        if ($d) return $d->format('Y-m-d');
+
+        // Standard YYYY-MM-DD
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) return $value;
+
+        return '';
+    }
+
     public function processExcel(string $filepath): array
     {
+        ini_set('memory_limit', '256M');
         $rows = []; $errors = [];
         try {
-            $spreadsheet = IOFactory::load($filepath);
+            $reader = IOFactory::createReaderForFile($filepath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filepath);
             $data        = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
         } catch (\Exception $e) {
             return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
         }
