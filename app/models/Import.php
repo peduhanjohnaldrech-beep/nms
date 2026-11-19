@@ -56,14 +56,22 @@ class Import extends Model
             }
         }
 
-        // Data starts at row 10 in OPT Plus template
-        $maxRow          = $sheet->getHighestRow();
+        // Auto-detect data start: find first row (from row 8) where col D has a name-like value
+        $maxRow           = $sheet->getHighestRow();
+        $dataStartRow     = null;
+        for ($r = 8; $r <= min(20, $maxRow); $r++) {
+            $val = trim((string)$sheet->getCellByColumnAndRow(4, $r)->getValue());
+            // Skip header-like labels
+            if ($val && !preg_match('/^(name|child|pangalan|beneficiary|last|first)/i', $val)) {
+                $dataStartRow = $r;
+                break;
+            }
+        }
+        if ($dataStartRow === null) $dataStartRow = 10; // fallback
+
         $beneficiaryModel = new Beneficiary();
 
-        for ($i = 10; $i <= $maxRow; $i++) {
-            $seqNum = $sheet->getCellByColumnAndRow(1, $i)->getValue();
-            if (!is_numeric($seqNum) || (int)$seqNum < 1) continue;
-
+        for ($i = $dataStartRow; $i <= $maxRow; $i++) {
             $purok      = trim((string)$sheet->getCellByColumnAndRow(2, $i)->getValue());
             $motherName = trim((string)$sheet->getCellByColumnAndRow(3, $i)->getValue());
             $childName  = trim((string)$sheet->getCellByColumnAndRow(4, $i)->getValue());
