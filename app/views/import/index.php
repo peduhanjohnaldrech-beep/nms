@@ -15,12 +15,28 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-upload me-2 text-primary"></i>Upload Excel File</span>
-                <a href="<?= APP_URL ?>/import/template" class="btn btn-sm btn-success">
+                <a href="<?= APP_URL ?>/import/template" class="btn btn-sm btn-outline-success" id="dlTemplateBtn">
                     <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Template
                 </a>
             </div>
             <div class="card-body">
                 <?php $hasGoogle = GOOGLE_API_KEY && GOOGLE_CLIENT_ID; ?>
+
+                <!-- Format selector -->
+                <div class="mb-3 d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary active" id="fmtStandard">
+                        <i class="bi bi-table me-1"></i>Standard Template
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="fmtOptPlus">
+                        <i class="bi bi-clipboard2-pulse me-1"></i>OPT Plus (DOH Format)
+                    </button>
+                </div>
+                <div id="fmtStandardInfo" class="alert alert-light border small py-2 mb-3">
+                    Use the system's standard template (22 columns, A–V). <a href="<?= APP_URL ?>/import/template" class="text-success fw-semibold">Download template</a>
+                </div>
+                <div id="fmtOptPlusInfo" class="alert alert-success border small py-2 mb-3 d-none">
+                    OPT Plus / DOH format — barangay in header, data from row 10 (Seq · Purok · Mother · Child · IP · Sex · DOB · Date Measured · Weight · Height).
+                </div>
 
                 <?php if ($hasGoogle): ?>
                 <script src="https://apis.google.com/js/api.js"></script>
@@ -30,7 +46,8 @@
                 <form action="<?= APP_URL ?>/import/upload" method="post" enctype="multipart/form-data" id="importForm">
                     <?= \Core\Session::csrfField() ?>
                     <input type="hidden" name="import_source" id="importSourceInput" value="Excel">
-                    <input type="file" name="excel_file" id="excelFileInput" accept=".xlsx,.xls" required class="d-none">
+                    <input type="file" name="excel_file" id="excelFileInput" accept=".xlsx,.xls" class="d-none">
+                    <input type="file" name="opt_plus_file" id="optPlusFileInput" accept=".xlsx,.xls" class="d-none">
 
                     <!-- Drop zone -->
                     <div id="dropZone" class="border border-2 rounded-3 text-center p-4 mb-3"
@@ -126,6 +143,32 @@
 
                 <script>
                 (function () {
+                    const form       = document.getElementById('importForm');
+                    const fmtStd     = document.getElementById('fmtStandard');
+                    const fmtOpt     = document.getElementById('fmtOptPlus');
+                    const stdInfo    = document.getElementById('fmtStandardInfo');
+                    const optInfo    = document.getElementById('fmtOptPlusInfo');
+                    const dlBtn      = document.getElementById('dlTemplateBtn');
+                    let isOptPlus    = false;
+
+                    function switchFormat(optPlus) {
+                        isOptPlus = optPlus;
+                        form.action = optPlus
+                            ? '<?= APP_URL ?>/import/upload-opt-plus'
+                            : '<?= APP_URL ?>/import/upload';
+                        fmtStd.classList.toggle('btn-primary',      !optPlus);
+                        fmtStd.classList.toggle('btn-outline-primary', optPlus);
+                        fmtOpt.classList.toggle('btn-success',      optPlus);
+                        fmtOpt.classList.toggle('btn-outline-success', !optPlus);
+                        stdInfo.classList.toggle('d-none',  optPlus);
+                        optInfo.classList.toggle('d-none', !optPlus);
+                        dlBtn.classList.toggle('d-none', optPlus);
+                        clearFile();
+                    }
+
+                    fmtStd.addEventListener('click', () => switchFormat(false));
+                    fmtOpt.addEventListener('click', () => switchFormat(true));
+
                     const zone       = document.getElementById('dropZone');
                     const input      = document.getElementById('excelFileInput');
                     const chosenBox  = document.getElementById('fileChosen');
@@ -175,14 +218,16 @@
                         setFile(file);
                     }
 
-                    // ── From Device ──────────────────────────────────────
-                    document.getElementById('fromDeviceBtn').addEventListener('click', () => input.click());
-                    const fromDeviceItem = document.getElementById('fromDeviceItem');
-                    if (fromDeviceItem) fromDeviceItem.addEventListener('click', e => { e.preventDefault(); input.click(); });
+                    const optPlusInput = document.getElementById('optPlusFileInput');
+                    function activeInput() { return isOptPlus ? optPlusInput : input; }
 
-                    input.addEventListener('change', () => {
-                        if (input.files[0]) setFile(input.files[0]);
-                    });
+                    // ── From Device ──────────────────────────────────────
+                    document.getElementById('fromDeviceBtn').addEventListener('click', () => activeInput().click());
+                    const fromDeviceItem = document.getElementById('fromDeviceItem');
+                    if (fromDeviceItem) fromDeviceItem.addEventListener('click', e => { e.preventDefault(); activeInput().click(); });
+
+                    input.addEventListener('change', () => { if (input.files[0]) setFile(input.files[0]); });
+                    optPlusInput.addEventListener('change', () => { if (optPlusInput.files[0]) setFile(optPlusInput.files[0]); });
 
                     // ── From URL ─────────────────────────────────────────
                     const fromUrlItem = document.getElementById('fromUrlItem');
@@ -235,7 +280,7 @@
                         }
                         const dt = new DataTransfer();
                         dt.items.add(file);
-                        input.files = dt.files;
+                        activeInput().files = dt.files;
                         setFile(file);
                     });
 
@@ -377,27 +422,6 @@
     </div>
     <?php endif; ?>
 
-</div>
-
-<!-- OPT Plus Import -->
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-clipboard2-pulse me-2 text-success"></i>Import from OPT Plus Format</span>
-        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">eOPT / DOH Format</span>
-    </div>
-    <div class="card-body">
-        <p class="text-muted small mb-3">
-            Upload an OPT Plus Excel file (DOH/government format). The file must have the standard OPT Plus layout —
-            barangay name in the header, data starting at row 10, columns: Seq · Purok · Mother · Child Name · IP · Sex · DOB · Date Measured · Weight · Height.
-        </p>
-        <form action="<?= APP_URL ?>/import/upload-opt-plus" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
-            <?= \Core\Session::csrfField() ?>
-            <input type="file" name="opt_plus_file" accept=".xlsx,.xls" required class="form-control form-control-sm" style="max-width:320px;">
-            <button type="submit" class="btn btn-success btn-sm text-nowrap">
-                <i class="bi bi-upload me-1"></i>Upload &amp; Preview
-            </button>
-        </form>
-    </div>
 </div>
 
 <!-- Bottom: Import History (full width) -->
