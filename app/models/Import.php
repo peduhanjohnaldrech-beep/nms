@@ -26,6 +26,12 @@ class Import extends Model
         try {
             $reader = IOFactory::createReaderForFile($filepath);
             $reader->setReadDataOnly(true);
+            $reader->setReadFilter(new class implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool {
+                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
+                    return $col <= 14 && $row <= 3000; // A–N, up to 3000 rows
+                }
+            });
             $spreadsheet = $reader->load($filepath);
             $sheet       = $spreadsheet->getActiveSheet();
         } catch (\Exception $e) {
@@ -162,6 +168,12 @@ class Import extends Model
         try {
             $reader = IOFactory::createReaderForFile($filepath);
             $reader->setReadDataOnly(true);
+            $reader->setReadFilter(new class implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool {
+                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
+                    return $col <= 22 && $row <= 3000; // A–V, up to 3000 rows
+                }
+            });
             $spreadsheet = $reader->load($filepath);
             $data        = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
             $spreadsheet->disconnectWorksheets();
