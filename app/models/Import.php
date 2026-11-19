@@ -21,61 +21,103 @@ class Import extends Model
 
     public function processOptPlus(string $filepath): array
     {
-        ini_set('memory_limit', '512M');
-        $rows = [];
-        try {
-            $reader = IOFactory::createReaderForFile($filepath);
-            $reader->setReadDataOnly(true);
-            // Find the correct sheet name before loading
-            $sheetNames  = $reader->listWorksheetNames($filepath);
-            $targetSheet = null;
-            foreach ($sheetNames as $name) {
-                if (stripos($name, 'Nut_Status') !== false) { $targetSheet = $name; break; }
-            }
-            if (!$targetSheet) {
-                // Fall back: pick first sheet that isn't Instructions/Summary
-                foreach ($sheetNames as $name) {
-                    if (!preg_match('/^(Instructions?|Summary|BNS|Clean|List|Region|Duplicate|Print)/i', $name)) {
-                        $targetSheet = $name; break;
-                    }
-                }
-            }
-            if (!$targetSheet) $targetSheet = $sheetNames[0];
-
-            $reader->setLoadSheetsOnly([$targetSheet]);
-            $ts = $targetSheet;
-            $reader->setReadFilter(new class($ts) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
-                private $sheet;
-                public function __construct($sheet) { $this->sheet = $sheet; }
-                public function readCell($columnAddress, $row, $worksheetName = '') {
-                    if ($worksheetName !== $this->sheet) return false;
-                    $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
-                    return $col <= 10 && $row <= 1010;
-                }
-            });
-            $spreadsheet = $reader->load($filepath);
-            $sheet       = $spreadsheet->getSheetByName($targetSheet) ?? $spreadsheet->getActiveSheet();
-        } catch (\Exception $e) {
-            return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
+        // Read XLSX directly as ZIP (no PhpSpreadsheet) — fast, low memory
+        $zip = new \ZipArchive();
+        if ($zip->open($filepath) !== true) {
+            return ['rows' => [], 'errors' => ['Could not open file.']];
         }
 
-        // Barangay is user-entered at Nut_StatusTool!E6 (next to the "Barangay:" label in D6)
-        $barangay = trim((string)$sheet->getCellByColumnAndRow(5, 6)->getValue());
-        // Fallback: also check E3, F6, then scan rows 3-8 near "Barangay" label
-        if (empty($barangay)) {
-            foreach ([[5,3],[6,6],[4,3]] as [$c,$r]) {
-                $v = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
-                if ($v && !preg_match('/^(barangay|city|municipality|choose|weight|age)/i', $v)) {
-                    $barangay = $v; break;
+        // ── Sheet map: name → xl/worksheets/sheetN.xml ───────────────────────
+        $wbXml   = $zip->getFromName('xl/workbook.xml')   ?: '';
+        $relsXml = $zip->getFromName('xl/_rels/workbook.xml.rels') ?: '';
+        preg_match_all('/Id="([^"]+)"[^>]+Target="([^"]+)"/', $relsXml, $rm, PREG_SET_ORDER);
+        $ridToPath = [];
+        foreach ($rm as $m) $ridToPath[$m[1]] = 'xl/' . $m[2];
+        preg_match_all('/<sheet\s[^>]*name="([^"]+)"[^>]*r:id="([^"]+)"/', $wbXml, $sm, PREG_SET_ORDER);
+        $sheetMap = [];
+        foreach ($sm as $m) if (isset($ridToPath[$m[2]])) $sheetMap[$m[1]] = $ridToPath[$m[2]];
+
+        // ── Find Nut_StatusTool sheet ─────────────────────────────────────────
+        $targetSheet = null;
+        foreach (array_keys($sheetMap) as $name) {
+            if (stripos($name, 'Nut_Status') !== false) { $targetSheet = $name; break; }
+        }
+        if (!$targetSheet) {
+            foreach (array_keys($sheetMap) as $name) {
+                if (!preg_match('/^(Instructions?|Summary|BNS|Clean|List|Region|Duplicate|Print)/i', $name)) {
+                    $targetSheet = $name; break;
                 }
             }
         }
+        if (!$targetSheet) $targetSheet = array_key_first($sheetMap);
+        if (!$targetSheet || !isset($sheetMap[$targetSheet])) {
+            $zip->close();
+            return ['rows' => [], 'errors' => ['Could not find data sheet in file.']];
+        }
+
+        $sheetXml = $zip->getFromName($sheetMap[$targetSheet]) ?: '';
+
+        // ── Shared String Table ───────────────────────────────────────────────
+        $sst = [];
+        $sstXml = $zip->getFromName('xl/sharedStrings.xml') ?: '';
+        if ($sstXml) {
+            preg_match_all('/<si>(.*?)<\/si>/s', $sstXml, $siMatches);
+            foreach ($siMatches[1] as $si) {
+                // Collect all <t> values and concatenate (handles rich text)
+                preg_match_all('/<t[^>]*>([^<]*)<\/t>/', $si, $tMatches);
+                $sst[] = html_entity_decode(implode('', $tMatches[1]), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            }
+        }
+        $zip->close();
+
+        // ── Helper: get cell value from a parsed row ──────────────────────────
+        $colIdx = function(string $col): int {
+            $n = 0;
+            foreach (str_split(strtoupper($col)) as $ch) $n = $n * 26 + (ord($ch) - 64);
+            return $n;
+        };
+        $getCellValue = function(string $rowXml, int $col) use ($sst, $colIdx): string {
+            // Find all cells in row, return value of the one matching column index
+            preg_match_all('/<c\s[^>]*r="([A-Z]+)(\d+)"[^>]*(?:t="([^"]*)")?[^>]*>(.*?)<\/c>/s',
+                $rowXml, $cells, PREG_SET_ORDER);
+            foreach ($cells as $cell) {
+                if ($colIdx($cell[1]) !== $col) continue;
+                $type    = $cell[3] ?? '';
+                $content = $cell[4];
+                if ($type === 's') {
+                    // Shared string
+                    preg_match('/<v[^>]*>(\d+)<\/v>/', $content, $vm);
+                    return $sst[(int)($vm[1] ?? -1)] ?? '';
+                }
+                if ($type === 'inlineStr') {
+                    preg_match('/<t[^>]*>([^<]*)<\/t>/', $content, $tm);
+                    return html_entity_decode($tm[1] ?? '', ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                }
+                // Numeric / date serial
+                preg_match('/<v[^>]*>(.*?)<\/v>/', $content, $vm);
+                return $vm[1] ?? '';
+            }
+            return '';
+        };
+
+        // ── Parse all rows ────────────────────────────────────────────────────
+        preg_match_all('/<row\s[^>]*r="(\d+)"[^>]*>(.*?)<\/row>/s', $sheetXml, $rowMatches, PREG_SET_ORDER);
+        $parsedRows = [];
+        foreach ($rowMatches as $m) $parsedRows[(int)$m[1]] = $m[2];
+
+        // ── Barangay from E6 ─────────────────────────────────────────────────
+        $barangay = '';
+        if (isset($parsedRows[6])) {
+            $barangay = $getCellValue($parsedRows[6], 5); // col E = 5
+        }
+        // Fallback: scan rows 3-8 for value near "Barangay" label
         if (empty($barangay)) {
             for ($r = 3; $r <= 8; $r++) {
+                if (!isset($parsedRows[$r])) continue;
                 for ($c = 1; $c <= 10; $c++) {
-                    $val = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
-                    if (preg_match('/^barangay[:\s]*$/i', $val)) {
-                        $next = trim((string)$sheet->getCellByColumnAndRow($c + 1, $r)->getValue());
+                    $v = $getCellValue($parsedRows[$r], $c);
+                    if (preg_match('/^barangay[:\s]*$/i', $v)) {
+                        $next = $getCellValue($parsedRows[$r], $c + 1);
                         if ($next && !preg_match('/^(barangay|city|municipality|choose)/i', $next)) {
                             $barangay = $next; break 2;
                         }
@@ -84,33 +126,31 @@ class Import extends Model
             }
         }
 
-        // Data starts at row 10 in OPT Plus (Nut_StatusTool sheet)
-        $maxRow       = $sheet->getHighestRow();
-        $dataStartRow = 10;
-
+        // ── Data rows (row 10+) ───────────────────────────────────────────────
+        $rows             = [];
         $beneficiaryModel = new Beneficiary();
 
-        for ($i = $dataStartRow; $i <= $maxRow; $i++) {
-            $purok      = trim((string)$sheet->getCellByColumnAndRow(2, $i)->getValue());
-            $motherName = trim((string)$sheet->getCellByColumnAndRow(3, $i)->getValue());
-            $childName  = trim((string)$sheet->getCellByColumnAndRow(4, $i)->getValue());
-            $isIP       = strtolower(trim((string)$sheet->getCellByColumnAndRow(5, $i)->getValue())) === 'yes';
-            $sexRaw     = strtoupper(trim((string)$sheet->getCellByColumnAndRow(6, $i)->getValue()));
-            $sex        = $sexRaw === 'F' ? 'Female' : 'Male';
-            $dobRaw     = $sheet->getCellByColumnAndRow(7, $i)->getValue();
-            $dateRaw    = $sheet->getCellByColumnAndRow(8, $i)->getValue();
-            $weight     = $sheet->getCellByColumnAndRow(9, $i)->getValue();
-            $height     = $sheet->getCellByColumnAndRow(10, $i)->getValue();
+        foreach ($parsedRows as $rowNum => $rowXml) {
+            if ($rowNum < 10) continue;
 
+            $childName = $getCellValue($rowXml, 4); // col D
             if (empty($childName)) continue;
 
-            // Parse child name: "Surname, First Name"
+            $purok      = $getCellValue($rowXml, 2); // B
+            $motherName = $getCellValue($rowXml, 3); // C
+            $isIP       = strtolower($getCellValue($rowXml, 5)) === 'yes'; // E
+            $sexRaw     = strtoupper($getCellValue($rowXml, 6)); // F
+            $sex        = $sexRaw === 'F' ? 'Female' : 'Male';
+            $dobRaw     = $getCellValue($rowXml, 7);  // G
+            $dateRaw    = $getCellValue($rowXml, 8);  // H
+            $weight     = $getCellValue($rowXml, 9);  // I
+            $height     = $getCellValue($rowXml, 10); // J
+
             if (str_contains($childName, ',')) {
                 [$lastName, $firstName] = explode(',', $childName, 2);
             } else {
-                $parts     = explode(' ', $childName, 2);
-                $lastName  = $parts[0];
-                $firstName = $parts[1] ?? '';
+                $parts    = explode(' ', $childName, 2);
+                $lastName = $parts[0]; $firstName = $parts[1] ?? '';
             }
 
             $rowData = [
@@ -149,12 +189,9 @@ class Import extends Model
                 'error'    => $rowError,
                 'status'   => $rowError ? 'error' : ($existing ? 'update' : 'new'),
                 'existing' => $existing[0] ?? null,
-                'rowNum'   => $i,
+                'rowNum'   => $rowNum,
             ];
         }
-
-        $spreadsheet->disconnectWorksheets();
-        unset($spreadsheet);
 
         return ['rows' => $rows, 'errors' => []];
     }
