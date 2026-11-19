@@ -77,24 +77,25 @@ class Import extends Model
             return $n;
         };
         $getCellValue = function(string $rowXml, int $col) use ($sst, $colIdx): string {
-            // Find all cells in row, return value of the one matching column index
-            preg_match_all('/<c\s[^>]*r="([A-Z]+)(\d+)"[^>]*(?:t="([^"]*)")?[^>]*>(.*?)<\/c>/s',
-                $rowXml, $cells, PREG_SET_ORDER);
+            preg_match_all('/<c\s([^>]*)>(.*?)<\/c>/s', $rowXml, $cells, PREG_SET_ORDER);
             foreach ($cells as $cell) {
-                if ($colIdx($cell[1]) !== $col) continue;
-                $type    = $cell[3] ?? '';
-                $content = $cell[4];
+                $attrs   = $cell[1];
+                $content = $cell[2];
+                // Extract column letter from r="D10"
+                if (!preg_match('/\br="([A-Z]+)\d+"/i', $attrs, $rm)) continue;
+                if ($colIdx($rm[1]) !== $col) continue;
+                // Extract type
+                preg_match('/\bt="([^"]+)"/', $attrs, $tm);
+                $type = $tm[1] ?? '';
                 if ($type === 's') {
-                    // Shared string
                     preg_match('/<v[^>]*>(\d+)<\/v>/', $content, $vm);
                     return $sst[(int)($vm[1] ?? -1)] ?? '';
                 }
                 if ($type === 'inlineStr') {
-                    preg_match('/<t[^>]*>([^<]*)<\/t>/', $content, $tm);
-                    return html_entity_decode($tm[1] ?? '', ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                    preg_match_all('/<t[^>]*>([^<]*)<\/t>/', $content, $tms);
+                    return html_entity_decode(implode('', $tms[1]), ENT_XML1 | ENT_QUOTES, 'UTF-8');
                 }
-                // Numeric / date serial
-                preg_match('/<v[^>]*>(.*?)<\/v>/', $content, $vm);
+                preg_match('/<v[^>]*>(.*?)<\/v>/s', $content, $vm);
                 return $vm[1] ?? '';
             }
             return '';
