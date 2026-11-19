@@ -24,17 +24,17 @@
 
                 <!-- Format selector -->
                 <div class="mb-3 d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-primary active" id="fmtStandard">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="fmtStandard">
                         <i class="bi bi-table me-1"></i>Standard Template
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-success" id="fmtOptPlus">
+                    <button type="button" class="btn btn-sm btn-success active" id="fmtOptPlus">
                         <i class="bi bi-clipboard2-pulse me-1"></i>OPT Plus (DOH Format)
                     </button>
                 </div>
-                <div id="fmtStandardInfo" class="alert alert-light border small py-2 mb-3">
+                <div id="fmtStandardInfo" class="alert alert-light border small py-2 mb-3 d-none">
                     Use the system's standard template (22 columns, A–V). <a href="<?= APP_URL ?>/import/template" class="text-success fw-semibold">Download template</a>
                 </div>
-                <div id="fmtOptPlusInfo" class="alert alert-success border small py-2 mb-3 d-none">
+                <div id="fmtOptPlusInfo" class="alert alert-success border small py-2 mb-3">
                     OPT Plus / DOH format — barangay in header, data from row 10 (Seq · Purok · Mother · Child · IP · Sex · DOB · Date Measured · Weight · Height).
                 </div>
 
@@ -43,7 +43,7 @@
                 <script src="https://accounts.google.com/gsi/client"></script>
                 <?php endif; ?>
 
-                <form action="<?= APP_URL ?>/import/upload" method="post" enctype="multipart/form-data" id="importForm">
+                <form action="<?= APP_URL ?>/import/upload-opt-plus" method="post" enctype="multipart/form-data" id="importForm">
                     <?= \Core\Session::csrfField() ?>
                     <input type="hidden" name="import_source" id="importSourceInput" value="Excel">
                     <input type="file" name="excel_file" id="excelFileInput" accept=".xlsx,.xls" class="d-none">
@@ -149,7 +149,7 @@
                     const stdInfo    = document.getElementById('fmtStandardInfo');
                     const optInfo    = document.getElementById('fmtOptPlusInfo');
                     const dlBtn      = document.getElementById('dlTemplateBtn');
-                    let isOptPlus    = false;
+                    let isOptPlus    = true;
 
                     function switchFormat(optPlus) {
                         isOptPlus = optPlus;
