@@ -21,7 +21,7 @@ class Import extends Model
 
     public function processOptPlus(string $filepath): array
     {
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M');
         $rows = [];
         try {
             $reader = IOFactory::createReaderForFile($filepath);
@@ -43,8 +43,12 @@ class Import extends Model
             if (!$targetSheet) $targetSheet = $sheetNames[0];
 
             $reader->setLoadSheetsOnly([$targetSheet]);
-            $reader->setReadFilter(new class implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+            $ts = $targetSheet;
+            $reader->setReadFilter(new class($ts) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                private $sheet;
+                public function __construct($sheet) { $this->sheet = $sheet; }
                 public function readCell($columnAddress, $row, $worksheetName = '') {
+                    if ($worksheetName !== $this->sheet) return false;
                     $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
                     return $col <= 10 && $row <= 1010; // A–J, up to 1000 data rows
                 }
