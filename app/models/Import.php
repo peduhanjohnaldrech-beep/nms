@@ -26,10 +26,27 @@ class Import extends Model
         try {
             $reader = IOFactory::createReaderForFile($filepath);
             $reader->setReadDataOnly(true);
+            // Find the correct sheet name before loading
+            $sheetNames  = $reader->listWorksheetNames($filepath);
+            $targetSheet = null;
+            foreach ($sheetNames as $name) {
+                if (stripos($name, 'Nut_Status') !== false) { $targetSheet = $name; break; }
+            }
+            if (!$targetSheet) {
+                // Fall back: pick first sheet that isn't Instructions/Summary
+                foreach ($sheetNames as $name) {
+                    if (!preg_match('/^(Instructions?|Summary|BNS|Clean|List|Region|Duplicate|Print)/i', $name)) {
+                        $targetSheet = $name; break;
+                    }
+                }
+            }
+            if (!$targetSheet) $targetSheet = $sheetNames[0];
+
+            $reader->setLoadSheetsOnly([$targetSheet]);
             $reader->setReadFilter(new class implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
                 public function readCell($columnAddress, $row, $worksheetName = '') {
                     $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
-                    return $col <= 14 && $row <= 3000; // A–N, up to 3000 rows
+                    return $col <= 10 && $row <= 1010; // A–J, up to 1000 data rows
                 }
             });
             $spreadsheet = $reader->load($filepath);
@@ -38,36 +55,27 @@ class Import extends Model
             return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
         }
 
-        // Extract barangay from header rows (scan first 10 rows for "Barangay" label)
-        $barangay = '';
-        for ($r = 1; $r <= 10; $r++) {
-            for ($c = 1; $c <= 15; $c++) {
-                $val = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
-                if (stripos($val, 'barangay') !== false) {
-                    // Check adjacent cells for the actual value
-                    for ($nc = $c + 1; $nc <= $c + 4; $nc++) {
-                        $next = trim((string)$sheet->getCellByColumnAndRow($nc, $r)->getValue());
-                        if ($next && stripos($next, 'barangay') === false && stripos($next, 'city') === false) {
+        // Barangay is in B3 (user-selected dropdown next to "Barangay" label in A3)
+        $barangay = trim((string)$sheet->getCellByColumnAndRow(2, 3)->getValue());
+        // Fallback: scan rows 1-9 for a "Barangay" label and check adjacent cell
+        if (empty($barangay)) {
+            for ($r = 1; $r <= 9; $r++) {
+                for ($c = 1; $c <= 10; $c++) {
+                    $val = trim((string)$sheet->getCellByColumnAndRow($c, $r)->getValue());
+                    if (strtolower($val) === 'barangay') {
+                        $next = trim((string)$sheet->getCellByColumnAndRow($c + 1, $r)->getValue());
+                        if ($next && !preg_match('/^(barangay|city|municipality|choose)/i', $next)) {
                             $barangay = $next;
-                            break 3;
+                            break 2;
                         }
                     }
                 }
             }
         }
 
-        // Auto-detect data start: find first row (from row 8) where col D has a name-like value
-        $maxRow           = $sheet->getHighestRow();
-        $dataStartRow     = null;
-        for ($r = 8; $r <= min(20, $maxRow); $r++) {
-            $val = trim((string)$sheet->getCellByColumnAndRow(4, $r)->getValue());
-            // Skip header-like labels
-            if ($val && !preg_match('/^(name|child|pangalan|beneficiary|last|first)/i', $val)) {
-                $dataStartRow = $r;
-                break;
-            }
-        }
-        if ($dataStartRow === null) $dataStartRow = 10; // fallback
+        // Data starts at row 10 in OPT Plus (Nut_StatusTool sheet)
+        $maxRow       = $sheet->getHighestRow();
+        $dataStartRow = 10;
 
         $beneficiaryModel = new Beneficiary();
 

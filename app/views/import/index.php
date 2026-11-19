@@ -214,7 +214,7 @@
                         const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
                         const dt = new DataTransfer();
                         dt.items.add(file);
-                        input.files = dt.files;
+                        activeInput().files = dt.files;
                         setFile(file);
                     }
 
