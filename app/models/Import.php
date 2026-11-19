@@ -42,26 +42,58 @@ class Import extends Model
             }
             if (!$targetSheet) $targetSheet = $sheetNames[0];
 
-            $reader->setLoadSheetsOnly([$targetSheet]);
+            // Also load Summary sheet to read barangay (stored at Summary!J3)
+            $summarySheet = in_array('Summary', $sheetNames) ? 'Summary' : null;
+            $sheetsToLoad = $summarySheet ? [$targetSheet, $summarySheet] : [$targetSheet];
+            $reader->setLoadSheetsOnly($sheetsToLoad);
             $ts = $targetSheet;
-            $reader->setReadFilter(new class($ts) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
-                private $sheet;
-                public function __construct($sheet) { $this->sheet = $sheet; }
+            $sm = $summarySheet;
+            $reader->setReadFilter(new class($ts, $sm) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter {
+                private $sheet, $summary;
+                public function __construct($sheet, $summary) { $this->sheet = $sheet; $this->summary = $summary; }
                 public function readCell($columnAddress, $row, $worksheetName = '') {
+                    // Summary: only need row 3 for barangay
+                    if ($worksheetName === $this->summary) {
+                        return $row <= 5;
+                    }
                     if ($worksheetName !== $this->sheet) return false;
                     $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($columnAddress);
-                    return $col <= 10 && $row <= 1010; // A–J, up to 1000 data rows
+                    return $col <= 10 && $row <= 1010;
                 }
             });
             $spreadsheet = $reader->load($filepath);
-            $sheet       = $spreadsheet->getActiveSheet();
+            $sheet       = $spreadsheet->getSheetByName($targetSheet) ?? $spreadsheet->getActiveSheet();
         } catch (\Exception $e) {
             return ['rows' => [], 'errors' => ['Could not read file: ' . $e->getMessage()]];
         }
 
-        // Barangay is in B3 (user-selected dropdown next to "Barangay" label in A3)
-        $barangay = trim((string)$sheet->getCellByColumnAndRow(2, 3)->getValue());
-        // Fallback: scan rows 1-9 for a "Barangay" label and check adjacent cell
+        // Barangay is stored in Summary sheet at J3 (user enters it there via dropdown)
+        $barangay = '';
+        if ($summarySheet) {
+            $sumSheet = $spreadsheet->getSheetByName($summarySheet);
+            if ($sumSheet) {
+                // Scan row 3 for a non-empty non-label value near col J (10)
+                for ($c = 8; $c <= 15; $c++) {
+                    $v = trim((string)$sumSheet->getCellByColumnAndRow($c, 3)->getValue());
+                    if ($v && !preg_match('/^(barangay|city|municipality|region|province|choose|summary)/i', $v)) {
+                        $barangay = $v;
+                        break;
+                    }
+                }
+                // Also try row 2 and 4 if still empty
+                if (empty($barangay)) {
+                    foreach ([2, 4] as $r) {
+                        for ($c = 1; $c <= 15; $c++) {
+                            $v = trim((string)$sumSheet->getCellByColumnAndRow($c, $r)->getValue());
+                            if ($v && !preg_match('/^(barangay|city|municipality|region|province|choose|summary)/i', $v)) {
+                                $barangay = $v; break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Fallback: scan Nut_StatusTool rows 1-9 for a value near "Barangay" label
         if (empty($barangay)) {
             for ($r = 1; $r <= 9; $r++) {
                 for ($c = 1; $c <= 10; $c++) {
@@ -69,8 +101,7 @@ class Import extends Model
                     if (strtolower($val) === 'barangay') {
                         $next = trim((string)$sheet->getCellByColumnAndRow($c + 1, $r)->getValue());
                         if ($next && !preg_match('/^(barangay|city|municipality|choose)/i', $next)) {
-                            $barangay = $next;
-                            break 2;
+                            $barangay = $next; break 2;
                         }
                     }
                 }
