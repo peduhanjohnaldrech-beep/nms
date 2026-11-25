@@ -226,4 +226,64 @@ class DispensingRecord extends Model
             'notes'           => $data['notes'] ?? null,
         ]);
     }
+
+    public function findById(int $id): ?array
+    {
+        $row = $this->fetchOne(
+            "SELECT dr.*, b.last_name, b.first_name, b.barangay
+             FROM dispensing_records dr
+             JOIN beneficiaries b ON b.id = dr.beneficiary_id
+             WHERE dr.id = ?",
+            [$id]
+        );
+        return $row ?: null;
+    }
+
+    public function updateRecord(int $id, array $data): void
+    {
+        $this->update($id, [
+            'supplement_type' => $data['supplement_type'],
+            'quantity'        => $data['quantity'],
+            'unit'            => $data['unit'],
+            'date_dispensed'  => $data['date_dispensed'],
+            'notes'           => $data['notes'] ?? null,
+        ]);
+    }
+
+    public function deleteRecord(int $id): void
+    {
+        Database::getInstance()
+            ->prepare("DELETE FROM dispensing_records WHERE id = ?")
+            ->execute([$id]);
+    }
+
+    /** Enrolled beneficiaries with no dispensing record for given month/program. */
+    public function getDueList(int $year, int $month, string $program = '', string $barangay = ''): array
+    {
+        $where  = "pe.status = 'Active' AND b.deleted_at IS NULL AND b.validation_status = 'validated'
+                   AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59";
+        $params = [$year, $month];
+        if ($program)  { $where .= ' AND pe.program = ?';   $params[] = $program; }
+        if ($barangay) { $where .= ' AND b.barangay = ?';   $params[] = $barangay; }
+
+        return $this->fetchAll(
+            "SELECT b.id AS beneficiary_id, b.last_name, b.first_name, b.barangay, b.purok_zone,
+                    pe.id AS enrollment_id, pe.program,
+                    (SELECT MAX(dr2.date_dispensed)
+                     FROM dispensing_records dr2
+                     WHERE dr2.beneficiary_id = b.id AND dr2.program = pe.program) AS last_dispensed
+             FROM program_enrollments pe
+             JOIN beneficiaries b ON b.id = pe.beneficiary_id
+             WHERE $where
+               AND NOT EXISTS (
+                   SELECT 1 FROM dispensing_records dr
+                   WHERE dr.beneficiary_id = b.id
+                     AND dr.program = pe.program
+                     AND YEAR(dr.date_dispensed) = ?
+                     AND MONTH(dr.date_dispensed) = ?
+               )
+             ORDER BY b.barangay, b.last_name, b.first_name",
+            array_merge($params, [$year, $month])
+        );
+    }
 }

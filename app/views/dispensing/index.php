@@ -91,6 +91,14 @@ usort($mnsLog, fn($a, $b) => strcmp($b['date_given'] ?? $b['date_given'], $a['da
         </button>
     </li>
     <li class="nav-item">
+        <button class="nav-link fw-semibold" id="tab-due" data-bs-toggle="tab" data-bs-target="#pane-due" type="button">
+            <i class="bi bi-clock-history me-1"></i>Due This Month
+            <?php if (!empty($dueList)): ?>
+            <span class="badge bg-danger ms-1"><?= count($dueList) ?></span>
+            <?php endif; ?>
+        </button>
+    </li>
+    <li class="nav-item">
         <button class="nav-link fw-semibold" id="tab-mns" data-bs-toggle="tab" data-bs-target="#pane-mns" type="button">
             <i class="bi bi-capsule me-1"></i>MNS Monthly Log
             <span class="badge bg-primary ms-1"><?= $mnsTotal ?></span>
@@ -191,6 +199,7 @@ usort($mnsLog, fn($a, $b) => strcmp($b['date_given'] ?? $b['date_given'], $a['da
                         <th>Unit</th>
                         <th>Dispensed By</th>
                         <th>Notes</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -214,6 +223,28 @@ usort($mnsLog, fn($a, $b) => strcmp($b['date_given'] ?? $b['date_given'], $a['da
                         <td class="text-muted small"><?= $r['program'] === 'DSP' ? '<span class="text-muted">—</span>' : htmlspecialchars($r['unit']) ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['dispensed_by_name'] ?? '—') ?></td>
                         <td class="text-muted small"><?= htmlspecialchars($r['notes'] ?? '') ?></td>
+                        <td class="text-end pe-2 text-nowrap">
+                            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
+                                onclick="openEditDisp(<?= htmlspecialchars(json_encode([
+                                    'id'              => $r['id'],
+                                    'supplement_type' => $r['supplement_type'],
+                                    'quantity'        => $r['quantity'],
+                                    'unit'            => $r['unit'],
+                                    'date_dispensed'  => $r['date_dispensed'],
+                                    'notes'           => $r['notes'] ?? '',
+                                    'name'            => $r['last_name'].', '.$r['first_name'],
+                                    'program'         => $r['program'],
+                                ]), ENT_QUOTES) ?>)" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="POST" action="<?= APP_URL ?>/dispensing/<?= $r['id'] ?>/delete"
+                                  class="d-inline" onsubmit="return confirm('Delete this record?')">
+                                <?= \Core\Session::csrfField() ?>
+                                <button type="submit" class="btn btn-xs btn-outline-danger py-0 px-1" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -222,7 +253,68 @@ usort($mnsLog, fn($a, $b) => strcmp($b['date_given'] ?? $b['date_given'], $a['da
         <?php endif; ?>
     </div><!-- /pane-records -->
 
-    <!-- ── Tab 2: MNS Monthly Log ── -->
+    <!-- ── Tab 2: Due This Month ── -->
+    <div class="tab-pane fade" id="pane-due">
+        <?php if (empty($dueList)): ?>
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-check-circle fs-1 d-block mb-2 text-success opacity-50"></i>
+            <p class="mb-0 fw-semibold">All enrolled beneficiaries have been served this month.</p>
+        </div>
+        <?php else: ?>
+        <div class="px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+            <span class="small text-muted"><strong><?= count($dueList) ?></strong> beneficiaries have not received their supplement in <strong><?= $monthNames[$selectedMonth] ?> <?= $year ?></strong>.</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Name</th>
+                        <th>Barangay</th>
+                        <th>Purok</th>
+                        <th>Program</th>
+                        <th>Last Dispensed</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($dueList as $d): ?>
+                    <tr>
+                        <td class="ps-3 fw-semibold">
+                            <a href="<?= APP_URL ?>/beneficiaries/<?= $d['beneficiary_id'] ?>" class="text-decoration-none">
+                                <?= htmlspecialchars($d['last_name'] . ', ' . $d['first_name']) ?>
+                            </a>
+                        </td>
+                        <td class="text-muted small"><?= htmlspecialchars($d['barangay']) ?></td>
+                        <td class="text-muted small"><?= htmlspecialchars($d['purok_zone'] ?? '—') ?></td>
+                        <td>
+                            <?php $pc2 = ['DSP'=>'warning','MNS'=>'primary','OPT'=>'success'];
+                                  $dc  = $pc2[$d['program']] ?? 'secondary';
+                                  $dt  = $dc === 'warning' ? 'text-dark' : 'text-white'; ?>
+                            <span class="badge bg-<?= $dc ?> <?= $dt ?>"><?= htmlspecialchars($d['program']) ?></span>
+                        </td>
+                        <td class="text-muted small">
+                            <?= $d['last_dispensed'] ? \DateHelper::formatDate($d['last_dispensed'], 'M j, Y') : '<span class="text-danger">Never</span>' ?>
+                        </td>
+                        <td class="pe-3 text-end">
+                            <button type="button" class="btn btn-sm btn-primary"
+                                onclick="openQuickDisp(<?= htmlspecialchars(json_encode([
+                                    'beneficiary_id' => $d['beneficiary_id'],
+                                    'enrollment_id'  => $d['enrollment_id'],
+                                    'name'           => $d['last_name'].', '.$d['first_name'],
+                                    'program'        => $d['program'],
+                                ]), ENT_QUOTES) ?>)">
+                                <i class="bi bi-plus-circle me-1"></i>Dispense
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+    </div><!-- /pane-due -->
+
+    <!-- ── Tab 3: MNS Monthly Log ── -->
     <div class="tab-pane fade" id="pane-mns">
 
         <!-- Filters -->
@@ -388,15 +480,156 @@ if (filterBeneSearch) {
     });
 }
 
-// Restore MNS tab from URL hash
-if (window.location.hash === '#mns') {
-    const tabEl = document.getElementById('tab-mns');
+// Restore tab from URL hash
+const hashMap = {'#mns': 'tab-mns', '#due': 'tab-due'};
+if (hashMap[window.location.hash]) {
+    const tabEl = document.getElementById(hashMap[window.location.hash]);
     if (tabEl) bootstrap.Tab.getOrCreateInstance(tabEl).show();
 }
 document.querySelectorAll('#dispTabs button[data-bs-toggle="tab"]').forEach(btn => {
     btn.addEventListener('shown.bs.tab', e => {
-        const target = e.target.getAttribute('data-bs-target');
-        history.replaceState(null, '', target === '#pane-mns' ? '#mns' : location.pathname + location.search);
+        const t = e.target.getAttribute('data-bs-target');
+        const h = t === '#pane-mns' ? '#mns' : t === '#pane-due' ? '#due' : location.pathname + location.search;
+        history.replaceState(null, '', h);
     });
 });
+
+// ── Quick Dispense modal ──────────────────────────────────────────────────────
+function openQuickDisp(d) {
+    document.getElementById('qdBeneId').value       = d.beneficiary_id;
+    document.getElementById('qdEnrollId').value     = d.enrollment_id;
+    document.getElementById('qdProgram').value      = d.program;
+    document.getElementById('qdName').textContent   = d.name;
+    document.getElementById('qdProgramBadge').textContent = d.program;
+    document.getElementById('qdDate').value         = new Date().toISOString().slice(0,10);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('quickDispModal')).show();
+}
+
+// ── Edit Dispensing modal ─────────────────────────────────────────────────────
+function openEditDisp(d) {
+    document.getElementById('editDispId').value          = d.id;
+    document.getElementById('editDispName').textContent  = d.name + ' — ' + d.program;
+    document.getElementById('editDispDate').value        = d.date_dispensed;
+    document.getElementById('editDispQty').value         = d.quantity;
+    document.getElementById('editDispUnit').value        = d.unit;
+    document.getElementById('editDispNotes').value       = d.notes;
+    const sel = document.getElementById('editDispType');
+    let found = false;
+    for (const opt of sel.options) { if (opt.value === d.supplement_type) { opt.selected = true; found = true; break; } }
+    if (!found) {
+        sel.value = 'Other';
+        document.getElementById('editDispTypeCustom').value = d.supplement_type;
+        document.getElementById('editDispTypeCustomWrap').classList.remove('d-none');
+    } else {
+        document.getElementById('editDispTypeCustomWrap').classList.add('d-none');
+    }
+    document.getElementById('editDispForm').action = '<?= APP_URL ?>/dispensing/' + d.id + '/update';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('editDispModal')).show();
+}
+document.getElementById('editDispType')?.addEventListener('change', function() {
+    document.getElementById('editDispTypeCustomWrap').classList.toggle('d-none', this.value !== 'Other');
+});
 </script>
+
+<!-- Quick Dispense Modal -->
+<div class="modal fade" id="quickDispModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Record Dispensing</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="<?= APP_URL ?>/dispensing/create">
+                <?= \Core\Session::csrfField() ?>
+                <input type="hidden" name="beneficiary_id" id="qdBeneId">
+                <input type="hidden" name="enrollment_id"  id="qdEnrollId">
+                <input type="hidden" name="program"        id="qdProgram">
+                <div class="modal-body">
+                    <p class="mb-3">
+                        <span class="fw-semibold" id="qdName"></span>
+                        <span class="badge bg-primary ms-2" id="qdProgramBadge"></span>
+                    </p>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Supplement / Medicine</label>
+                            <input type="text" name="supplement_type" class="form-control form-control-sm" required placeholder="e.g. Zinc, Iron, Vit A">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Qty</label>
+                            <input type="number" name="quantity" class="form-control form-control-sm" value="1" min="0" step="0.5">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Unit</label>
+                            <input type="text" name="unit" class="form-control form-control-sm" value="piece(s)">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Date Dispensed</label>
+                            <input type="date" name="date_dispensed" id="qdDate" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Any remarks…">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Dispensing Modal -->
+<div class="modal fade" id="editDispModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Edit Dispensing Record</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editDispForm">
+                <?= \Core\Session::csrfField() ?>
+                <input type="hidden" id="editDispId">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3" id="editDispName"></p>
+                    <div class="row g-2">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-semibold">Supplement / Medicine</label>
+                            <select name="supplement_type" id="editDispType" class="form-select form-select-sm">
+                                <option>Zinc</option><option>Iron</option><option>Vitamin A</option>
+                                <option>MNP</option><option>LNS-SQ</option><option>Albendazole</option>
+                                <option>Other</option>
+                            </select>
+                            <div id="editDispTypeCustomWrap" class="d-none mt-1">
+                                <input type="text" name="supplement_type_custom" id="editDispTypeCustom"
+                                       class="form-control form-control-sm" placeholder="Specify…">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Qty</label>
+                            <input type="number" name="quantity" id="editDispQty" class="form-control form-control-sm" min="0" step="0.5">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">Unit</label>
+                            <input type="text" name="unit" id="editDispUnit" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Date Dispensed</label>
+                            <input type="date" name="date_dispensed" id="editDispDate" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Notes</label>
+                            <input type="text" name="notes" id="editDispNotes" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -99,6 +99,8 @@ class DispensingController extends Controller
         $allBeneficiaries = $beneStmt->fetchAll();
         $activePrograms   = (new Program())->getActive();
 
+        $dueList = $model->getDueList($year, $selectedMonth, $program, $barangay);
+
         $this->view('dispensing/index', [
             'records'          => $records,
             'summary'          => $summary,
@@ -117,6 +119,7 @@ class DispensingController extends Controller
             'mnpMonthRecords'  => $mnpMonthRecords,
             'lnsMonthRecords'  => $lnsMonthRecords,
             'vitaMonthRecords' => $vitaMonthRecords,
+            'dueList'          => $dueList,
         ]);
     }
 
@@ -183,6 +186,59 @@ class DispensingController extends Controller
         $this->view('dispensing/create', compact(
             'beneficiary', 'enrollments', 'allBeneficiaries', 'beneficiaryId', 'activePrograms'
         ));
+    }
+
+    public function update(int $id): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('dispensing');
+        if (!$this->isPost()) { $this->redirect('/dispensing'); }
+        $this->validateCsrf();
+
+        $model  = new DispensingRecord();
+        $record = $model->findById($id);
+        if (!$record) {
+            Session::flash('error', 'Record not found.');
+            $this->redirect('/dispensing');
+            return;
+        }
+
+        $supplementType = trim($_POST['supplement_type'] ?? '');
+        if ($supplementType === 'Other' && !empty($_POST['supplement_type_custom'])) {
+            $supplementType = htmlspecialchars(trim($_POST['supplement_type_custom']), ENT_QUOTES, 'UTF-8');
+        }
+
+        $model->updateRecord($id, [
+            'supplement_type' => $supplementType,
+            'quantity'        => (float)($_POST['quantity'] ?? 1),
+            'unit'            => trim($_POST['unit'] ?? 'piece(s)'),
+            'date_dispensed'  => $_POST['date_dispensed'] ?? date('Y-m-d'),
+            'notes'           => trim($_POST['notes'] ?? ''),
+        ]);
+
+        Session::flash('success', 'Dispensing record updated.');
+        $this->redirect('/dispensing');
+    }
+
+    public function delete(int $id): void
+    {
+        $this->requireAuth();
+        $this->requirePermission('dispensing');
+        if (!$this->isPost()) { $this->redirect('/dispensing'); }
+        $this->validateCsrf();
+
+        $model  = new DispensingRecord();
+        $record = $model->findById($id);
+        if (!$record) {
+            Session::flash('error', 'Record not found.');
+            $this->redirect('/dispensing');
+            return;
+        }
+
+        $model->deleteRecord($id);
+        \ActivityLog::log('dispensing_delete', "Deleted dispensing record #{$id}");
+        Session::flash('success', 'Dispensing record deleted.');
+        $this->redirect('/dispensing');
     }
 
     public function export(): void

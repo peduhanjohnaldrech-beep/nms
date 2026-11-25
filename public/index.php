@@ -133,10 +133,12 @@ $router->post('/programs-admin/{id}/edit',    'ProgramsAdminController@edit');
 $router->post('/programs-admin/{id}/toggle',  'ProgramsAdminController@toggle');
 
 // Dispensing Tracker
-$router->get('/dispensing',         'DispensingController@index');
-$router->get('/dispensing/create',  'DispensingController@create');
-$router->post('/dispensing/create', 'DispensingController@create');
-$router->get('/dispensing/export',  'DispensingController@export');
+$router->get('/dispensing',                  'DispensingController@index');
+$router->get('/dispensing/create',           'DispensingController@create');
+$router->post('/dispensing/create',          'DispensingController@create');
+$router->get('/dispensing/export',           'DispensingController@export');
+$router->post('/dispensing/{id}/update',     'DispensingController@update');
+$router->post('/dispensing/{id}/delete',     'DispensingController@delete');
 
 // Reports
 $router->get('/reports',              'ReportController@index');
