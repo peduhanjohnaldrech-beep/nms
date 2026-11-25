@@ -145,6 +145,49 @@ class BarangayController extends Controller
         $this->redirect('/barangays');
     }
 
+    public function update(string $id): void
+    {
+        $this->requireAdmin();
+        if (!$this->isPost()) { $this->redirect('/barangays'); }
+        $this->validateCsrf();
+
+        $newName = trim($_POST['name'] ?? '');
+        if ($newName === '') {
+            Session::flash('error', 'Barangay name cannot be empty.');
+            $this->redirect('/barangays');
+        }
+
+        $db  = Database::getInstance();
+        $row = $db->prepare("SELECT id, name FROM barangays WHERE id = ?");
+        $row->execute([$id]);
+        $bar = $row->fetch();
+
+        if (!$bar) {
+            Session::flash('error', 'Barangay not found.');
+            $this->redirect('/barangays');
+        }
+
+        $oldName = $bar['name'];
+        if ($oldName === $newName) {
+            $this->redirect('/barangays');
+        }
+
+        // Check duplicate
+        $dup = $db->prepare("SELECT id FROM barangays WHERE LOWER(name) = LOWER(?) AND id != ?");
+        $dup->execute([$newName, $id]);
+        if ($dup->fetch()) {
+            Session::flash('error', "Barangay \"" . htmlspecialchars($newName) . "\" already exists.");
+            $this->redirect('/barangays');
+        }
+
+        // Rename in barangays table and cascade to all beneficiaries
+        $db->prepare("UPDATE barangays SET name = ? WHERE id = ?")->execute([$newName, $id]);
+        $db->prepare("UPDATE beneficiaries SET barangay = ? WHERE barangay = ?")->execute([$newName, $oldName]);
+
+        Session::flash('success', "Barangay renamed from \"" . htmlspecialchars($oldName) . "\" to \"" . htmlspecialchars($newName) . "\".");
+        $this->redirect('/barangays');
+    }
+
     public function destroy(string $id): void
     {
         $this->requireAdmin();

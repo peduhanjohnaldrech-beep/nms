@@ -71,6 +71,7 @@ $router->get('/dashboard', 'DashboardController@index');
 $router->get('/barangays',                  'BarangayController@index');
 $router->post('/barangays',                 'BarangayController@store');
 $router->post('/barangays/{id}/delete',     'BarangayController@destroy');
+$router->post('/barangays/{id}/update',     'BarangayController@update');
 
 // Beneficiaries
 $router->get('/beneficiaries',             'BeneficiaryController@index');

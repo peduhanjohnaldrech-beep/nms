@@ -39,16 +39,37 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
                     <table class="table table-sm table-hover align-middle mb-0">
                         <tbody>
                             <?php foreach ($barangays as $b): ?>
-                            <tr>
-                                <td class="ps-3"><i class="bi bi-geo-alt me-1 text-muted"></i><?= htmlspecialchars($b['name']) ?></td>
-                                <td class="text-end pe-3" style="width:1%">
-                                    <?php if (isset($b['id'])): ?>
-                                    <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/delete"
-                                          onsubmit="return confirm('Delete \'<?= htmlspecialchars(addslashes($b['name'])) ?>\'?')">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                            <tr id="brgy-row-<?= $b['id'] ?? '' ?>">
+                                <!-- View mode -->
+                                <td class="ps-3 brgy-view-<?= $b['id'] ?? '' ?>">
+                                    <i class="bi bi-geo-alt me-1 text-muted"></i><?= htmlspecialchars($b['name']) ?>
+                                </td>
+                                <!-- Edit mode (hidden) -->
+                                <td class="ps-3 d-none brgy-edit-<?= $b['id'] ?? '' ?>">
+                                    <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/update" class="d-flex gap-1">
+                                        <?= \Core\Session::csrfField() ?>
+                                        <input type="text" name="name" class="form-control form-control-sm"
+                                               value="<?= htmlspecialchars($b['name']) ?>" required maxlength="100">
+                                        <button type="submit" class="btn btn-sm btn-success text-nowrap">Save</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="toggleEditBrgy(<?= $b['id'] ?? 'null' ?>, false)">Cancel</button>
                                     </form>
+                                </td>
+                                <td class="text-end pe-3 brgy-actions-<?= $b['id'] ?? '' ?>" style="width:1%">
+                                    <?php if (isset($b['id'])): ?>
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="toggleEditBrgy(<?= $b['id'] ?>, true)" title="Rename">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="POST" action="<?= APP_URL ?>/barangays/<?= $b['id'] ?>/delete"
+                                              onsubmit="return confirm('Delete \'<?= htmlspecialchars(addslashes($b['name'])) ?>\'?')">
+                                            <?= \Core\Session::csrfField() ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                     <?php else: ?>
                                     <span class="text-muted small">legacy</span>
                                     <?php endif; ?>
@@ -65,6 +86,14 @@ $isAdmin    = strtolower(\Core\Session::get('user_role', '')) === 'admin';
         </div>
     </div>
 </div>
+<script>
+function toggleEditBrgy(id, on) {
+    document.querySelector('.brgy-view-'    + id).classList.toggle('d-none', on);
+    document.querySelector('.brgy-edit-'    + id).classList.toggle('d-none', !on);
+    document.querySelector('.brgy-actions-' + id).classList.toggle('d-none', on);
+    if (on) document.querySelector('.brgy-edit-' + id + ' input').focus();
+}
+</script>
 <?php endif; ?>
 
 <div class="card border-0 shadow-sm">
