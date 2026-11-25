@@ -262,9 +262,11 @@ class DispensingRecord extends Model
     {
         $where  = "pe.status = 'Active' AND b.deleted_at IS NULL AND b.validation_status = 'validated'
                    AND TIMESTAMPDIFF(MONTH, b.date_of_birth, NOW()) <= 59";
-        $params = [$year, $month];
+        $params = [];
         if ($program)  { $where .= ' AND pe.program = ?';   $params[] = $program; }
         if ($barangay) { $where .= ' AND b.barangay = ?';   $params[] = $barangay; }
+        $params[] = $year;
+        $params[] = $month;
 
         return $this->fetchAll(
             "SELECT b.id AS beneficiary_id, b.last_name, b.first_name, b.barangay, b.purok_zone,
@@ -283,7 +285,7 @@ class DispensingRecord extends Model
                      AND MONTH(dr.date_dispensed) = ?
                )
              ORDER BY b.barangay, b.last_name, b.first_name",
-            array_merge($params, [$year, $month])
+            $params
         );
     }
 }
