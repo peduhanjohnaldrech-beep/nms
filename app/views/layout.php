@@ -69,13 +69,14 @@ $__reportsOpen = str_contains($__uri, '/reports');
 $__dataOpen    = str_contains($__uri, '/dispensing') || str_contains($__uri, '/import');
 $__adminOpen   = str_contains($__uri, '/activity') || str_contains($__uri, '/users') || str_contains($__uri, '/programs-admin') || str_contains($__uri, '/backup') || str_contains($__uri, '/settings');
 
-// Active sidebar helper
+// Active sidebar helper — use str_contains on full URI (same as $__programsOpen/$__adminOpen)
+// to avoid APP_URL base-path stripping issues across environments.
 $__basePath = rtrim(parse_url(APP_URL, PHP_URL_PATH) ?? '', '/');
 $__relPath  = substr($__uri, strlen($__basePath)) ?: '/';
 if ($__relPath === '' || $__relPath[0] !== '/') $__relPath = '/' . $__relPath;
 function __navActive(string $path): string {
-    global $__relPath;
-    return str_starts_with($__relPath, $path) ? 'active' : '';
+    global $__uri;
+    return str_contains($__uri, $path) ? 'active' : '';
 }
 
 // Breadcrumbs
