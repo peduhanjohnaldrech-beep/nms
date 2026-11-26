@@ -1,282 +1,218 @@
 # NMS — Nutrition Monitoring System
 
-A web-based system for the City Health Office Nutrition Department to monitor and manage child nutrition programs for beneficiaries aged 0–59 months.
+A nutrition monitoring platform for the City/Municipal Health Unit Nutrition Department. Tracks children 0–59 months across OPT, DSP, and MNS programs. Consists of a **PHP web system** for coordinators and encoders, and a **Flutter Android app** for field health workers.
+
+- **Web:** https://kabnms.duckdns.org
+- **API:** https://kabnms.duckdns.org/api
+- **Web repo:** https://github.com/peduhanjohnaldrech-beep/nms
+- **Mobile repo:** https://github.com/peduhanjohnaldrech-beep/nmsMobile
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Language | PHP 8.0+ |
-| Framework | Custom MVC (no external framework) |
-| Database | **MySQL / MariaDB 10.4+** (database name: `nms`) |
-| Frontend | Bootstrap 5.3, Bootstrap Icons, Chart.js |
-| Excel Import | PhpSpreadsheet 1.29+ |
-| eOPT Excel Export | Direct ZIP + XML manipulation (no external library) |
-| PDF Export | Dompdf 2.0+ |
-| Email | PHPMailer 6.9+ (SMTP) with PHP `mail()` fallback |
-| Server | PHP built-in server via `start.bat` (port 3000) or XAMPP Apache |
-
----
-
-## Requirements
-
-- PHP 8.0 or higher
-- Composer
-- MySQL / MariaDB 10.4+ (included in XAMPP)
-- XAMPP recommended (includes Apache, MySQL, PHP)
-
----
-
-## Installation
-
-### 1. Clone / Copy the project
-
-Place the project folder inside your XAMPP `htdocs` directory:
+## System Overview
 
 ```
-C:\xampp\htdocs\nms\
+┌─────────────────────────────────────────────────────────────┐
+│                   NMS Web System (PHP)                      │
+│   Nutrition Coordinators, Midwives, Encoders, BNS/BHW       │
+│   https://kabnms.duckdns.org                                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │  REST API (/api/*)
+                            │  Bearer token auth
+┌───────────────────────────▼─────────────────────────────────┐
+│               NMS Mobile App (Flutter/Android)              │
+│        BHW, BNS, Midwife — field data entry & sync          │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            │  MySQL (kabnms.duckdns.org)
+┌───────────────────────────▼─────────────────────────────────┐
+│                  Shared MySQL Database                       │
+│          DigitalOcean Droplet — /var/www/nms                 │
+└─────────────────────────────────────────────────────────────┘
 ```
-
-### 2. Install dependencies
-
-```bash
-composer install
-```
-
-### 3. Initialize the database
-
-Start XAMPP and ensure MySQL is running. Then create and import the schema:
-
-```bash
-# In XAMPP Shell or Command Prompt
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root nms < database/nms.sql
-```
-
-Or restore from a backup:
-
-```bash
-mysql -u root nms < database/backups/nms_backup_YYYY-MM-DD_HHiiss.sql
-```
-
-### 3a. Configure the database connection
-
-Edit `config/database.php`:
-
-```php
-return [
-    'host'   => 'localhost',
-    'dbname' => 'nms',
-    'user'   => 'root',
-    'pass'   => '',   // set if your MySQL root has a password
-];
-```
-
-### 4. Configure environment
-
-Edit `.env` in the project root:
-
-```env
-APP_NAME=NMS
-APP_URL=http://127.0.0.1:3000
-APP_ENV=development
-
-# SMTP — required for admin email OTP login (optional: falls back to PHP mail())
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=youremail@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM=youremail@gmail.com
-SMTP_FROM_NAME=NMS
-```
-
-> **Admin login OTP:** Admin accounts with an email address set will receive a 6-digit verification code via email on every login. Set the email in **Users → Edit**. If no SMTP is configured, it falls back to PHP `mail()`. If no email is set for the admin account, login proceeds without OTP.
-
-### 5. Add logo and background images
-
-Place your branding images in `public/img/`:
-
-```
-public/img/logo.jpg        ← City/LGU seal (shown in navbar and login page)
-public/img/background.jpg  ← Background image shown behind page content
-```
-
-### 6. Start the server
-
-Double-click `start.bat` or run:
-
-```bash
-php -S 127.0.0.1:3000 -t public
-```
-
-### 7. Access the system
-
-```
-http://127.0.0.1:3000
-```
-
----
-
-## Default Login
-
-| Field | Value |
-|-------|-------|
-| Username | `admin` |
-| Password | `Admin@1234` |
-
-> **Note:** Change the admin password after first login.
 
 ---
 
 ## User Roles
 
-| Role | Description |
-|------|-------------|
-| **admin** | Full access — user management, all modules, reports, database backup; email OTP required on login if email is set |
-| **nutritionist** | Access to all modules except user management; validates mobile submissions |
-| **encoder** | Can add/edit beneficiaries and record assessments; no deletions |
-| **bns** | Barangay Nutrition Scholar — scoped to assigned barangay; beneficiaries, assessments, and reports; mobile app only for data entry |
-| **bhw** | Barangay Health Worker — scoped to assigned barangay; mobile app only; cannot log in to web |
-| **midwife** | Barangay-scoped; can record assessments (including on pending-validation beneficiaries); accesses Validation Queue |
+| Role | Web | Mobile | Scope |
+|------|-----|--------|-------|
+| **admin** (Nutrition Coordinator) | Full access | Full access | System-wide |
+| **nutritionist** | All clinical features, reports | Full access | System-wide |
+| **midwife** | Beneficiaries, assessments, validation, reports | Assessments, validation queue | Assigned barangay |
+| **bns** (Barangay Nutrition Scholar) | Beneficiaries, assessments, programs, reports | Full field features | Assigned barangay |
+| **bhw** (Barangay Health Worker) | Web login disabled | Register beneficiaries, record assessments | Assigned barangay |
+| **encoder** | Add/edit beneficiaries and assessments, no deletions | — | System-wide |
 
 ---
 
-## Features
+## Web System
 
-### Beneficiary Management
-- Add, edit, and soft-delete beneficiaries
-- Full demographic profile: personal info, address, parent/guardian, socioeconomic status
-- Age filter: Active (0–59 months) / Aged Out (>59 months) with badge indicator
-- Last Assessed column with color coding (green < 90 days, yellow < 180, red > 180)
-- Duplicate check (AJAX) on add/edit forms
-- Trash & Restore page at `/beneficiaries/trash`
-- Paginated list (25 per page), search and filter by name, barangay, source, age status
+**Path:** `C:\xampp\htdocs\nms`
+**Stack:** PHP 8, Custom MVC, MySQL, Bootstrap 5.3, Chart.js
 
-### Beneficiary Profile
-- Data completeness indicator (progress bar + 8-field checklist)
-- Growth chart with WHO reference lines (-3SD, -2SD, median); toggle Weight/Height
-- Print-ready card (browser print — hides UI, shows compact summary card)
-- All records in one view: assessments, enrollments, Vitamin A, MNP/LNS-SQ, dispensing
+### Features
 
-### Nutritional Assessment
-- Record weight, height, and MUAC measurements
-- Automatic WHO Z-score calculations (WFA, HFA, WFL/H)
-- Nutritional status classification (SUW, UW, Normal, OW, OB)
-- Auto-enrollment into DSP for malnourished children
-- Batch assessment entry by barangay and period
+#### Beneficiary Management
+- Register children 0–59 months with full address, guardian, and socioeconomic data
+- Soft delete with Trash / Restore; duplicate detection on add/edit
+- Data completeness indicator on each profile
+- BHW/BNS scoped to their assigned barangay
 
-### Programs
+#### Assessments
+- Record weight, height, and MUAC per OPT period (January / July)
+- WHO Z-score computation (WFA, HFA, WFL/H) with nutritional status classification
+- Growth chart with WHO reference lines (−3SD, −2SD, median)
+- Batch assessment entry for quick OPT weighing
+- Validation workflow: BHW/BNS submissions start as `pending`; midwife/admin validates
 
-#### OPT — Operation Timbang
-- View all assessed beneficiaries by nutritional status, year, and period
+#### Programs
+- **OPT** — enrollment per period, eligible list, barangay coverage
+- **DSP** — feeding program enrollments; pre/post weight outcome tracking; auto-enrollment when child is flagged malnourished
+- **MNS** — Vitamin A (February/August rounds), MNP, and LNS-SQ distributions; real-time eligibility lists
+- Custom programs via Program Manager
 
-#### DSP — Dietary Supplementation Program
-- Enroll eligible (malnourished) beneficiaries
-- Intervention types: RUTF, RUSF, Health Education, Supplementary Feeding
-- Track pre/post weight and discharge status
-- Auto-creates a new assessment on DSP completion with post-weight
-
-#### MNS — Micronutrient Supplementation
-- **Vitamin A** — April & October rounds; auto-calculates dosage (Blue 100,000 IU for 6–11 mo, Red 200,000 IU for 12–59 mo); eligibility list (6–59 months not yet covered); server-side age validation and 5-month cooldown enforcement
-- **MNP (Micronutrient Powder)** — "Not Yet Received" list for 6–23 months; Cycle 1 (6–11 mo) and Cycle 2 (12–23 mo) auto-assigned from DOB; age validated server-side
-- **LNS-SQ** — monthly 30-sachet distribution for at-risk children 6–23 months; age group auto-assigned from DOB; 25-day minimum gap between doses enforced server-side; Mark Recovered feature for graduated children
-- All MNS recordings auto-create a Dispensing Tracker entry
-- Real-time eligibility panel in recording modals shows dose type, cycle, and out-of-range warnings before submission
-
-#### Custom Programs
-- Admins can create additional programs via Program Manager
-- Each gets a unique code, name, icon, color, and sort order
-- Generic enrollment page at `/programs/{code}`
-
-### Dispensing Tracker
-- Tracks all medicines and supplements dispensed across programs
-- Auto-populated from MNS recordings (Vitamin A, MNP, LNS-SQ)
-- Manual entries supported
+#### Dispensing Tracker
+- Unified log of all supplement/medicine dispensing (MNS auto-populates here)
 - Filter by year, program, barangay, purok, or specific beneficiary
-- **Due This Month** tab — shows enrolled beneficiaries (active, 0–59 months, validated) with no dispensing record for the selected month/program
-- Quick Dispense modal directly from the Due list (pre-fills beneficiary and program)
-- Edit and delete existing records inline
+- **Due This Month** tab — enrolled beneficiaries with no dispensing record for the selected month
+- Quick Dispense modal directly from the Due list; Edit and Delete existing records
 - Monthly MNS log (MNP, LNS-SQ, Vitamin A) for the selected month
-- Export to Excel and PDF
+- Excel and PDF export
 
-### Barangay Directory
-- Per-barangay beneficiary counts and nutritional status summary (WFA, HFA, WFL/H)
+#### Barangay Directory
+- Per-barangay beneficiary counts and nutritional status summary
 - Rename a barangay — cascades automatically to all beneficiary records
-- Block deletion if beneficiaries are still assigned
 
-### Excel Import & File Storage
-- Upload `.xlsx` / `.xls` files with preview and row-level validation
-- **Standard format** — NMS-compatible column layout
-- **OPT Plus format** — imports directly from the official eOPT Community Level Tool (21-sheet workbook); no memory overhead; reads barangay from E6, data from row 10 of the `Nut_StatusTool` sheet
-- Duplicate detection; preview before confirming
-- Google Drive import (optional, requires API key)
-- Storage Browser: Beneficiary Imports + Other Files tabs
-- Folder management; in-browser file preview
+#### Import / Export
+- Excel import with preview and row-level validation (Standard format and OPT Plus)
+- **OPT Plus** — imports directly from the official eOPT Community Level Tool (21-sheet workbook); no memory overhead; reads barangay from E6, data from row 10 of `Nut_StatusTool`
+- Google Drive import (optional)
+- **eOPT Export** — generates a fully-populated eOPT `.xlsx` workbook with all sheets
 
-### Reports & Export
-- **OPT, DSP, MNS, Outcome** reports with CSV/Excel/PDF export
-- **Summary Report** — per-barangay coverage, malnutrition rates, DSP, Vitamin A
-- **Period Comparison** — January vs July OPT malnutrition rate per barangay with chart
-- **Distribution Report** — supplement dispensing summary
-- **eOPT Export** — generates a fully-populated eOPT Plus Community Level Tool `.xlsx` workbook; fills Summary, OPT_Form1A, OPT_Form1B, List sheets (UW/SUW/St/SSt/MW/SW), BNS_Printout, Nut_StatusTool, Clean&Update, and Data-Export sheets. Template file required at `storage/templates/eopt_slim.xlsx`.
+#### Reports
+- OPT, DSP, MNS, Outcome, Summary, Period Comparison, Distribution reports
+- CSV / Excel / PDF export for all reports
 
-### Dashboard
-- Stat cards: Total Beneficiaries, OPT Assessed, DSP Active, MNS Coverage, Not Yet Assessed this period
-- Charts: Nutritional status by barangay (stacked bar), Program enrollment (donut), OPT trend (line), Malnutrition rate by barangay (bar)
-- **Mobile layout**: charts hidden on small screens; Quick Actions grid (role-based) for fast navigation; pending validation alert
+#### Admin Tools
+- User management, Program Manager, Activity log, Database backup
+- Demo data seeder (`/admin/seed`) for training/testing
 
-### Mobile Web Support
-- Fully usable on mobile browsers (same URL, no app install needed)
-- Beneficiaries page shows card-style list on mobile; switches to full table on desktop
-- Dashboard Quick Actions grid with role-based shortcuts (Add Beneficiary, OPT Weighing, Validation, Reports, etc.)
-- Stat cards display 2-per-row on mobile
+### Quick Start (Local)
 
-### Admin Tools
-- User management (with primary + secondary email for OTP)
-- Activity log viewer (includes mobile app actions)
-- Program Manager
-- Database backup (auto daily via sync + manual "Create Backup Now"; download live dump or saved backups)
-- **Demo data seeder** (`/admin/seed`) — seeds ~30 realistic beneficiaries with assessments/enrollments; clear button removes all demo data safely
+```bash
+# 1. Install dependencies
+cd C:\xampp\htdocs\nms
+composer install
+
+# 2. Create and import database
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS nms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root nms < database/nms_mysql.sql
+
+# 3. Configure .env
+APP_URL=http://localhost/nms/public
+APP_ENV=production
+
+# 4. Start Apache in XAMPP, then browse to:
+#    http://localhost/nms/public
+# Or use built-in server:
+start.bat    # → http://127.0.0.1:3000
+```
+
+**Default login:** `admin` / `Admin@1234`
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `public/index.php` | Entry point — all routes defined here |
+| `app/views/layout.php` | Main layout and sidebar nav |
+| `app/models/DispensingRecord.php` | Dispensing CRUD + Due This Month query |
+| `app/models/Import.php` | Standard and OPT Plus import parsers |
+| `app/helpers/ZScoreHelper.php` | WHO Z-score calculations |
+| `app/helpers/EoptExport.php` | eOPT workbook generation |
+| `docs/DATABASE.md` | Table and column reference |
+| `docs/DEPLOYMENT.md` | Full setup and troubleshooting guide |
 
 ---
 
-## Project Structure
+## Mobile App
 
+**Path:** `C:\xampp\htdocs\nms_mobile`
+**Stack:** Flutter 3.32.2, Dart 3.8.1, Provider, sqflite, flutter_secure_storage
+
+### Features
+
+- **Login** — Bearer token auth; session stored securely on-device
+- **Beneficiary Management** — Register, view, edit; scoped to assigned barangay
+- **Beneficiary Profile** — Assessment history, program records (Vitamin A, MNP, LNS-SQ, DSP), WFA/HFA/WFLH status badges
+- **Assessment Recording** — Weight, height, MUAC; auto OPT period detection
+- **OPT Batch Weighing** — Enter weights for multiple children, submit in one API call
+- **MNS** — Vitamin A (April/October), MNP, LNS-SQ; real-time eligibility panel; age group auto-set from DOB
+- **DSP** — View and manage feeding program enrollments
+- **Submit to Admin** — BNS submits pending records to midwife/admin for validation
+- **Validation Queue** — Midwife/admin reviews and validates pending submissions
+- **Reports** — OPT, DSP, MNS, summary reports by barangay
+- **Offline Support** — sqflite local DB; records sync on next connection
+
+### Build
+
+```bash
+cd C:\xampp\htdocs\nms_mobile
+
+# Debug
+flutter build apk --debug --target-platform android-arm64
+
+# Release
+flutter build apk --release --target-platform android-arm64
+# Output: build\app\outputs\flutter-apk\app-release.apk
 ```
-nms/
-├── app/
-│   ├── controllers/        # Request handlers
-│   ├── models/             # Database logic
-│   ├── views/              # HTML templates
-│   └── helpers/            # DateHelper, ZScoreHelper, ActivityLog, EoptExport
-├── config/
-│   └── config.php          # App constants and .env loader
-├── core/
-│   ├── Router.php
-│   ├── Controller.php
-│   ├── Model.php
-│   ├── View.php
-│   ├── Database.php        # PDO singleton (MySQL)
-│   └── Session.php         # Session & CSRF management
-├── config/
-│   └── database.php        # MySQL connection settings
-├── database/
-│   ├── nms.sql             # MySQL schema (for fresh install)
-│   └── backups/            # Auto-generated mysqldump backups (.sql)
-├── public/
-│   ├── index.php           # Application entry point + all routes
-│   ├── css/
-│   ├── js/app.js           # Dashboard charts, growth chart, sidebar
-│   └── img/                # logo.jpg, background.jpg
-├── storage/
-│   ├── imports/            # Saved beneficiary import files
-│   ├── files/              # General uploaded files
-│   └── templates/          # Excel templates (eopt_slim.xlsx for eOPT export)
-├── vendor/                 # Composer dependencies
-├── start.bat               # Starts PHP built-in server on port 3000
-└── .env                    # Environment configuration
+
+Install by transferring the APK to the device. Enable "Install from unknown sources" if prompted.
+
+### API URL
+
+Default: `http://152.42.197.110/api` (set in `lib/config/app_config.dart`)
+
+Can be changed at runtime via the app's Settings screen (stored in SharedPreferences). Update `defaultBaseUrl` and rebuild to change the default for new installs.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/main.dart` | App entry, theme, main shell, drawer nav |
+| `lib/config/app_config.dart` | Base URL config |
+| `lib/services/api_service.dart` | All HTTP calls (singleton) |
+| `lib/services/auth_provider.dart` | Auth state (ChangeNotifier) |
+| `lib/services/local_db_service.dart` | SQLite operations |
+| `lib/services/sync_service.dart` | Push/pull sync |
+
+---
+
+## Production Server
+
+| Item | Value |
+|------|-------|
+| Host | DigitalOcean Droplet — 152.42.197.110 (Singapore) |
+| OS | Ubuntu 24.04 LTS |
+| Stack | Nginx + PHP 8.3-FPM + MySQL |
+| Web URL | https://kabnms.duckdns.org |
+| API URL | https://kabnms.duckdns.org/api |
+| Files | /var/www/nms |
+| Email | Resend HTTP API (SMTP blocked by DigitalOcean network) |
+| SSH | Blocked by local ISP — use DigitalOcean web console |
+
+### Deploy Web Updates
+
+```bash
+# 1. Local (Git Bash)
+cd /c/xampp/htdocs/nms
+git add .
+git commit -m "description"
+git push
+
+# 2. Server (DigitalOcean web console)
+cd /var/www/nms && git pull && composer install --no-dev
 ```
 
 ---
@@ -285,9 +221,9 @@ nms/
 
 | Table | Description |
 |-------|-------------|
-| `users` | System user accounts and roles |
-| `beneficiaries` | Child beneficiary records (soft-deletable) |
+| `users` | System accounts with role-based access |
 | `barangays` | Managed barangay list; rename cascades to `beneficiaries.barangay` |
+| `beneficiaries` | Child beneficiary records (soft-deletable) |
 | `assessments` | Anthropometric measurements and Z-scores |
 | `programs` | Program definitions (OPT, DSP, MNS, and custom) |
 | `program_enrollments` | OPT/DSP/custom program enrollment records |
@@ -297,48 +233,23 @@ nms/
 | `dispensing_records` | All supplement/medicine dispensing (auto-populated from MNS) |
 | `activity_logs` | Timestamped audit trail of all user data actions |
 | `import_logs` | Excel import history |
-| `stored_files` | General uploaded files (Other Files storage tab) |
+| `stored_files` | General uploaded files |
 | `who_growth_standards` | WHO LMS values for Z-score calculations |
+
+See `docs/DATABASE.md` for full column reference and relationships.
 
 ---
 
 ## Security
 
 - CSRF token validation on all POST forms
-- Password hashing with bcrypt
-- SQL injection prevention via PDO prepared statements
+- Passwords hashed with bcrypt
+- PDO prepared statements throughout (no SQL injection)
 - XSS prevention via `htmlspecialchars()` on all output
-- Session regeneration on login
 - Role-based access control on every route
-- BHW data isolation by assigned barangay
-- File upload validation (extension + MIME type)
-- Soft deletes to preserve audit trail
-- **Email OTP** — Admin accounts with a registered email receive a 6-digit one-time code on every login (primary + secondary email supported)
-
----
-
-## Production Server
-
-- **URL:** https://kabnms.duckdns.org
-- **Host:** DigitalOcean Droplet — Ubuntu 24.04 LTS, Nginx + PHP 8.3-FPM + MySQL
-- **Files:** `/var/www/nms`
-- **Email:** Resend HTTP API (`RESEND_API_KEY` in `.env`); SMTP is blocked at DO network level
-- **Deploy:**
-  ```bash
-  # Local (Git Bash)
-  cd /c/xampp/htdocs/nms && git add . && git commit -m "msg" && git push
-
-  # On server (DigitalOcean web console — SSH blocked by ISP)
-  cd /var/www/nms && git pull && composer install --no-dev
-  ```
-
----
-
-## Mobile App
-
-A Flutter companion app for field health workers (BHW, BNS, Midwife). Connects to the same backend API at `https://kabnms.duckdns.org/api`.
-
-See [`../nms_mobile/README.md`](../nms_mobile/README.md) for setup, build, and API reference.
+- BHW/BNS data isolation by assigned barangay
+- Email OTP for admin login (Resend API)
+- Bearer token auth for mobile API
 
 ---
 
