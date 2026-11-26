@@ -194,12 +194,24 @@ http://127.0.0.1:3000
 - Tracks all medicines and supplements dispensed across programs
 - Auto-populated from MNS recordings (Vitamin A, MNP, LNS-SQ)
 - Manual entries supported
-- Filter by year, program, barangay
+- Filter by year, program, barangay, purok, or specific beneficiary
+- **Due This Month** tab — shows enrolled beneficiaries (active, 0–59 months, validated) with no dispensing record for the selected month/program
+- Quick Dispense modal directly from the Due list (pre-fills beneficiary and program)
+- Edit and delete existing records inline
+- Monthly MNS log (MNP, LNS-SQ, Vitamin A) for the selected month
 - Export to Excel and PDF
+
+### Barangay Directory
+- Per-barangay beneficiary counts and nutritional status summary (WFA, HFA, WFL/H)
+- Rename a barangay — cascades automatically to all beneficiary records
+- Block deletion if beneficiaries are still assigned
 
 ### Excel Import & File Storage
 - Upload `.xlsx` / `.xls` files with preview and row-level validation
+- **Standard format** — NMS-compatible column layout
+- **OPT Plus format** — imports directly from the official eOPT Community Level Tool (21-sheet workbook); no memory overhead; reads barangay from E6, data from row 10 of the `Nut_StatusTool` sheet
 - Duplicate detection; preview before confirming
+- Google Drive import (optional, requires API key)
 - Storage Browser: Beneficiary Imports + Other Files tabs
 - Folder management; in-browser file preview
 
@@ -275,6 +287,7 @@ nms/
 |-------|-------------|
 | `users` | System user accounts and roles |
 | `beneficiaries` | Child beneficiary records (soft-deletable) |
+| `barangays` | Managed barangay list; rename cascades to `beneficiaries.barangay` |
 | `assessments` | Anthropometric measurements and Z-scores |
 | `programs` | Program definitions (OPT, DSP, MNS, and custom) |
 | `program_enrollments` | OPT/DSP/custom program enrollment records |
@@ -301,3 +314,32 @@ nms/
 - File upload validation (extension + MIME type)
 - Soft deletes to preserve audit trail
 - **Email OTP** — Admin accounts with a registered email receive a 6-digit one-time code on every login (primary + secondary email supported)
+
+---
+
+## Production Server
+
+- **URL:** https://kabnms.duckdns.org
+- **Host:** DigitalOcean Droplet — Ubuntu 24.04 LTS, Nginx + PHP 8.3-FPM + MySQL
+- **Files:** `/var/www/nms`
+- **Email:** Resend HTTP API (`RESEND_API_KEY` in `.env`); SMTP is blocked at DO network level
+- **Deploy:**
+  ```bash
+  # Local (Git Bash)
+  cd /c/xampp/htdocs/nms && git add . && git commit -m "msg" && git push
+
+  # On server (DigitalOcean web console — SSH blocked by ISP)
+  cd /var/www/nms && git pull && composer install --no-dev
+  ```
+
+---
+
+## Mobile App
+
+A Flutter companion app for field health workers (BHW, BNS, Midwife). Connects to the same backend API at `https://kabnms.duckdns.org/api`.
+
+See [`../nms_mobile/README.md`](../nms_mobile/README.md) for setup, build, and API reference.
+
+---
+
+*NMS — Nutrition Monitoring System — November 2026*

@@ -193,6 +193,9 @@ Click **Clear Demo Data** when done testing — only demo records are removed; r
 - [ ] **MNS / LNS-SQ** → same as MNP above
 - [ ] MNP/LNS-SQ records appear in Beneficiary Profile
 - [ ] Dispensing Tracker → MNS records auto-appear; manual record works
+- [ ] Dispensing Tracker → "Due This Month" tab shows enrolled children with no record for the month
+- [ ] Dispensing Tracker → Edit and Delete buttons work on existing records
+- [ ] Barangay Directory → Rename a barangay → verify it cascades to beneficiary records
 - [ ] Import → upload `.xlsx` → preview → folder → confirm → records imported
 - [ ] Storage Browser → Beneficiary Imports and Other Files tabs work
 - [ ] Reports → OPT / DSP / MNS / Outcome / Summary / Comparison → load with data
@@ -223,3 +226,7 @@ Click **Clear Demo Data** when done testing — only demo records are removed; r
 | BHW sees no beneficiaries | Set barangay in User Management — must match beneficiary records exactly |
 | eOPT export — template not found | Place `eopt_slim.xlsx` in `storage/templates/` |
 | eOPT export — sheets show 0 values | Ensure assessments exist for the selected year/period and barangay; `calcChain.xml` is deleted automatically so Excel will recalculate on open |
+| OPT Plus import — "Could not open file" | Verify the uploaded file is a valid `.xlsx` (zip-based); re-save from Excel if needed |
+| OPT Plus import — barangay empty | The barangay field must be filled in cell E6 of the `Nut_StatusTool` sheet before exporting |
+| Dispensing "Due This Month" empty | Verify beneficiaries are enrolled with status `Active`, age ≤ 59 months, and `validation_status = validated` |
+| Nav sidebar not highlighting | Ensure `APP_URL` in `.env` matches the actual URL the browser uses; the nav uses `str_contains` on `REQUEST_URI` |

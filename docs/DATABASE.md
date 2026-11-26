@@ -11,6 +11,7 @@ The database is **MySQL** (MariaDB 10.4+) running via XAMPP. All queries use PDO
 | Table | Purpose |
 |-------|---------|
 | `users` | System accounts with role-based access |
+| `barangays` | Managed barangay name list; rename cascades to `beneficiaries.barangay` |
 | `beneficiaries` | Children enrolled in nutrition programs |
 | `assessments` | OPT weight/height measurements per child per period |
 | `programs` | Program definitions — built-in (OPT, DSP, MNS) and admin-created custom programs |
@@ -138,6 +139,8 @@ Tracks all supplement and medicine dispensing events:
 
 **Auto-population:** Any MNS recording (Vitamin A, MNP, LNS-SQ) inserts a row here automatically. Manual entries can also be created via the Dispensing Tracker.
 
+**Due This Month:** `DispensingRecord::getDueList()` returns enrolled beneficiaries (active, 0–59 months, validated) who have no dispensing record for a given month/year/program, using a `NOT EXISTS` subquery. Parameters order: optional `program`, optional `barangay`, then `$year`, `$month` last (matches the `NOT EXISTS` clause binding order).
+
 ---
 
 ### `programs`
@@ -161,7 +164,7 @@ Audit trail of all user data actions:
 - `description` — human-readable detail
 - `created_at` — timestamp
 
-Actions logged: `login`, `login_failed`, `logout`, `beneficiary_create`, `beneficiary_update`, `beneficiary_delete`, `beneficiary_restore`, `assessment_create`, `assessment_delete`, `batch_assessment`, `dsp_enroll`, `dsp_discharge`, `dispensing_create`, `import_complete`, `program_create`, `program_update`, `backup`.
+Actions logged: `login`, `login_failed`, `logout`, `beneficiary_create`, `beneficiary_update`, `beneficiary_delete`, `beneficiary_restore`, `assessment_create`, `assessment_delete`, `batch_assessment`, `dsp_enroll`, `dsp_discharge`, `dispensing_create`, `dispensing_delete`, `import_complete`, `program_create`, `program_update`, `backup`.
 
 ---
 
